@@ -5,9 +5,8 @@ import axios from 'axios';
 // API URLs in order of preference
 const API_URLS = [
   import.meta.env.VITE_API_URL,
-  
-  'https://saas-backend-33g1.onrender.com/api',
-  //'https://saas-backend-33g1.onrender.com'
+  'https://saas-backend-33g1.onrender.com',
+  'http://localhost:4000'
 ].filter(Boolean); // Remove null/undefined values
 
 let currentApiUrlIndex = 0;

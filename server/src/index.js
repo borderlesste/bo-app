@@ -65,17 +65,35 @@ const corsOptions = {
   origin: function (origin, callback) {
     const isProduction = process.env.NODE_ENV === 'production';
     const allowedOrigins = isProduction
-      ? ['https://borderlesstechno.com', 
-         'https://bo-app-h21.vercel.app/',
-         'https://www.borderlesstechno.com'];
+      ? [
+          'https://borderlesstechno.com', 
+          'https://www.borderlesstechno.com',
+          'https://bo-app-h21.vercel.app',
+          'https://bo-app-git-pro-git-borderlesste.vercel.app',
+          'https://bo-app-borderlesste.vercel.app'
+        ]
+      : [
+          'http://localhost:5173', 
+          'http://localhost:4000', 
+          'http://127.0.0.1:5173'
+        ];
 
     if (!origin) return callback(null, true);
+    
+    // Allow development origins
     if (!isProduction && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
       return callback(null, true);
     }
+    
+    // Allow Vercel deployments in production
+    if (isProduction && origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log(`CORS blocked origin: ${origin}`);
       callback(new Error('No permitido por CORS'));
     }
   },

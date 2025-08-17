@@ -291,17 +291,7 @@ export const statisticsAPI = {
 };
 
 // Export all APIs
-export {
-  servicesAPI,
-  messagesAPI,
-  configurationAPI,
-  paymentsAPI,
-  quotationsAPI,
-  ordersAPI,
-  projectsAPI,
-  invoicesAPI,
-  statisticsAPI
-};
+
 
 export default {
   services: servicesAPI,
