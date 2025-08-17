@@ -68,11 +68,6 @@ const corsOptions = {
       ? ['https://borderlesstechno.com', 'https://www.borderlesstechno.com']
       : [
         'https://saas-backend-33g1.onrender.com',
-          'http://localhost:5173', 
-          'http://localhost:4000', 
-          'http://127.0.0.1:5173',
-          'https://borderlesstechno.com', 
-          'https://www.borderlesstechno.com'
         ];
 
     if (!origin) return callback(null, true);
