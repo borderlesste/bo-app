@@ -65,10 +65,9 @@ const corsOptions = {
   origin: function (origin, callback) {
     const isProduction = process.env.NODE_ENV === 'production';
     const allowedOrigins = isProduction
-      ? ['https://borderlesstechno.com', 'https://www.borderlesstechno.com']
-      : [
-        'https://saas-backend-33g1.onrender.com',
-        ];
+      ? ['https://borderlesstechno.com', 
+         'https://saas-backend-33g1.onrender.com',
+         'https://www.borderlesstechno.com'];
 
     if (!origin) return callback(null, true);
     if (!isProduction && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
