@@ -66,7 +66,7 @@ const corsOptions = {
     const isProduction = process.env.NODE_ENV === 'production';
     const allowedOrigins = isProduction
       ? ['https://borderlesstechno.com', 
-         'https://saas-backend-33g1.onrender.com',
+         'https://bo-app-h21.vercel.app/',
          'https://www.borderlesstechno.com'];
 
     if (!origin) return callback(null, true);
