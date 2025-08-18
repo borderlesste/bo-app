@@ -97,7 +97,10 @@ const deleteFile = (filePath) => {
 
 // Función para obtener URL del archivo
 const getFileUrl = (filename) => {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:4000';
+  const baseUrl = process.env.BASE_URL || 
+                  (process.env.NODE_ENV === 'production' 
+                    ? 'https://saas-backend-33g1.onrender.com' 
+                    : 'http://localhost:4000');
   return `${baseUrl}/uploads/projects/${filename}`;
 };
 

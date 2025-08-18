@@ -47,12 +47,13 @@ const validatePhone = (phone) => {
 const validateProject = (projectData) => {
   const errors = {};
   
-  if (!projectData.titulo || projectData.titulo.trim().length < 3) {
-    errors.titulo = 'El título debe tener al menos 3 caracteres';
+  // Usar 'nombre' en lugar de 'titulo' para compatibilidad con el controlador
+  if (!projectData.nombre || projectData.nombre.trim().length < 3) {
+    errors.nombre = 'El nombre debe tener al menos 3 caracteres';
   }
   
-  if (projectData.titulo && projectData.titulo.length > 200) {
-    errors.titulo = 'El título no puede exceder los 200 caracteres';
+  if (projectData.nombre && projectData.nombre.length > 200) {
+    errors.nombre = 'El nombre no puede exceder los 200 caracteres';
   }
   
   if (!projectData.descripcion || projectData.descripcion.trim().length < 10) {
@@ -63,12 +64,14 @@ const validateProject = (projectData) => {
     errors.descripcion = 'La descripción no puede exceder los 2000 caracteres';
   }
   
-  if (!projectData.categoria || projectData.categoria.trim().length === 0) {
-    errors.categoria = 'La categoría es obligatoria';
+  // Categoría opcional con valor por defecto
+  if (projectData.categoria && projectData.categoria.trim().length === 0) {
+    errors.categoria = 'La categoría no puede estar vacía';
   }
   
-  if (!projectData.estado || !['activo', 'pausado', 'completado', 'cancelado'].includes(projectData.estado)) {
-    errors.estado = 'El estado debe ser uno de: activo, pausado, completado, cancelado';
+  // Estados válidos para proyectos
+  if (projectData.estado && !['planificacion', 'desarrollo', 'revision', 'completado', 'mantenimiento'].includes(projectData.estado)) {
+    errors.estado = 'El estado debe ser uno de: planificacion, desarrollo, revision, completado, mantenimiento';
   }
   
   if (projectData.presupuesto !== undefined && projectData.presupuesto !== null) {
