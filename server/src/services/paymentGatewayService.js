@@ -6,25 +6,34 @@ if (process.env.STRIPE_SECRET_KEY) {
   stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 }
 
-// Solo cargar PayPal si hay configuración
+// PayPal SDK Configuration
 let paypalClient = null;
 let OrdersController = null;
+let PaymentsController = null;
+
 if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
   try {
     const checkoutSDK = require('@paypal/checkout-server-sdk');
     
-    // Create PayPal client
+    // Create PayPal environment
     const environment = process.env.PAYPAL_ENVIRONMENT === 'production' 
       ? new checkoutSDK.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
       : new checkoutSDK.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
     
+    // Create PayPal client
     paypalClient = new checkoutSDK.core.PayPalHttpClient(environment);
     OrdersController = checkoutSDK.orders;
+    PaymentsController = checkoutSDK.payments;
+    
+    console.log('✅ PayPal SDK initialized successfully');
+    console.log(`📝 Environment: ${process.env.PAYPAL_ENVIRONMENT || 'sandbox'}`);
   } catch (error) {
-    console.error('Error initializing PayPal SDK:', error);
+    console.error('❌ Error initializing PayPal SDK:', error);
   }
 }
+
 const emailService = require('./emailService');
+const { pool } = require('../config/db');
 
 class PaymentGatewayService {
   constructor() {
@@ -118,27 +127,104 @@ class PaymentGatewayService {
     }
   }
 
-  // Crear orden de PayPal
-  async createPayPalOrder(amount, currency = 'USD', orderData = {}) {
-    // For development, always simulate PayPal orders if real credentials fail
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔧 Development mode: Simulating PayPal order creation');
+  // Crear pedido en base de datos y orden de PayPal (Paso 1 y 2 del flujo)
+  async createPayPalPedido(userId, orderItems, orderData = {}) {
+    const connection = await pool.getConnection();
+    
+    try {
+      await connection.beginTransaction();
+      
+      // 1. Calcular total en el servidor (nunca confiar en el frontend)
+      let subtotal = 0;
+      const items = [];
+      
+      for (const item of orderItems) {
+        const itemSubtotal = (item.cantidad || 1) * (item.precio_unitario || 0);
+        subtotal += itemSubtotal;
+        items.push({
+          ...item,
+          subtotal: itemSubtotal
+        });
+      }
+      
+      const iva = subtotal * 0.16; // 16% IVA
+      const total = subtotal + iva;
+      
+      // Generar número de pedido único
+      const numeroPedido = `PED-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // 2. Insertar pedido en MySQL con status PENDING
+      const [pedidoResult] = await connection.execute(
+        `INSERT INTO pedidos 
+         (numero_pedido, usuario_id, estado, subtotal, iva, total, saldo_pendiente, 
+          descripcion, payment_method, created_at, updated_at) 
+         VALUES (?, ?, 'nuevo', ?, ?, ?, ?, ?, 'paypal', NOW(), NOW())`,
+        [numeroPedido, userId, subtotal, iva, total, total, orderData.descripcion || 'Pedido PayPal']
+      );
+      
+      const pedidoId = pedidoResult.insertId;
+      
+      // 3. Insertar items del pedido
+      for (const item of items) {
+        await connection.execute(
+          `INSERT INTO pedido_items 
+           (pedido_id, descripcion, cantidad, precio_unitario, subtotal, orden) 
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [pedidoId, item.descripcion, item.cantidad || 1, item.precio_unitario, item.subtotal, item.orden || 0]
+        );
+      }
+      
+      // 4. Crear orden en PayPal
+      const paypalOrder = await this.createPayPalOrder(total, orderData.currency || 'USD', {
+        ...orderData,
+        reference_id: numeroPedido,
+        pedido_id: pedidoId
+      });
+      
+      if (!paypalOrder.success) {
+        await connection.rollback();
+        return paypalOrder;
+      }
+      
+      // 5. Actualizar pedido con PayPal order ID
+      await connection.execute(
+        'UPDATE pedidos SET paypal_order_id = ? WHERE id = ?',
+        [paypalOrder.data.order_id, pedidoId]
+      );
+      
+      await connection.commit();
+      
       return {
         success: true,
         data: {
-          order_id: 'DEMO_ORDER_' + Date.now(),
-          approve_url: 'https://www.sandbox.paypal.com/checkoutnow?token=DEMO_TOKEN_' + Date.now(),
-          amount,
-          currency,
-          simulated: true
+          pedido_id: pedidoId,
+          numero_pedido: numeroPedido,
+          paypal_order_id: paypalOrder.data.order_id,
+          approve_url: paypalOrder.data.approve_url,
+          total,
+          currency: orderData.currency || 'USD'
         }
       };
-    }
-
-    if (!this.paypalClient) {
+      
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error creating PayPal pedido:', error);
       return {
         success: false,
-        message: 'PayPal no está configurado para desarrollo'
+        message: 'Error al crear el pedido',
+        error: error.message
+      };
+    } finally {
+      connection.release();
+    }
+  }
+
+  // Crear orden de PayPal (método interno)
+  async createPayPalOrder(amount, currency = 'USD', orderData = {}) {
+    if (!paypalClient || !OrdersController) {
+      return {
+        success: false,
+        message: 'PayPal no está configurado correctamente'
       };
     }
 
@@ -149,66 +235,50 @@ class PaymentGatewayService {
           purchase_units: [{
             amount: {
               currency_code: currency.toUpperCase(),
-              value: amount.toString()
+              value: amount.toFixed(2)
             },
-            description: `Servicio de Borderless Techno - ${orderData.service || 'Desarrollo de Software'}`,
-            reference_id: orderData.reference_id || 'DEFAULT'
+            description: `Borderless Techno - ${orderData.descripcion || 'Servicio de desarrollo'}`,
+            reference_id: orderData.reference_id || 'DEFAULT',
+            invoice_id: orderData.pedido_id ? `INV-${orderData.pedido_id}` : undefined
           }],
           application_context: {
             return_url: process.env.PAYPAL_RETURN_URL || 'http://localhost:4001/payment/success',
             cancel_url: process.env.PAYPAL_CANCEL_URL || 'http://localhost:4001/payment/cancel',
-            brand_name: 'Borderless Techno Company',
+            brand_name: 'Borderless Techno',
             locale: 'es-MX',
             landing_page: 'BILLING',
-            user_action: 'PAY_NOW'
+            user_action: 'PAY_NOW',
+            shipping_preference: 'NO_SHIPPING'
           }
         }
       };
-
-      if (!this.ordersController) {
-        throw new Error('PayPal OrdersController not available');
-      }
       
-      console.log('🔄 Creating PayPal order with request:', JSON.stringify(request, null, 2));
+      console.log('🔄 Creating PayPal order:', JSON.stringify(request.body, null, 2));
       
-      const orderRequest = new this.ordersController.OrdersCreateRequest();
+      const orderRequest = new OrdersController.OrdersCreateRequest();
       orderRequest.requestBody(request.body);
-      const response = await this.paypalClient.execute(orderRequest);
+      const response = await paypalClient.execute(orderRequest);
       
-      console.log('📦 PayPal response received:', JSON.stringify(response, null, 2));
+      console.log('✅ PayPal order created:', response.body.id);
       
       if (response.body && response.body.id) {
+        const approveLink = response.body.links.find(link => link.rel === 'approve');
+        
         return {
           success: true,
           data: {
             order_id: response.body.id,
-            approve_url: response.body.links.find(link => link.rel === 'approve')?.href,
+            approve_url: approveLink?.href,
             amount,
-            currency
+            currency,
+            status: response.body.status
           }
         };
       } else {
-        throw new Error('No se pudo crear la orden de PayPal - respuesta inválida');
+        throw new Error('Invalid PayPal response - missing order ID');
       }
     } catch (error) {
-      console.error('Error creating PayPal order:', error);
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        statusCode: error.statusCode,
-        details: error.details
-      });
-      
-      // If it's an authentication error, provide helpful message
-      if (error.message?.includes('authentication') || error.statusCode === 401) {
-        return {
-          success: false,
-          message: 'Error de autenticación con PayPal. Verifique las credenciales de sandbox.',
-          error: error.message
-        };
-      }
-      
+      console.error('❌ Error creating PayPal order:', error);
       return {
         success: false,
         message: 'Error al crear la orden de PayPal',
@@ -217,37 +287,123 @@ class PaymentGatewayService {
     }
   }
 
-  // Capturar pago de PayPal
-  async capturePayPalPayment(orderId) {
-    // For development, simulate PayPal capture if order ID is demo
-    if (process.env.NODE_ENV === 'development' && orderId.startsWith('DEMO_ORDER_')) {
-      console.log('🔧 Development mode: Simulating PayPal payment capture');
+  // Capturar pago de PayPal y actualizar pedido (Paso 4 del flujo)
+  async capturePayPalPedido(paypalOrderId, additionalData = {}) {
+    const connection = await pool.getConnection();
+    
+    try {
+      await connection.beginTransaction();
+      
+      // 1. Buscar el pedido en MySQL
+      const [pedidos] = await connection.execute(
+        'SELECT * FROM pedidos WHERE paypal_order_id = ?',
+        [paypalOrderId]
+      );
+      
+      if (pedidos.length === 0) {
+        await connection.rollback();
+        return {
+          success: false,
+          message: 'Pedido no encontrado en la base de datos'
+        };
+      }
+      
+      const pedido = pedidos[0];
+      
+      // 2. Capturar pago en PayPal
+      const captureResult = await this.capturePayPalOrder(paypalOrderId);
+      
+      if (!captureResult.success) {
+        await connection.rollback();
+        return captureResult;
+      }
+      
+      const capture = captureResult.data;
+      
+      // 3. Insertar registro en tabla pagos
+      const [pagoResult] = await connection.execute(
+        `INSERT INTO pagos 
+         (numero_pago, usuario_id, tipo, estado, monto, moneda, metodo_pago, 
+          referencia, paypal_order_id, paypal_capture_id, paypal_payer_email, 
+          payment_gateway, fecha_pago, fecha_aplicacion, concepto, created_at, updated_at) 
+         VALUES (?, ?, 'total', 'aplicado', ?, ?, 'paypal', ?, ?, ?, ?, 'paypal', NOW(), NOW(), ?, NOW(), NOW())`,
+        [
+          `PAY-${Date.now()}`,
+          pedido.usuario_id,
+          capture.amount,
+          capture.currency,
+          capture.capture_id,
+          paypalOrderId,
+          capture.capture_id,
+          capture.payer_email,
+          `Pago PayPal para pedido ${pedido.numero_pedido}`
+        ]
+      );
+      
+      // 4. Actualizar estado del pedido
+      await connection.execute(
+        `UPDATE pedidos 
+         SET estado = 'confirmado', paypal_capture_id = ?, saldo_pendiente = 0, updated_at = NOW() 
+         WHERE id = ?`,
+        [capture.capture_id, pedido.id]
+      );
+      
+      // 5. Registrar en historial de estados
+      await connection.execute(
+        `INSERT INTO historial_estado_pedidos 
+         (pedido_id, estado_anterior, estado_nuevo, comentario, created_at) 
+         VALUES (?, ?, 'confirmado', 'Pago completado via PayPal', NOW())`,
+        [pedido.id, pedido.estado]
+      );
+      
+      await connection.commit();
+      
       return {
         success: true,
         data: {
-          id: orderId,
-          status: 'COMPLETED',
-          amount: '100.00', // Default demo amount
-          currency: 'USD',
-          capture_id: 'DEMO_CAPTURE_' + Date.now(),
-          payer_email: 'demo@example.com',
-          created: new Date().toISOString(),
-          simulated: true
+          pedido_id: pedido.id,
+          numero_pedido: pedido.numero_pedido,
+          pago_id: pagoResult.insertId,
+          paypal_order_id: paypalOrderId,
+          paypal_capture_id: capture.capture_id,
+          amount: capture.amount,
+          currency: capture.currency,
+          status: 'PAID',
+          payer_email: capture.payer_email
         }
+      };
+      
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error capturing PayPal pedido:', error);
+      return {
+        success: false,
+        message: 'Error al capturar el pago',
+        error: error.message
+      };
+    } finally {
+      connection.release();
+    }
+  }
+
+  // Capturar orden PayPal (método interno)
+  async capturePayPalOrder(orderId) {
+    if (!paypalClient || !OrdersController) {
+      return {
+        success: false,
+        message: 'PayPal no está configurado correctamente'
       };
     }
 
     try {
-      const request = {
-        id: orderId
-      };
-
-      if (!this.ordersController) {
-        throw new Error('PayPal OrdersController not available');
-      }
+      console.log('🔄 Capturing PayPal order:', orderId);
       
-      const ordersController = new this.ordersController(this.paypalClient);
-      const response = await ordersController.ordersCapture(request);
+      const request = new OrdersController.OrdersCaptureRequest(orderId);
+      request.requestBody({});
+      
+      const response = await paypalClient.execute(request);
+      
+      console.log('📦 PayPal capture response:', JSON.stringify(response.body, null, 2));
       
       if (response.body && response.body.status === 'COMPLETED') {
         const capture = response.body.purchase_units[0].payments.captures[0];
@@ -257,18 +413,20 @@ class PaymentGatewayService {
           data: {
             id: response.body.id,
             status: response.body.status,
-            amount: capture.amount.value,
+            amount: parseFloat(capture.amount.value),
             currency: capture.amount.currency_code,
             capture_id: capture.id,
             payer_email: response.body.payer?.email_address,
-            created: capture.create_time
+            payer_id: response.body.payer?.payer_id,
+            created: capture.create_time,
+            transaction_fee: capture.seller_receivable_breakdown?.paypal_fee?.value || '0.00'
           }
         };
       } else {
-        throw new Error('El pago no se completó correctamente');
+        throw new Error(`Payment not completed. Status: ${response.body.status}`);
       }
     } catch (error) {
-      console.error('Error capturing PayPal payment:', error);
+      console.error('❌ Error capturing PayPal order:', error);
       return {
         success: false,
         message: 'Error al capturar el pago de PayPal',
@@ -416,6 +574,217 @@ class PaymentGatewayService {
         error: error.message
       };
     }
+  }
+
+  // Procesar webhook de PayPal (Paso 5 del flujo)
+  async processPayPalWebhook(webhookPayload, headers) {
+    const connection = await pool.getConnection();
+    
+    try {
+      await connection.beginTransaction();
+      
+      const { event_type, resource, id: eventId } = webhookPayload;
+      
+      // 1. Verificar si ya procesamos este evento (idempotencia)
+      const [existingEvents] = await connection.execute(
+        'SELECT * FROM webhooks_paypal WHERE event_id = ?',
+        [eventId]
+      );
+      
+      if (existingEvents.length > 0) {
+        await connection.rollback();
+        return {
+          success: true,
+          message: 'Evento ya procesado',
+          data: { event_id: eventId, status: 'duplicate' }
+        };
+      }
+      
+      // 2. Registrar el webhook
+      await connection.execute(
+        `INSERT INTO webhooks_paypal 
+         (webhook_id, event_type, event_id, resource_type, resource_id, 
+          raw_payload, verification_status, created_at) 
+         VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW())`,
+        [
+          headers['paypal-transmission-id'] || 'unknown',
+          event_type,
+          eventId,
+          resource?.resource_type || 'unknown',
+          resource?.id || 'unknown',
+          JSON.stringify(webhookPayload)
+        ]
+      );
+      
+      // 3. Procesar según el tipo de evento
+      let processingResult = { success: true, message: 'Event logged' };
+      
+      switch (event_type) {
+        case 'PAYMENT.CAPTURE.COMPLETED':
+          processingResult = await this.handlePaymentCaptureCompleted(resource, connection);
+          break;
+          
+        case 'PAYMENT.CAPTURE.DENIED':
+        case 'PAYMENT.CAPTURE.DECLINED':
+          processingResult = await this.handlePaymentCaptureFailed(resource, connection);
+          break;
+          
+        case 'CHECKOUT.ORDER.APPROVED':
+          processingResult = await this.handleOrderApproved(resource, connection);
+          break;
+          
+        default:
+          console.log(`📝 Unhandled webhook event: ${event_type}`);
+          processingResult = { success: true, message: 'Event type not handled' };
+      }
+      
+      // 4. Actualizar estado del webhook
+      const webhookStatus = processingResult.success ? 'processed' : 'failed';
+      await connection.execute(
+        `UPDATE webhooks_paypal 
+         SET status = ?, processing_error = ?, processed_at = NOW() 
+         WHERE event_id = ?`,
+        [webhookStatus, processingResult.error || null, eventId]
+      );
+      
+      await connection.commit();
+      
+      return {
+        success: true,
+        data: {
+          event_id: eventId,
+          event_type,
+          processing_result: processingResult
+        }
+      };
+      
+    } catch (error) {
+      await connection.rollback();
+      console.error('❌ Error processing PayPal webhook:', error);
+      return {
+        success: false,
+        message: 'Error al procesar webhook',
+        error: error.message
+      };
+    } finally {
+      connection.release();
+    }
+  }
+
+  // Manejar captura de pago completada
+  async handlePaymentCaptureCompleted(resource, connection) {
+    try {
+      const captureId = resource.id;
+      const orderId = resource.supplementary_data?.related_ids?.order_id;
+      const amount = parseFloat(resource.amount.value);
+      const currency = resource.amount.currency_code;
+      const payerEmail = resource.payee?.email_address;
+      
+      if (!orderId) {
+        return { success: false, error: 'Order ID not found in webhook' };
+      }
+      
+      // Buscar pedido y verificar estado
+      const [pedidos] = await connection.execute(
+        'SELECT * FROM pedidos WHERE paypal_order_id = ?',
+        [orderId]
+      );
+      
+      if (pedidos.length === 0) {
+        return { success: false, error: 'Pedido no encontrado' };
+      }
+      
+      const pedido = pedidos[0];
+      
+      // Si ya está confirmado, no hacer nada (reconciliación)
+      if (pedido.estado === 'confirmado' && pedido.paypal_capture_id) {
+        return { success: true, message: 'Payment already processed' };
+      }
+      
+      // Actualizar pedido a confirmado
+      await connection.execute(
+        `UPDATE pedidos 
+         SET estado = 'confirmado', paypal_capture_id = ?, saldo_pendiente = 0 
+         WHERE paypal_order_id = ?`,
+        [captureId, orderId]
+      );
+      
+      // Verificar si ya existe el pago
+      const [existingPayments] = await connection.execute(
+        'SELECT * FROM pagos WHERE paypal_capture_id = ?',
+        [captureId]
+      );
+      
+      if (existingPayments.length === 0) {
+        // Crear registro de pago
+        await connection.execute(
+          `INSERT INTO pagos 
+           (numero_pago, usuario_id, tipo, estado, monto, moneda, metodo_pago, 
+            referencia, paypal_order_id, paypal_capture_id, paypal_payer_email, 
+            payment_gateway, fecha_pago, fecha_aplicacion, concepto) 
+           VALUES (?, ?, 'total', 'aplicado', ?, ?, 'paypal', ?, ?, ?, ?, 'paypal', NOW(), NOW(), ?)`,
+          [
+            `PAY-WH-${Date.now()}`,
+            pedido.usuario_id,
+            amount,
+            currency,
+            captureId,
+            orderId,
+            captureId,
+            payerEmail,
+            `Pago webhook PayPal para pedido ${pedido.numero_pedido}`
+          ]
+        );
+      }
+      
+      return { success: true, message: 'Payment capture completed via webhook' };
+      
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Manejar captura de pago fallida
+  async handlePaymentCaptureFailed(resource, connection) {
+    try {
+      const orderId = resource.supplementary_data?.related_ids?.order_id;
+      
+      if (orderId) {
+        await connection.execute(
+          'UPDATE pedidos SET estado = ? WHERE paypal_order_id = ?',
+          ['cancelado', orderId]
+        );
+      }
+      
+      return { success: true, message: 'Payment marked as failed' };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Manejar orden aprobada (solo logging)
+  async handleOrderApproved(resource, connection) {
+    try {
+      const orderId = resource.id;
+      
+      await connection.execute(
+        `UPDATE webhooks_paypal 
+         SET order_id = ? 
+         WHERE resource_id = ?`,
+        [orderId, orderId]
+      );
+      
+      return { success: true, message: 'Order approval logged' };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Verificar firma del webhook (implementar según documentación de PayPal)
+  async verifyWebhookSignature(payload, headers) {
+    // TODO: Implementar verificación de firma usando PayPal SDK
+    // Por ahora, aceptamos todos los webhooks (solo para desarrollo)
+    return true;
   }
 }
 

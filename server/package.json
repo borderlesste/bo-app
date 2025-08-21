@@ -12,11 +12,13 @@
     "db:reset": "node scripts/setup-database.js",
     "db:test": "node scripts/test-connection.js",
     "db:add-invoices": "node scripts/add-invoices-table.js",
+    "db:migrate:paypal": "node scripts/migrate-paypal-fields.js",
     "test": "NODE_ENV=test jest",
     "test:watch": "NODE_ENV=test jest --watch",
     "test:coverage": "NODE_ENV=test jest --coverage",
     "test:integration": "NODE_ENV=test jest --testMatch='**/tests/integration/**/*.test.js'",
     "test:unit": "NODE_ENV=test jest --testMatch='**/tests/**/*.test.js' --ignore='**/tests/integration/**'",
+    "test:paypal": "node scripts/test-paypal-integration.js",
     "db:backup": "node scripts/backup-database.js",
     "vercel-build": "echo 'Build complete'"
   },

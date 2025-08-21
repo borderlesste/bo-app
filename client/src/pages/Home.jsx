@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLanguage } from '../hooks/useLanguage';
 import Button from '../components/Button';
+import api from '../api/axios';
 
 function Home() {
   const { t } = useLanguage();
@@ -73,18 +74,11 @@ function Home() {
       setIsSubmitting(true);
       setShowSuccess(false);
       
-      // Send to API
-      const response = await fetch('http://localhost:4001/api/public/quotes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(quoteData)
-      });
+      // Send to API using centralized axios configuration
+      const response = await api.post('/api/public/quotes', quoteData);
+      const result = response.data;
       
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
+      if (result.success) {
         setShowSuccess(true);
         setFormData({
           nombre: '',

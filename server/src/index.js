@@ -14,6 +14,7 @@ const ordersRoutes = require('./routes/orders.js');
 const paymentsRoutes = require('./routes/payments.js');
 const clientPaymentsRoutes = require('./routes/clientPayments.js');
 const paymentGatewayRoutes = require('./routes/paymentGateway.js');
+const paypalOrdersRoutes = require('./routes/paypalOrders.js');
 const configRoutes = require('./routes/config.js');
 const contactRoutes = require('./routes/contact.js');
 const usersRoutes = require('./routes/users.js');
@@ -69,8 +70,8 @@ const corsOptions = {
           'https://borderlesstechno.com', 
           'https://www.borderlesstechno.com',
           'https://bo-app-h21.vercel.app',
-          'https://bo-app-git-pro-git-borderlesste.vercel.app',
-          'https://bo-app-borderlesste.vercel.app'
+          //'https://bo-app-git-pro-git-borderlesste.vercel.app',
+          //'https://bo-app-borderlesste.vercel.app'
         ]
       : [
           'http://localhost:5173', 
@@ -168,6 +169,7 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/client-payments', clientPaymentsRoutes);
 app.use('/api/payment-gateway', paymentGatewayRoutes);
+app.use('/api/paypal', paypalOrdersRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/contacto', contactRoutes);
 app.use('/api/users', usersRoutes);
