@@ -19,6 +19,9 @@
     "test:integration": "NODE_ENV=test jest --testMatch='**/tests/integration/**/*.test.js'",
     "test:unit": "NODE_ENV=test jest --testMatch='**/tests/**/*.test.js' --ignore='**/tests/integration/**'",
     "test:paypal": "node scripts/test-paypal-integration.js",
+    "health:paypal": "node scripts/paypal-health-check.js",
+    "setup:paypal-webhook": "node scripts/setup-paypal-webhook.js",
+    "deploy:production": "./scripts/deploy-production.sh",
     "db:backup": "node scripts/backup-database.js",
     "vercel-build": "echo 'Build complete'"
   },

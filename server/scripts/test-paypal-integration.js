@@ -49,19 +49,22 @@ class PayPalIntegrationTest {
     try {
       const response = await axios.post(`${API_BASE}/api/auth/login`, TEST_USER);
       
-      if (response.data.success) {
+      // Check for successful login (could have 'message' or 'success' field)
+      if (response.data.message === 'Login exitoso' || response.data.success) {
         console.log('✅ Login exitoso');
         this.authToken = response.headers['set-cookie']?.[0] || null;
         
         if (!this.authToken) {
           throw new Error('No se recibió token de autenticación');
         }
+        
+        console.log(`📝 Usuario: ${response.data.user?.nombre} (${response.data.user?.rol})`);
       } else {
-        throw new Error('Login falló: ' + response.data.message);
+        throw new Error('Login falló: ' + (response.data.message || 'Error desconocido'));
       }
     } catch (error) {
-      if (error.response?.status === 404) {
-        console.log('📝 Usuario no existe, creando cuenta de prueba...');
+      if (error.response?.status === 404 || error.response?.status === 401) {
+        console.log('📝 Usuario no existe o credenciales incorrectas, creando cuenta de prueba...');
         await this.createTestUser();
         await this.test1_Authentication(); // Reintentar login
       } else {
@@ -74,7 +77,8 @@ class PayPalIntegrationTest {
     const userData = {
       ...TEST_USER,
       nombre: 'Usuario de Prueba PayPal',
-      telefono: '+1234567890'
+      telefono: '+1234567890',
+      direccion: 'Calle de Prueba 123, Ciudad Test'
     };
     
     const response = await axios.post(`${API_BASE}/api/auth/register`, userData);
