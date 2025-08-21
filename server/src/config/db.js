@@ -4,9 +4,17 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+// Validate required environment variables
+const requiredVars = ['DB_HOST', 'DB_USER', 'DB_NAME'];
+const missingVars = requiredVars.filter(varName => !process.env[varName] || process.env[varName].includes('your_'));
+
+if (missingVars.length > 0) {
+  console.warn(`Warning: Missing or placeholder database configuration: ${missingVars.join(', ')}`);
+}
+
 // Usar DATABASE_URL si está disponible, sino construir desde variables individuales
 const databaseUrl = process.env.DATABASE_URL || 
-  `mysql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+  `mysql://${process.env.DB_USER || 'root'}:${process.env.DB_PASSWORD || ''}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 3306}/${process.env.DB_NAME || 'borderless_techno'}`;
 
 const pool = mysql.createPool(`${databaseUrl}?multipleStatements=true`);
 
