@@ -94,6 +94,22 @@ api.interceptors.response.use(
     const endTime = new Date();
     const duration = endTime - response.config.metadata.startTime;
     
+    // Check if response is HTML instead of JSON
+    const contentType = response.headers['content-type'] || '';
+    const isHtml = contentType.includes('text/html');
+    
+    if (isHtml && response.config.url !== '/') {
+      console.error(`⚠️ Received HTML instead of JSON for: ${response.config.method?.toUpperCase()} ${response.config.url}`);
+      console.error('Response content type:', contentType);
+      console.error('Response data preview:', typeof response.data === 'string' ? response.data.substring(0, 200) : response.data);
+      
+      // Create a custom error for HTML responses
+      const htmlError = new Error('Server returned HTML instead of JSON');
+      htmlError.isHtmlResponse = true;
+      htmlError.response = response;
+      return Promise.reject(htmlError);
+    }
+    
     // Log response en modo desarrollo
     if (import.meta.env.DEV) {
       console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url} (${duration}ms)`, response.data);
@@ -117,6 +133,23 @@ api.interceptors.response.use(
     // Check if this is a CORS error
     const isCorsError = error.message?.includes('CORS') || 
                        error.message?.includes('Access-Control-Allow-Origin');
+    
+    // Check if this is an HTML response error
+    const isHtmlError = error.isHtmlResponse || 
+                       error.message?.includes('Unexpected token') ||
+                       error.message?.includes('<!DOCTYPE');
+    
+    // Enhanced logging for HTML errors
+    if (isHtmlError) {
+      console.error(`🚨 HTML Response Error detected for: ${error.config?.url}`);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response headers:', error.response.headers);
+        if (typeof error.response.data === 'string') {
+          console.error('HTML content preview:', error.response.data.substring(0, 300));
+        }
+      }
+    }
     
     // Log error - pero no para errores 401 en auth/profile (es normal)
     const isAuthProfileCheck = error.config?.url?.includes('/api/auth/profile') && error.response?.status === 401;
