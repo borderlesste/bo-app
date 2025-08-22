@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { X, CheckCircle, User, DollarSign, Calendar, FileText, CreditCard, Building } from 'lucide-react';
 
-const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, pedidos, user }) => {
+const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) => {
   const [formData, setFormData] = useState({
     concepto: '',
     monto: '',
@@ -54,6 +54,9 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, pedidos, user })
       if (!formData.usuario_id) {
         throw new Error('Debe seleccionar un cliente');
       }
+      if (!formData.pedido_id) {
+        throw new Error('Debe asociar el pago a un pedido');
+      }
       
       await onSave(formData);
       onClose();
@@ -67,6 +70,7 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, pedidos, user })
   const paymentMethods = [
     { value: 'tarjeta', label: 'Tarjeta de Crédito/Débito', icon: CreditCard },
     { value: 'transferencia', label: 'Transferencia Bancaria', icon: Building },
+    { value: 'paypal', label: 'PayPal', icon: CreditCard },
     { value: 'efectivo', label: 'Efectivo', icon: DollarSign }
   ];
 
@@ -154,11 +158,15 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, pedidos, user })
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                 >
                   <option value="">Seleccionar cliente...</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.nombre} ({client.email})
-                    </option>
-                  ))}
+                  {clients && clients.length > 0 ? (
+                    clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.nombre} ({client.email})
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>No hay clientes para mostrar</option>
+                  )}
                 </select>
               </div>
 
@@ -228,7 +236,7 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, pedidos, user })
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Seleccionar pedido</option>
-                {pedidos && pedidos.map(pedido => (
+                {orders && orders.map(pedido => (
                   <option key={pedido.id} value={pedido.id}>
                     Pedido #{pedido.id} - {pedido.titulo || 'Sin título'}
                   </option>
@@ -292,7 +300,7 @@ PaymentCreateModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   clients: PropTypes.array,
-  pedidos: PropTypes.array,
+  orders: PropTypes.array,
   user: PropTypes.object
 };
 
