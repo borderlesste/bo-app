@@ -20,10 +20,10 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import PaymentGatewayModal from '../../components/payments/PaymentGatewayModal';
 
 const ClientPayments = () => {
-  const [orders, setOrders] = useState([]);
+  const [orders, setorders] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedorder, setSelectedorder] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [activeTab, setActiveTab] = useState('unpaid');
   const [showFinancialDetails, setShowFinancialDetails] = useState({});
@@ -33,7 +33,7 @@ const ClientPayments = () => {
   const { user } = useAuth();
   const { success: showSuccess, error: showError } = useToast();
 
-  const fetchOrdersAndPayments = useCallback(async () => {
+  const fetchordersAndPayments = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -47,14 +47,14 @@ const ClientPayments = () => {
       
       if (ordersResponse.ok) {
         const ordersData = await ordersResponse.json();
-        console.log('Orders data received:', ordersData); // Debug log
+        console.log('orders data received:', ordersData); // Debug log
         
         // Process orders data to ensure consistent structure
-        const processedOrders = (ordersData || []).map(order => ({
+        const processedorders = (ordersData || []).map(order => ({
           ...order,
           estado: order.status || order.estado || 'nuevo', // Priorizar status ya que viene del backend
           id: order.id,
-          numero_pedido: order.numero_pedido,
+          numero_order: order.numero_order,
           value: parseFloat(order.presupuesto_estimado) || parseFloat(order.value) || parseFloat(order.total) || 0,
           descripcion: order.descripcion || order.description || order.name || '',
           servicio: order.servicio || '',
@@ -63,11 +63,11 @@ const ClientPayments = () => {
           created_at: order.created_at
         }));
         
-        console.log('Processed orders:', processedOrders); // Debug log
-        setOrders(processedOrders);
+        console.log('Processed orders:', processedorders); // Debug log
+        setorders(processedorders);
       } else {
         console.error('Error fetching orders:', ordersResponse.status);
-        setOrders([]);
+        setorders([]);
       }
 
       // Fetch payments using correct endpoint
@@ -95,8 +95,8 @@ const ClientPayments = () => {
   }, [showError]);
 
   useEffect(() => {
-    fetchOrdersAndPayments();
-  }, [fetchOrdersAndPayments]);
+    fetchordersAndPayments();
+  }, [fetchordersAndPayments]);
 
   const handlePayment = async (paymentData) => {
     try {
@@ -115,12 +115,12 @@ const ClientPayments = () => {
         showSuccess('Pago procesado exitosamente');
         
         if (result.order_updated) {
-          showSuccess('Su pedido ha sido completado automáticamente');
+          showSuccess('Su order ha sido completado automáticamente');
         }
         
         setShowPaymentModal(false);
-        setSelectedOrder(null);
-        await fetchOrdersAndPayments();
+        setSelectedorder(null);
+        await fetchordersAndPayments();
       } else {
         showError(result.message || 'Error al procesar el pago');
       }
@@ -140,13 +140,13 @@ const ClientPayments = () => {
   );
 
   // Filter orders that need payment (only confirmed projects without completed payments)
-  const pendingOrders = orders.filter(order => {
+  const pendingorders = orders.filter(order => {
     // Only show projects that are confirmed by admin and need payment
     const isConfirmedByAdmin = order.estado === 'confirmado' || order.estado === 'en_proceso';
     const needsPayment = order.estado !== 'completado' && (order.value > 0);
     // Check if there's already a completed payment for this order
     const hasCompletedPayment = payments.some(payment => 
-      payment.pedido_id === order.id && payment.estado === 'aplicado'
+      payment.order_id === order.id && payment.estado === 'aplicado'
     );
     return isConfirmedByAdmin && needsPayment && !hasCompletedPayment;
   });
@@ -156,12 +156,12 @@ const ClientPayments = () => {
     const isWaitingApproval = order.estado === 'nuevo';
     const hasValue = order.value > 0;
     const hasCompletedPayment = payments.some(payment => 
-      payment.pedido_id === order.id && payment.estado === 'aplicado'
+      payment.order_id === order.id && payment.estado === 'aplicado'
     );
     return isWaitingApproval && hasValue && !hasCompletedPayment;
   });
 
-  const completedOrders = orders.filter(order => order.estado === 'completado');
+  const completedorders = orders.filter(order => order.estado === 'completado');
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -206,8 +206,8 @@ const ClientPayments = () => {
     }
   };
 
-  // Usar el completedOrders para mostrar estadísticas
-  const completedOrdersStats = completedOrders.reduce((acc, order) => {
+  // Usar el completedorders para mostrar estadísticas
+  const completedordersStats = completedorders.reduce((acc, order) => {
     acc.count++;
     acc.totalValue += order.value || 0;
     return acc;
@@ -239,7 +239,7 @@ const ClientPayments = () => {
     const data = {
       usuario: user?.name || 'Usuario',
       item_id: item.id,
-      numero_pedido: item.numero_pedido || 'N/A',
+      numero_order: item.numero_order || 'N/A',
       descripcion: item.descripcion || 'N/A',
       valor: item.value || 0,
       estado: item.estado,
@@ -247,7 +247,7 @@ const ClientPayments = () => {
       fecha_generacion: new Date().toISOString()
     };
 
-    const filename = `${type === 'pdf' ? 'comprobante' : 'reporte'}_${item.numero_pedido || item.id}_${new Date().toISOString().split('T')[0]}`;
+    const filename = `${type === 'pdf' ? 'comprobante' : 'reporte'}_${item.numero_order || item.id}_${new Date().toISOString().split('T')[0]}`;
     
     if (type === 'json') {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -259,7 +259,7 @@ const ClientPayments = () => {
       URL.revokeObjectURL(url);
     } else {
       // Para PDF/CSV, aquí se podría integrar con una API real
-      showSuccess(`Descargando ${type.toUpperCase()} para ${item.numero_pedido || item.id}`);
+      showSuccess(`Descargando ${type.toUpperCase()} para ${item.numero_order || item.id}`);
     }
   };
 
@@ -269,7 +269,7 @@ const ClientPayments = () => {
       window.open(order.paypal_link, '_blank', 'noopener,noreferrer');
     } else {
       // Crear enlace de PayPal simulado
-      const paypalUrl = `https://www.paypal.com/checkout?amount=${order.value}&item=${order.numero_pedido}`;
+      const paypalUrl = `https://www.paypal.com/checkout?amount=${order.value}&item=${order.numero_order}`;
       window.open(paypalUrl, '_blank', 'noopener,noreferrer');
     }
   };
@@ -327,14 +327,14 @@ const ClientPayments = () => {
           </button>
         </div>
         
-        {/* Estadísticas mejoradas con completedOrdersStats */}
+        {/* Estadísticas mejoradas con completedordersStats */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
           <div className="bg-red-50 p-4 rounded-lg">
             <div className="flex items-center">
               <AlertCircle className="h-8 w-8 text-red-600" />
               <div className="ml-3">
                 <p className="text-sm font-medium text-red-600">Listos para Pago</p>
-                <p className="text-2xl font-bold text-red-900">{pendingOrders.length}</p>
+                <p className="text-2xl font-bold text-red-900">{pendingorders.length}</p>
               </div>
             </div>
           </div>
@@ -370,7 +370,7 @@ const ClientPayments = () => {
               <DollarSign className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
                 <p className="text-sm font-medium text-blue-600">Total Completados</p>
-                <p className="text-xl font-bold text-blue-900">{formatCurrency(completedOrdersStats.totalValue)}</p>
+                <p className="text-xl font-bold text-blue-900">{formatCurrency(completedordersStats.totalValue)}</p>
               </div>
             </div>
           </div>
@@ -391,7 +391,7 @@ const ClientPayments = () => {
             >
               <div className="flex items-center">
                 <CreditCard className="h-4 w-4 mr-2" />
-                Listos para Pagar ({pendingOrders.length})
+                Listos para Pagar ({pendingorders.length})
               </div>
             </button>
             <button
@@ -439,7 +439,7 @@ const ClientPayments = () => {
         <div className="p-6">
           {activeTab === 'unpaid' && (
             <div className="space-y-4">
-              {pendingOrders.length === 0 ? (
+              {pendingorders.length === 0 ? (
                 <div className="text-center py-12">
                   <CreditCard className="mx-auto h-12 w-12 text-green-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -450,14 +450,14 @@ const ClientPayments = () => {
                   </p>
                 </div>
               ) : (
-                pendingOrders.map((order) => (
+                pendingorders.map((order) => (
                   <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         {getStatusIcon(order.estado)}
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">
-                            Proyecto #{order.numero_pedido || order.id}
+                            Proyecto #{order.numero_order || order.id}
                           </h3>
                           <p className="text-sm text-gray-500">{order.descripcion}</p>
                           <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
@@ -543,7 +543,7 @@ const ClientPayments = () => {
                           {/* Botón Principal de Pago */}
                           <button
                             onClick={() => {
-                              setSelectedOrder(order);
+                              setSelectedorder(order);
                               setShowPaymentModal(true);
                             }}
                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
@@ -582,7 +582,7 @@ const ClientPayments = () => {
                         </div>
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">
-                            Proyecto #{order.numero_pedido || order.id}
+                            Proyecto #{order.numero_order || order.id}
                           </h3>
                           <p className="text-sm text-gray-600">{order.descripcion}</p>
                           <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
@@ -722,12 +722,12 @@ const ClientPayments = () => {
       </div>
 
       {/* Payment Modal */}
-      {showPaymentModal && selectedOrder && (
+      {showPaymentModal && selectedorder && (
         <PaymentGatewayModal 
-          order={selectedOrder}
+          order={selectedorder}
           onClose={() => {
             setShowPaymentModal(false);
-            setSelectedOrder(null);
+            setSelectedorder(null);
           }}
           onPayment={handlePayment}
         />
@@ -740,7 +740,7 @@ const ClientPayments = () => {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                  Detalles del Proyecto #{selectedItemForDetails.numero_pedido || selectedItemForDetails.id}
+                  Detalles del Proyecto #{selectedItemForDetails.numero_order || selectedItemForDetails.id}
                 </h2>
                 <button
                   onClick={() => setSelectedItemForDetails(null)}

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Script para verificar que los datos de pedidos lleguen correctamente al administrador
+ * Script para verificar que los datos de orders lleguen correctamente al administrador
  * Simula lo que debería mostrar el dashboard del admin
  */
 
 const mysql = require('mysql2/promise');
 
-async function testAdminOrdersData() {
+async function testAdminordersData() {
   const connection = await mysql.createConnection({
     host: '216.246.47.82',
     port: 3306,
@@ -17,11 +17,11 @@ async function testAdminOrdersData() {
   });
 
   try {
-    console.log('🔍 VERIFICANDO DATOS DE PEDIDOS PARA ADMINISTRADOR');
+    console.log('🔍 VERIFICANDO DATOS DE orderS PARA ADMINISTRADOR');
     console.log('='.repeat(60));
 
     const query = `
-      SELECT p.id, p.numero_pedido, p.usuario_id, 
+      SELECT p.id, p.numero_order, p.usuario_id, 
              c.nombre as cliente_nombre, c.email as cliente_email,
              p.descripcion, p.servicio, p.estado, p.prioridad,
              COALESCE(p.presupuesto_estimado, p.total, 0) as valor_display,
@@ -34,19 +34,19 @@ async function testAdminOrdersData() {
                WHEN p.total > 0 THEN 'final' 
                ELSE 'sin_definir'
              END as tipo_presupuesto
-      FROM pedidos p
+      FROM orders p
       JOIN usuarios c ON p.usuario_id = c.id
-      ORDER BY p.created_at DESC
+      order BY p.created_at DESC
       LIMIT 5
     `;
 
     const [rows] = await connection.execute(query);
 
-    console.log(`📋 ENCONTRADOS ${rows.length} PEDIDOS:`);
+    console.log(`📋 ENCONTRADOS ${rows.length} orderS:`);
     console.log('');
 
     rows.forEach((order, index) => {
-      console.log(`${index + 1}. PEDIDO #${order.numero_pedido}`);
+      console.log(`${index + 1}. order #${order.numero_order}`);
       console.log(`   Estado: ${order.estado}`);
       console.log(`   Prioridad: ${order.prioridad}`);
       console.log(`   Cliente: ${order.cliente_nombre} (${order.cliente_email})`);
@@ -80,4 +80,4 @@ async function testAdminOrdersData() {
 }
 
 // Ejecutar el test
-testAdminOrdersData();
+testAdminordersData();

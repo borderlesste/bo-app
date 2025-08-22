@@ -485,7 +485,7 @@ export default {
 
   // Register page
   register: {
-    title: 'Join BORDERLESS COMPANY',
+    title: 'Join BorderLESS COMPANY',
     subtitle: 'Discover a world of borderless opportunities. Connect with professionals from around the world.',
     createAccount: 'Create Account',
     joinCommunity: 'Join our community',
@@ -778,7 +778,7 @@ export default {
       cybersecurity: 'Cybersecurity',
       automation: 'Automation'
     },
-    copyright: '© 2025 BORDERLESS TECHNO COMPANY. All rights reserved.',
+    copyright: '© 2025 BorderLESS TECHNO COMPANY. All rights reserved.',
     followUsOn: 'Follow us on',
     visit: 'Visit'
   }

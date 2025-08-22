@@ -1,9 +1,9 @@
 const { pool, beginTransaction, commitTransaction, rollbackTransaction } = require('../config/db.js');
 
-const orderService = {
-  async getOrders(userId, role) {
+const pedidoService = {
+  async getpedidos(userId, role) {
     let query = `
-      SELECT p.id, p.numero_pedido, p.usuario_id, c.nombre as cliente_nombre, c.email as cliente_email,
+      SELECT p.id, p.numero_pedido, p.usuario_id, c.nombre as usuario_nombre, c.email as usuario_email,
              p.descripcion, p.servicio, p.estado, p.prioridad, 
              p.subtotal, p.descuento, p.iva, p.total, p.anticipo, p.saldo_pendiente,
              p.presupuesto_estimado, p.fecha_entrega_deseada,
@@ -19,46 +19,46 @@ const orderService = {
       query += ' WHERE p.usuario_id = ?';
       params.push(userId);
     }
-    
-    query += ' ORDER BY p.created_at DESC';
+
+    query += ' pedidos BY p.created_at DESC';
 
     const [rows] = await pool.execute(query, params);
     
     // Procesar los resultados para mostrar mejor información al admin
-    const processedOrders = rows.map(order => ({
-      ...order,
+    const processedpedidos = rows.map(pedido => ({
+      ...pedido,
       // Calcular el valor a mostrar: presupuesto estimado > total > 0
-      valor_mostrar: order.presupuesto_estimado > 0 ? order.presupuesto_estimado : 
-                     order.total > 0 ? order.total : 0,
-      tipo_valor: order.presupuesto_estimado > 0 && order.total === 0 ? 'estimado' :
-                  order.total > 0 ? 'final' : 'sin_definir',
-      // Formatear información del cliente
-      cliente_info: {
-        nombre: order.cliente_nombre,
-        email: order.cliente_email,
-        id: order.usuario_id
+      valor_mostrar: pedido.presupuesto_estimado > 0 ? pedido.presupuesto_estimado : 
+                     pedido.total > 0 ? pedido.total : 0,
+      tipo_valor: pedido.presupuesto_estimado > 0 && pedido.total === 0 ? 'estimado' :
+                  pedido.total > 0 ? 'final' : 'sin_definir',
+      // Formatear información del usuario
+      usuario_info: {
+        nombre: pedido.usuario_nombre,
+        email: pedido.usuario_email,
+        id: pedido.usuario_id
       },
       // Información de fechas más clara
       fecha_info: {
-        creado: order.created_at,
-        inicio: order.fecha_inicio,
-        entrega_estimada: order.fecha_entrega_estimada,
-        entrega_deseada: order.fecha_entrega_deseada,
-        entrega_real: order.fecha_entrega_real
+        creado: pedido.created_at,
+        inicio: pedido.fecha_inicio,
+        entrega_estimada: pedido.fecha_entrega_estimada,
+        entrega_deseada: pedido.fecha_entrega_deseada,
+        entrega_real: pedido.fecha_entrega_real
       },
       // Información del servicio
       servicio_info: {
-        tipo: order.servicio,
-        descripcion: order.descripcion
+        tipo: pedido.servicio,
+        descripcion: pedido.descripcion
       }
     }));
-    
-    return processedOrders;
+
+    return processedpedidos;
   },
 
-  async getOrderById(id) {
+  async getpedidoById(id) {
     const [rows] = await pool.execute(
-      `SELECT p.id, p.numero_pedido, p.usuario_id, c.nombre as cliente_nombre, c.email as cliente_email,
+      `SELECT p.id, p.numero_pedido, p.usuario_id, c.nombre as usuario_nombre, c.email as usuario_email,
               p.descripcion, p.servicio, p.estado, p.prioridad,
               p.subtotal, p.descuento, p.iva, p.total, p.anticipo, p.saldo_pendiente,
               p.presupuesto_estimado, p.fecha_entrega_deseada,
@@ -71,17 +71,17 @@ const orderService = {
       [id]
     );
     if (rows.length === 0) {
-      throw new Error('Pedido no encontrado');
+      throw new Error('pedido no encontrado');
     }
     return rows[0];
   },
 
   // Método específico para dashboard del admin con información completa
-  async getOrdersSummaryForAdmin() {
+  async getpedidosSummaryForAdmin() {
     const query = `
       SELECT p.id, p.numero_pedido, p.usuario_id, p.cotizacion_id,
-             c.nombre as cliente_nombre, c.email as cliente_email,
-             c.telefono as cliente_telefono, c.empresa as cliente_empresa,
+             c.nombre as usuario_nombre, c.email as usuario_email,
+             c.telefono as usuario_telefono, c.empresa as usuario_empresa,
              p.descripcion, p.servicio, p.estado, p.prioridad,
              COALESCE(p.presupuesto_estimado, p.total, 0) as valor_display,
              p.presupuesto_estimado, p.total, p.subtotal, p.descuento, p.iva,
@@ -115,23 +115,23 @@ const orderService = {
              END as prioridad_descripcion
       FROM pedidos p
       JOIN usuarios c ON p.usuario_id = c.id
-      ORDER BY p.created_at DESC
+      pedido BY p.created_at DESC
     `;
     
     const [rows] = await pool.execute(query);
     
     // Enhance each row with additional computed fields
-    return rows.map(order => ({
-      ...order,
+    return rows.map(pedido => ({
+      ...pedido,
       // Formatear fechas para mejor legibilidad
-      fecha_creacion_formateada: new Date(order.created_at).toLocaleDateString('es-ES', {
+      fecha_creacion_formateada: new Date(pedido.created_at).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       }),
-      fecha_actualizacion_formateada: new Date(order.updated_at).toLocaleDateString('es-ES', {
+      fecha_actualizacion_formateada: new Date(pedido.updated_at).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -139,17 +139,17 @@ const orderService = {
         minute: '2-digit'
       }),
       // Información de progreso y estado
-      progreso_estimado: this.calculateOrderProgress(order.estado),
-      urgencia_nivel: this.calculateUrgencyLevel(order.prioridad, order.dias_hasta_entrega),
+      progreso_estimado: this.calculatepedidoProgress(pedido.estado),
+      urgencia_nivel: this.calculateUrgencyLevel(pedido.prioridad, pedido.dias_hasta_entrega),
       // Información financiera formateada
-      valor_formateado: `$${parseFloat(order.valor_display || 0).toFixed(2)}`,
-      anticipo_formateado: order.anticipo ? `$${parseFloat(order.anticipo).toFixed(2)}` : 'Sin anticipo',
-      saldo_formateado: order.saldo_pendiente ? `$${parseFloat(order.saldo_pendiente).toFixed(2)}` : 'Sin saldo pendiente'
+      valor_formateado: `$${parseFloat(pedido.valor_display || 0).toFixed(2)}`,
+      anticipo_formateado: pedido.anticipo ? `$${parseFloat(pedido.anticipo).toFixed(2)}` : 'Sin anticipo',
+      saldo_formateado: pedido.saldo_pendiente ? `$${parseFloat(pedido.saldo_pendiente).toFixed(2)}` : 'Sin saldo pendiente'
     }));
   },
 
   // Método auxiliar para calcular progreso estimado
-  calculateOrderProgress(estado) {
+  calculatepedidoProgress(estado) {
     const progressMap = {
       'nuevo': 0,
       'confirmado': 20,
@@ -170,7 +170,7 @@ const orderService = {
     return 'baja';
   },
 
-  async updateOrderPartial(id, updateData) {
+  async updatepedidoPartial(id, updateData) {
     const connection = await pool.getConnection();
     try {
       // Construir query dinámico basado en los campos a actualizar
@@ -205,26 +205,26 @@ const orderService = {
       if (fields.length === 1) { // Solo updated_at
         throw new Error('No hay campos para actualizar');
       }
-      
+
       const query = `UPDATE pedidos SET ${fields.join(', ')} WHERE id = ?`;
       const [result] = await connection.execute(query, values);
       
       if (result.affectedRows === 0) {
-        throw new Error('Pedido no encontrado');
+        throw new Error('pedido no encontrado');
       }
-      
+
       // Devolver el pedido actualizado
-      return await this.getOrderById(id);
-      
+      return await this.getpedidoById(id);
+
     } finally {
       connection.release();
     }
   },
 
-  async createOrder(usuario_id, orderData) {
+  async createpedido(usuario_id, pedidoData) {
     // Generar número de pedido único
     const numero_pedido = `PED-${Date.now()}`;
-    
+
     const {
       servicio,
       descripcion,
@@ -232,7 +232,7 @@ const orderService = {
       fecha_entrega_deseada,
       prioridad = 'normal',
       notas_adicionales
-    } = orderData;
+    } = pedidoData;
 
     const [result] = await pool.execute(
       `INSERT INTO pedidos (
@@ -241,33 +241,33 @@ const orderService = {
         prioridad, notas_adicionales, estado
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'nuevo')`,
       [
-        numero_pedido, usuario_id, servicio, descripcion,
+        numero_order, usuario_id, servicio, descripcion,
         presupuesto_estimado, fecha_entrega_deseada,
         prioridad, notas_adicionales
       ]
     );
-    
+
     const [rows] = await pool.execute('SELECT * FROM pedidos WHERE id = ?', [result.insertId]);
     return rows[0];
   },
 
-  async updateOrder(id, descripcion, estado, prioridad, total, fecha_entrega_estimada) {
+  async updatepedido(id, descripcion, estado, prioridad, total, fecha_entrega_estimada) {
     let connection;
     try {
       if (estado === 'Completado') {
         connection = await beginTransaction();
 
         // 1. Actualizar el pedido
-        const [orderUpdateResult] = await connection.execute(
+        const [pedidoUpdateResult] = await connection.execute(
           'UPDATE pedidos SET descripcion = ?, estado = ?, prioridad = ?, total = ?, fecha_entrega_estimada = ? WHERE id = ?',
           [descripcion, estado, prioridad, total, fecha_entrega_estimada, id]
         );
-        if (orderUpdateResult.affectedRows === 0) {
-          throw new Error('Pedido no encontrado.');
+        if (pedidoUpdateResult.affectedRows === 0) {
+          throw new Error('pedido no encontrado.');
         }
-        
-        const [updatedOrderRows] = await connection.execute('SELECT * FROM pedidos WHERE id = ?', [id]);
-        const updatedOrder = updatedOrderRows[0];
+
+        const [updatedpedidoRows] = await connection.execute('SELECT * FROM pedidos WHERE id = ?', [id]);
+        const updatedpedido = updatedpedidoRows[0];
 
         // 2. Buscar pagos asociados al pedido
         const [paymentsResult] = await connection.execute(
@@ -286,7 +286,7 @@ const orderService = {
         }
 
         await commitTransaction(connection);
-        return updatedOrder;
+        return updatedorder;
       } else {
         // Lógica de actualización normal si el estado no es 'Completado'
         const [result] = await pool.execute(
@@ -294,7 +294,7 @@ const orderService = {
           [descripcion, estado, prioridad, total, fecha_entrega_estimada, id]
         );
         if (result.affectedRows === 0) {
-          throw new Error('Pedido no encontrado.');
+          throw new Error('pedido no encontrado.');
         }
         const [rows] = await pool.execute('SELECT * FROM pedidos WHERE id = ?', [id]);
         return rows[0];
@@ -307,19 +307,19 @@ const orderService = {
     }
   },
 
-  async deleteOrder(id) {
+  async deletepedido(id) {
     const [result] = await pool.execute('DELETE FROM pedidos WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
-      throw new Error('Pedido no encontrado');
+      throw new Error('pedido no encontrado');
     }
-    return { message: `Pedido con id ${id} eliminado correctamente` };
+    return { message: `pedido con id ${id} eliminado correctamente` };
   },
 
-  async cancelOrderClient(id, usuario_id) {
-    const [orderResult] = await pool.execute('SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?', [id, usuario_id]);
+  async cancelpedidoClient(id, usuario_id) {
+    const [pedidoResult] = await pool.execute('SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?', [id, usuario_id]);
 
-    if (orderResult.length === 0) {
-      throw new Error('Pedido no encontrado o no autorizado.');
+    if (pedidoResult.length === 0) {
+      throw new Error('pedido no encontrado o no autorizado.');
     }
 
     await pool.execute(
@@ -330,11 +330,11 @@ const orderService = {
     return rows[0];
   },
 
-  async resumeOrderClient(id, usuario_id) {
+  async resumeorderClient(id, usuario_id) {
     const [orderResult] = await pool.execute('SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?', [id, usuario_id]);
 
     if (orderResult.length === 0) {
-      throw new Error('Pedido no encontrado o no autorizado.');
+      throw new Error('pedido no encontrado o no autorizado.');
     }
 
     if (orderResult[0].estado !== 'Cancelado') {
@@ -350,4 +350,4 @@ const orderService = {
   }
 };
 
-module.exports = { orderService };
+module.exports = { orderservice };

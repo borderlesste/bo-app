@@ -89,15 +89,15 @@ exports.createPayment = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
+  const { usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
   try {
-    const newPayment = await paymentService.createPayment(usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
+    const newPayment = await paymentService.createPayment(usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
     
     // Registrar actividad de nuevo pago
     const clienteName = await getClienteName(usuario_id);
     await logActivity(
       'new_payment',
-      `${clienteName} realizó un pago de $${monto.toLocaleString('es-MX')}${pedido_id ? ` para pedido #${pedido_id}` : ''}`,
+      `${clienteName} realizó un pago de $${monto.toLocaleString('es-MX')}${order_id ? ` para order #${order_id}` : ''}`,
       'normal',
       usuario_id,
       newPayment.id,
@@ -139,7 +139,7 @@ exports.createPayment = async (req, res) => {
         monto,
         metodo_pago,
         concepto,
-        pedido_id
+        order_id
       }, clienteName);
     } catch (notificationError) {
       console.log('⚠️ Error creando notificación de pago:', notificationError);
@@ -167,9 +167,9 @@ exports.updatePayment = async (req, res) => {
   }
 
   const { id } = req.params;
-  const { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
+  const { usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
   try {
-    const updatedPayment = await paymentService.updatePayment(id, usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
+    const updatedPayment = await paymentService.updatePayment(id, usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
     
     res.json({
       success: true,
@@ -205,7 +205,7 @@ exports.createClientPayment = async (req, res) => {
   }
 
   const usuario_id = req.user.id;
-  const { pedido_id, concepto, monto, metodo_pago, banco_origen, referencia_transferencia } = req.body;
+  const { order_id, concepto, monto, metodo_pago, banco_origen, referencia_transferencia } = req.body;
 
   let estado;
   if (metodo_pago === 'transferencia' || metodo_pago === 'Transferencia Bancaria') {
@@ -221,7 +221,7 @@ exports.createClientPayment = async (req, res) => {
   try {
     const newPayment = await paymentService.createPayment(
       usuario_id,
-      pedido_id,
+      order_id,
       concepto || 'Pago de servicios',
       monto,
       metodo_pago,
@@ -269,7 +269,7 @@ exports.updateClientPayment = async (req, res) => {
     const updatedPayment = await paymentService.updatePayment(
       paymentId,
       usuario_id,
-      existingPayment.pedido_id,
+      existingPayment.order_id,
       existingPayment.concepto,
       existingPayment.monto,
       metodo_pago,
@@ -380,7 +380,7 @@ exports.confirmStripePayment = async (req, res) => {
 };
 
 // Crear orden de PayPal
-exports.createPayPalOrder = async (req, res) => {
+exports.createPayPalorder = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ 
@@ -392,12 +392,12 @@ exports.createPayPalOrder = async (req, res) => {
   const { amount, currency = 'USD', service, reference_id } = req.body;
 
   try {
-    const result = await paymentGatewayService.createPayPalOrder(
+    const result = await paymentGatewayService.createPayPalorder(
       amount, 
       currency, 
       { 
         service, 
-        reference_id: reference_id || `ORDER_${Date.now()}`,
+        reference_id: reference_id || `order_${Date.now()}`,
         user_id: req.user?.id 
       }
     );

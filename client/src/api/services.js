@@ -165,42 +165,42 @@ export const quotationsAPI = {
   }
 };
 
-// --- Enhanced Orders API ---
-export const ordersAPI = {
-  // Get all orders with filters
-  getAll: (params = {}) => api.get('/api/orders', { params }),
+// --- Enhanced Pedidos API ---
+export const pedidosAPI = {
+  // Get all pedidos with filters
+  getAll: (params = {}) => api.get('/api/pedidos', { params }),
   
-  // Get orders with status
-  getWithStatus: () => api.get('/api/orders/with-status'),
+  // Get pedidos with status
+  getWithStatus: () => api.get('/api/pedidos/with-status'),
   
-  // Get order by ID
-  getById: (id) => api.get(`/api/orders/${id}`),
+  // Get pedido by ID
+  getById: (id) => api.get(`/api/pedidos/${id}`),
   
-  // Create order
-  create: (orderData) => api.post('/api/orders', orderData),
+  // Create pedido
+  create: (pedidoData) => api.post('/api/pedidos', pedidoData),
   
-  // Update order
-  update: (id, orderData) => api.put(`/api/orders/${id}`, orderData),
+  // Update pedido
+  update: (id, pedidoData) => api.put(`/api/pedidos/${id}`, pedidoData),
   
-  // Update order status
-  updateStatus: (id, estado, changedBy, comentario) => api.put(`/api/orders/${id}/status`, {
+  // Update pedido status
+  updateStatus: (id, estado, changedBy, comentario) => api.put(`/api/pedidos/${id}/status`, {
     estado,
     changed_by: changedBy,
     comentario
   }),
   
-  // Generate order number
-  generateNumber: () => api.get('/api/orders/generate-number'),
+  // Generate pedido number
+  generateNumber: () => api.get('/api/pedidos/generate-number'),
   
   // Get status history
-  getStatusHistory: (orderId) => api.get(`/api/orders/${orderId}/status-history`),
+  getStatusHistory: (pedidoId) => api.get(`/api/pedidos/${pedidoId}/status-history`),
   
   // Items management
   items: {
-    get: (orderId) => api.get(`/api/orders/${orderId}/items`),
-    add: (orderId, itemData) => api.post(`/api/orders/${orderId}/items`, itemData),
-    update: (itemId, itemData) => api.put(`/api/orders/items/${itemId}`, itemData),
-    delete: (itemId) => api.delete(`/api/orders/items/${itemId}`)
+    get: (pedidoId) => api.get(`/api/pedidos/${pedidoId}/items`),
+    add: (pedidoId, itemData) => api.post(`/api/pedidos/${pedidoId}/items`, itemData),
+    update: (itemId, itemData) => api.put(`/api/pedidos/items/${itemId}`, itemData),
+    delete: (itemId) => api.delete(`/api/pedidos/items/${itemId}`)
   }
 };
 
@@ -265,6 +265,9 @@ export const invoicesAPI = {
   // Get invoice statistics
   getStats: () => api.get('/api/invoices/stats'),
   
+  // Search users for admin invoice creation
+  searchUsers: (query) => api.get(`/api/invoices/search-users?search=${encodeURIComponent(query)}`),
+  
   // Items management
   items: {
     get: (invoiceId) => api.get(`/api/invoices/${invoiceId}/items`),
@@ -290,6 +293,24 @@ export const statisticsAPI = {
     api.get(`/api/stats/comparison?year1=${year1}&month1=${month1}&year2=${year2}&month2=${month2}`)
 };
 
+// --- Admin Dashboard API ---
+export const adminDashboardAPI = {
+  // Get basic stats
+  getStats: () => api.get('/api/admin/stats'),
+  
+  // Get charts data
+  getCharts: () => api.get('/api/admin/charts'),
+  
+  // Get trends
+  getTrends: () => api.get('/api/admin/trends'),
+  
+  // Get alerts
+  getAlerts: () => api.get('/api/admin/alerts'),
+  
+  // Get advanced metrics
+  getAdvancedMetrics: (params = {}) => api.get('/api/admin/advanced-metrics', { params })
+};
+
 // Export all APIs
 
 
@@ -299,8 +320,9 @@ export default {
   configuration: configurationAPI,
   payments: paymentsAPI,
   quotations: quotationsAPI,
-  orders: ordersAPI,
+  pedidos: pedidosAPI,
   projects: projectsAPI,
   invoices: invoicesAPI,
-  statistics: statisticsAPI
+  statistics: statisticsAPI,
+  adminDashboard: adminDashboardAPI
 };

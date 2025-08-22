@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getPayments, createAdminPayment, updateAdminPayment, deletePayment, getUsers, getOrders } from '../api/axios';
+import { getPayments, createAdminPayment, updateAdminPayment, deletePayment, getUsers, getorders } from '../api/axios';
 import PaymentCreateModal from '../components/PaymentCreateModal';
 import PaymentEditModal from '../components/PaymentEditModal';
 import { 
@@ -31,7 +31,7 @@ const FinancePaymentsPage = ({ showNavigation = true }) => {
   const { user } = useAuth();
   const [payments, setPayments] = useState([]);
   const [clients, setClients] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [orders, setorders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
@@ -52,7 +52,7 @@ const FinancePaymentsPage = ({ showNavigation = true }) => {
       const [paymentsRes, usersRes, ordersRes] = await Promise.all([
         getPayments(),
         getUsers(),
-        getOrders()
+        getorders()
       ]);
 
       if (paymentsRes.data.success) {
@@ -62,7 +62,7 @@ const FinancePaymentsPage = ({ showNavigation = true }) => {
         setClients(usersRes.data.data.filter(user => user.rol !== 'admin'));
       }
       if (ordersRes.data.success) {
-        setOrders(ordersRes.data.data);
+        setorders(ordersRes.data.data);
       }
     } catch (error) {
       console.error('Error loading data:', error);

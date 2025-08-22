@@ -8,8 +8,8 @@ const getAdminStats = async (req, res) => {
       // Total de clientes
       pool.execute('SELECT COUNT(*) as total FROM usuarios WHERE rol != "admin"'),
       
-      // Proyectos activos (pedidos en progreso) 
-      pool.execute('SELECT COUNT(*) as total FROM pedidos WHERE estado IN ("nuevo", "confirmado", "en_proceso")'),
+      // Proyectos activos (orders en progreso) 
+      pool.execute('SELECT COUNT(*) as total FROM orders WHERE estado IN ("nuevo", "confirmado", "en_proceso")'),
       
       // Cotizaciones pendientes
       pool.execute('SELECT COUNT(*) as total FROM cotizaciones WHERE estado = "Pendiente"'),
@@ -24,7 +24,7 @@ const getAdminStats = async (req, res) => {
       `),
       
       // Proyectos completados
-      pool.execute('SELECT COUNT(*) as total FROM pedidos WHERE estado = "completado"'),
+      pool.execute('SELECT COUNT(*) as total FROM orders WHERE estado = "completado"'),
       
       // Pagos pendientes (monto total)
       pool.execute('SELECT COALESCE(SUM(monto), 0) as total FROM pagos WHERE estado = "pendiente"'),
@@ -39,7 +39,7 @@ const getAdminStats = async (req, res) => {
       `),
       
       // Valor promedio de proyectos
-      pool.execute('SELECT AVG(total) as promedio FROM pedidos WHERE total IS NOT NULL'),
+      pool.execute('SELECT AVG(total) as promedio FROM orders WHERE total IS NOT NULL'),
 
       // Total de proyectos en portfolio
       pool.execute('SELECT COUNT(*) as total FROM proyectos WHERE es_publico = 1'),
@@ -118,7 +118,7 @@ const getRecentActivity = async (req, res) => {
         'normal' as priority,
         a.created_at as time
       FROM actividades a
-      ORDER BY a.created_at DESC
+      order BY a.created_at DESC
       LIMIT 10
     `);
 
@@ -152,11 +152,11 @@ const getTopClients = async (req, res) => {
         END as status
       FROM usuarios c
       LEFT JOIN pagos p ON c.id = p.usuario_id AND p.estado = 'aplicado'
-      LEFT JOIN pedidos pe ON c.id = pe.usuario_id
+      LEFT JOIN orders pe ON c.id = pe.usuario_id
       WHERE c.rol != 'admin'
       GROUP BY c.id, c.nombre, c.email
       HAVING COUNT(DISTINCT pe.id) > 0 OR SUM(p.monto) > 0
-      ORDER BY totalSpent DESC, projectsCount DESC
+      order BY totalSpent DESC, projectsCount DESC
       LIMIT 10
     `);
 
@@ -195,7 +195,7 @@ const getChartsData = async (req, res) => {
       WHERE estado = 'aplicado' 
         AND fecha_pago >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
       GROUP BY DATE_FORMAT(fecha_pago, '%Y-%m'), MONTHNAME(fecha_pago)
-      ORDER BY month ASC
+      order BY month ASC
     `);
 
     // Distribución de proyectos por estado
@@ -206,7 +206,7 @@ const getChartsData = async (req, res) => {
       FROM proyectos 
       WHERE es_publico = 1
       GROUP BY estado
-      ORDER BY count DESC
+      order BY count DESC
     `);
 
     // Crecimiento de clientes por mes (últimos 6 meses)
@@ -219,7 +219,7 @@ const getChartsData = async (req, res) => {
       WHERE rol != 'admin' 
         AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
       GROUP BY DATE_FORMAT(created_at, '%Y-%m'), MONTHNAME(created_at)
-      ORDER BY month ASC
+      order BY month ASC
     `);
 
     // Distribución de proyectos por categoría
@@ -230,7 +230,7 @@ const getChartsData = async (req, res) => {
       FROM proyectos 
       WHERE es_publico = 1
       GROUP BY categoria
-      ORDER BY count DESC
+      order BY count DESC
     `);
 
     // Top servicios más cotizados
@@ -244,7 +244,7 @@ const getChartsData = async (req, res) => {
       LEFT JOIN cotizacion_items ci ON s.id = ci.servicio_id
       GROUP BY s.id, s.nombre, s.categoria
       HAVING quotes_count > 0
-      ORDER BY quotes_count DESC
+      order BY quotes_count DESC
       LIMIT 10
     `);
 
@@ -295,7 +295,7 @@ const getFinancialSummary = async (req, res) => {
         (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE estado = 'pendiente') as pending_income,
         (SELECT COALESCE(SUM(total), 0) FROM facturas WHERE estado IN ('emitida', 'timbrada')) as pending_invoices,
         (SELECT COALESCE(SUM(precio_estimado), 0) FROM cotizaciones WHERE estado = 'Pendiente') as pending_quotes,
-        (SELECT COALESCE(AVG(total), 0) FROM pedidos WHERE total IS NOT NULL) as avg_project_value,
+        (SELECT COALESCE(AVG(total), 0) FROM orders WHERE total IS NOT NULL) as avg_project_value,
         (SELECT COUNT(*) FROM cotizaciones WHERE estado = 'Aprobada' AND MONTH(created_at) = MONTH(CURRENT_DATE())) as accepted_quotes_month
     `);
 
@@ -308,6 +308,227 @@ const getFinancialSummary = async (req, res) => {
     res.status(500).json({ 
       success: false,
       message: 'Error al obtener resumen financiero',
+      error: error.message 
+    });
+  }
+};
+
+// Obtener métricas avanzadas del negocio
+const getAdvancedMetrics = async (req, res) => {
+  try {
+    const { period = '30' } = req.query; // días
+    
+    const [metrics] = await pool.execute(`
+      SELECT 
+        -- Conversión de cotizaciones a orders
+        (SELECT COUNT(*) FROM cotizaciones WHERE estado = 'Aprobada' AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as quotes_approved,
+        (SELECT COUNT(*) FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_quotes,
+        
+        -- Tiempo promedio de respuesta a cotizaciones (en días)
+        (SELECT AVG(DATEDIFF(updated_at, created_at)) FROM cotizaciones WHERE estado != 'Pendiente' AND updated_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as avg_response_time,
+        
+        -- Valor promedio de cotizaciones
+        (SELECT AVG(precio_estimado) FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as avg_quote_value,
+        
+        -- Retención de clientes (clientes con más de un proyecto)
+        (SELECT COUNT(DISTINCT usuario_id) FROM orders GROUP BY usuario_id HAVING COUNT(*) > 1) as returning_clients,
+        (SELECT COUNT(DISTINCT usuario_id) FROM orders) as total_clients_with_orders,
+        
+        -- Ingresos por fuente
+        (SELECT COUNT(*) FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND usuario_id IS NULL) as direct_leads,
+        (SELECT COUNT(*) FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND usuario_id IS NOT NULL) as referral_leads,
+        
+        -- Eficiencia de cobro
+        (SELECT COALESCE(SUM(total), 0) FROM facturas WHERE estado = 'pagada' AND fecha_emision >= DATE_SUB(NOW(), INTERVAL ? DAY)) as collected_invoices,
+        (SELECT COALESCE(SUM(total), 0) FROM facturas WHERE fecha_emision >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_invoiced,
+        
+        -- Carga de trabajo
+        (SELECT COUNT(*) FROM orders WHERE estado IN ('nuevo', 'confirmado', 'en_proceso')) as active_workload,
+        (SELECT COUNT(*) FROM usuarios WHERE rol = 'empleado' AND estado = 'activo') as available_staff
+    `, Array(8).fill(period));
+
+    const data = metrics[0];
+    
+    // Calcular métricas derivadas
+    const conversionRate = data.total_quotes > 0 ? (data.quotes_approved / data.total_quotes * 100) : 0;
+    const retentionRate = data.total_clients_with_orders > 0 ? (data.returning_clients / data.total_clients_with_orders * 100) : 0;
+    const collectionEfficiency = data.total_invoiced > 0 ? (data.collected_invoices / data.total_invoiced * 100) : 0;
+    const workloadPerStaff = data.available_staff > 0 ? (data.active_workload / data.available_staff) : data.active_workload;
+
+    res.json({
+      success: true,
+      data: {
+        ...data,
+        conversion_rate: Math.round(conversionRate * 100) / 100,
+        retention_rate: Math.round(retentionRate * 100) / 100,
+        collection_efficiency: Math.round(collectionEfficiency * 100) / 100,
+        workload_per_staff: Math.round(workloadPerStaff * 100) / 100,
+        avg_response_time: Math.round((data.avg_response_time || 0) * 100) / 100,
+        avg_quote_value: Math.round((data.avg_quote_value || 0) * 100) / 100
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener métricas avanzadas:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener métricas avanzadas',
+      error: error.message 
+    });
+  }
+};
+
+// Obtener tendencias y comparaciones
+const getTrends = async (req, res) => {
+  try {
+    // Comparar últimos 30 días vs 30 días anteriores
+    const [currentPeriod] = await pool.execute(`
+      SELECT 
+        COUNT(DISTINCT u.id) as new_clients,
+        COUNT(DISTINCT c.id) as new_quotes,
+        COUNT(DISTINCT p.id) as new_orders,
+        COALESCE(SUM(pg.monto), 0) as revenue,
+        COUNT(DISTINCT f.id) as invoices_issued
+      FROM usuarios u
+      LEFT JOIN cotizaciones c ON u.id = c.usuario_id AND c.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN orders p ON u.id = p.usuario_id AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN pagos pg ON u.id = pg.usuario_id AND pg.estado = 'aplicado' AND pg.fecha_pago >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN facturas f ON u.id = f.usuario_id AND f.fecha_emision >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND u.rol != 'admin'
+    `);
+
+    const [previousPeriod] = await pool.execute(`
+      SELECT 
+        COUNT(DISTINCT u.id) as new_clients,
+        COUNT(DISTINCT c.id) as new_quotes,
+        COUNT(DISTINCT p.id) as new_orders,
+        COALESCE(SUM(pg.monto), 0) as revenue,
+        COUNT(DISTINCT f.id) as invoices_issued
+      FROM usuarios u
+      LEFT JOIN cotizaciones c ON u.id = c.usuario_id AND c.created_at BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN orders p ON u.id = p.usuario_id AND p.created_at BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN pagos pg ON u.id = pg.usuario_id AND pg.estado = 'aplicado' AND pg.fecha_pago BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN facturas f ON u.id = f.usuario_id AND f.fecha_emision BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
+      WHERE u.created_at BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY) AND u.rol != 'admin'
+    `);
+
+    const current = currentPeriod[0];
+    const previous = previousPeriod[0];
+
+    // Calcular porcentajes de cambio
+    const calculateGrowth = (current, previous) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - previous) / previous * 100) * 100) / 100;
+    };
+
+    res.json({
+      success: true,
+      data: {
+        current_period: current,
+        previous_period: previous,
+        growth: {
+          clients: calculateGrowth(current.new_clients, previous.new_clients),
+          quotes: calculateGrowth(current.new_quotes, previous.new_quotes),
+          orders: calculateGrowth(current.new_orders, previous.new_orders),
+          revenue: calculateGrowth(parseFloat(current.revenue), parseFloat(previous.revenue)),
+          invoices: calculateGrowth(current.invoices_issued, previous.invoices_issued)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener tendencias:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener tendencias',
+      error: error.message 
+    });
+  }
+};
+
+// Obtener alertas y notificaciones importantes
+const getAlerts = async (req, res) => {
+  try {
+    const alerts = [];
+
+    // Cotizaciones pendientes por más de 7 días
+    const [oldQuotes] = await pool.execute(`
+      SELECT COUNT(*) as count FROM cotizaciones 
+      WHERE estado = 'Pendiente' AND created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
+    `);
+
+    if (oldQuotes[0].count > 0) {
+      alerts.push({
+        type: 'warning',
+        title: 'Cotizaciones Pendientes',
+        message: `${oldQuotes[0].count} cotizaciones llevan más de 7 días sin respuesta`,
+        count: oldQuotes[0].count,
+        action: 'Ver cotizaciones'
+      });
+    }
+
+    // Facturas vencidas
+    const [overdueInvoices] = await pool.execute(`
+      SELECT COUNT(*) as count, COALESCE(SUM(saldo_pendiente), 0) as total
+      FROM facturas 
+      WHERE fecha_vencimiento < CURDATE() AND estado NOT IN ('pagada', 'cancelada')
+    `);
+
+    if (overdueInvoices[0].count > 0) {
+      alerts.push({
+        type: 'danger',
+        title: 'Facturas Vencidas',
+        message: `${overdueInvoices[0].count} facturas vencidas por $${parseFloat(overdueInvoices[0].total).toLocaleString()}`,
+        count: overdueInvoices[0].count,
+        amount: parseFloat(overdueInvoices[0].total),
+        action: 'Ver facturas'
+      });
+    }
+
+    // Proyectos con retraso
+    const [delayedProjects] = await pool.execute(`
+      SELECT COUNT(*) as count FROM orders 
+      WHERE fecha_entrega_estimada < CURDATE() AND estado IN ('nuevo', 'confirmado', 'en_proceso')
+    `);
+
+    if (delayedProjects[0].count > 0) {
+      alerts.push({
+        type: 'warning',
+        title: 'Proyectos con Retraso',
+        message: `${delayedProjects[0].count} proyectos han superado su fecha estimada de entrega`,
+        count: delayedProjects[0].count,
+        action: 'Ver proyectos'
+      });
+    }
+
+    // Clientes sin actividad reciente
+    const [inactiveClients] = await pool.execute(`
+      SELECT COUNT(*) as count FROM usuarios u
+      WHERE u.rol = 'cliente' AND u.estado = 'activo'
+      AND u.id NOT IN (
+        SELECT DISTINCT usuario_id FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+        UNION
+        SELECT DISTINCT usuario_id FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+      )
+    `);
+
+    if (inactiveClients[0].count > 5) {
+      alerts.push({
+        type: 'info',
+        title: 'Clientes Inactivos',
+        message: `${inactiveClients[0].count} clientes sin actividad en los últimos 90 días`,
+        count: inactiveClients[0].count,
+        action: 'Ver clientes'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: alerts
+    });
+  } catch (error) {
+    console.error('Error al obtener alertas:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener alertas',
       error: error.message 
     });
   }
@@ -351,5 +572,8 @@ module.exports = {
   getTopClients,
   getChartsData,
   getFinancialSummary,
+  getAdvancedMetrics,
+  getTrends,
+  getAlerts,
   logActivity
 };

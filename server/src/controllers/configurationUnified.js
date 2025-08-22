@@ -292,7 +292,7 @@ const updateSecurityConfig = async (req, res) => {
 const getPaymentConfig = async (req, res) => {
   try {
     const [paymentMethods] = await pool.execute(
-      'SELECT * FROM configuracion_pagos ORDER BY orden, nombre'
+      'SELECT * FROM configuracion_pagos order BY orden, nombre'
     );
 
     res.json({
@@ -382,7 +382,7 @@ const updatePaymentConfig = async (req, res) => {
 const getNotificationConfig = async (req, res) => {
   try {
     const [notifications] = await pool.execute(
-      'SELECT * FROM configuracion_notificaciones ORDER BY tipo_evento'
+      'SELECT * FROM configuracion_notificaciones order BY tipo_evento'
     );
 
     res.json({
@@ -479,11 +479,11 @@ const getCompleteConfig = async (req, res) => {
     );
     
     const [paymentMethods] = await pool.execute(
-      'SELECT * FROM configuracion_pagos ORDER BY orden, nombre'
+      'SELECT * FROM configuracion_pagos order BY orden, nombre'
     );
     
     const [notifications] = await pool.execute(
-      'SELECT * FROM configuracion_notificaciones ORDER BY tipo_evento'
+      'SELECT * FROM configuracion_notificaciones order BY tipo_evento'
     );
 
     res.json({

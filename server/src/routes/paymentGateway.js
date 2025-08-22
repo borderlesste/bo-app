@@ -18,7 +18,7 @@ router.post('/paypal/create-order',
     try {
       const { amount, currency, orderData } = req.body;
       
-      const result = await paymentGatewayService.createPayPalOrder(
+      const result = await paymentGatewayService.createPayPalorder(
         amount, 
         currency, 
         {
@@ -61,7 +61,7 @@ router.post('/paypal/capture-order',
     try {
       const { orderID, paymentID } = req.body;
       
-      const result = await paymentGatewayService.capturePayPalOrder(orderID);
+      const result = await paymentGatewayService.capturePayPalorder(orderID);
 
       if (result.success) {
         // Update payment status in database
@@ -296,14 +296,14 @@ router.get('/bank-transfers/pending',
           p.*,
           u.nombre as cliente_nombre,
           u.email as cliente_email,
-          ped.numero_pedido,
+          ped.numero_order,
           ped.descripcion as proyecto_descripcion
         FROM pagos p
         JOIN usuarios u ON p.usuario_id = u.id
-        LEFT JOIN pedidos ped ON p.pedido_id = ped.id
+        LEFT JOIN orders ped ON p.order_id = ped.id
         WHERE p.metodo_pago = 'Transferencia Bancaria' 
         AND p.estado = 'pendiente'
-        ORDER BY p.created_at DESC
+        order BY p.created_at DESC
       `);
 
       res.json({

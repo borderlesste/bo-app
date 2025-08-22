@@ -259,7 +259,7 @@ class EmailService {
               <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-ES')}</p>
               <p><strong>Estado:</strong> <span style="color: #10b981; font-weight: bold;">Pagado</span></p>
             </div>
-            <p>Procesaremos tu pedido y te mantendremos informado sobre el progreso.</p>
+            <p>Procesaremos tu order y te mantendremos informado sobre el progreso.</p>
             <p>Gracias por confiar en nosotros.</p>
             <p>Saludos,<br><strong>El equipo de Borderless Techno</strong></p>
           </div>

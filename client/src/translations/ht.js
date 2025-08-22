@@ -490,7 +490,7 @@ export default {
 
   // Register page
   register: {
-    title: 'Antre nan BORDERLESS COMPANY',
+    title: 'Antre nan BorderLESS COMPANY',
     subtitle: 'Dekouvri yon mond opòtinite yo san fwontyè. Konekte ak pwofesyonèl nan tout mond lan.',
     createAccount: 'Kreye Kont',
     joinCommunity: 'Antre nan kominote nou an',
@@ -807,7 +807,7 @@ export default {
       cybersecurity: 'Sibekèsekirite',
       automation: 'Otomatizasyon'
     },
-    copyright: '© 2025 BORDERLESS TECHNO COMPANY. Tout dwa yo rezève.',
+    copyright: '© 2025 BorderLESS TECHNO COMPANY. Tout dwa yo rezève.',
     followUsOn: 'Swiv nou sou',
     visit: 'Vizite'
   }

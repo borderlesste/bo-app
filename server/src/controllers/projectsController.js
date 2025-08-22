@@ -16,7 +16,7 @@ const getAllProjects = async (req, res) => {
       params.push(categoria);
     }
     
-    query += ' ORDER BY orden_portfolio ASC, created_at DESC';
+    query += ' order BY orden_portfolio ASC, created_at DESC';
     
     if (limit) {
       query += ' LIMIT ?';
@@ -377,7 +377,7 @@ const getProjectGallery = async (req, res) => {
     const { projectId } = req.params;
     
     const [images] = await pool.execute(
-      'SELECT * FROM proyecto_imagenes WHERE proyecto_id = ? ORDER BY orden ASC, id ASC',
+      'SELECT * FROM proyecto_imagenes WHERE proyecto_id = ? order BY orden ASC, id ASC',
       [projectId]
     );
     

@@ -36,8 +36,8 @@ const cotizacionValidation = {
   ]
 };
 
-// Pedido validation schemas
-const pedidoValidation = {
+// order validation schemas
+const orderValidation = {
   create: [
     body('usuario_id').isInt().withMessage('Usuario ID debe ser un número'),
     body('descripcion').optional().notEmpty().withMessage('La descripción no puede estar vacía'),
@@ -125,7 +125,7 @@ const mensajeValidation = {
     body('asunto').notEmpty().withMessage('El asunto es requerido'),
     body('mensaje').notEmpty().withMessage('El mensaje es requerido'),
     body('destinatario_email').optional().isEmail().withMessage('Email de destinatario inválido'),
-    body('tipo').optional().isIn(['consulta_general', 'consulta_pedido', 'soporte', 'cotizacion', 'feedback', 'interno']).withMessage('Tipo de mensaje inválido'),
+    body('tipo').optional().isIn(['consulta_general', 'consulta_order', 'soporte', 'cotizacion', 'feedback', 'interno']).withMessage('Tipo de mensaje inválido'),
     body('prioridad').optional().isIn(['baja', 'media', 'alta']).withMessage('Prioridad inválida')
   ]
 };
@@ -184,7 +184,7 @@ const queryValidation = {
 module.exports = {
   userValidation,
   cotizacionValidation,
-  pedidoValidation,
+  orderValidation,
   facturaValidation,
   pagoValidation,
   proyectoValidation,

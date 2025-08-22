@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { X, CheckCircle, User, FileText, DollarSign, Calendar, Mail, Phone } from 'lucide-react';
 import { Button } from '../components';
 
-const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
+const CreateorderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
   const [formData, setFormData] = useState({
     usuario_id: '',
     descripcion: '',
@@ -51,7 +51,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
       
       onClose();
     } catch (err) {
-      setError(err.message || 'Error al crear el pedido');
+      setError(err.message || 'Error al crear el order');
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              📦 Crear Nuevo Pedido
+              📦 Crear Nuevo order
             </h2>
             <button
               onClick={onClose}
@@ -226,7 +226,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
-                placeholder="Información adicional o comentarios sobre el pedido..."
+                placeholder="Información adicional o comentarios sobre el order..."
               />
             </div>
 
@@ -239,7 +239,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
                 className="flex items-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" />
-                {loading ? 'Creando...' : 'Crear Pedido'}
+                {loading ? 'Creando...' : 'Crear order'}
               </Button>
               <Button 
                 variant="ghost" 
@@ -257,11 +257,11 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
   );
 };
 
-CreateOrderModal.propTypes = {
+CreateorderModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   clients: PropTypes.array
 };
 
-export default CreateOrderModal;
+export default CreateorderModal;

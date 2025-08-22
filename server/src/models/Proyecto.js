@@ -8,7 +8,7 @@ class Proyecto {
 
     static async create(proyectoData) {
         const {
-            codigo, nombre, descripcion, usuario_id, pedido_id,
+            codigo, nombre, descripcion, usuario_id, order_id,
             categoria = 'web', tecnologias, imagen_principal,
             url_demo, url_produccion, repositorio, fecha_inicio,
             fecha_fin, estado = 'planificacion', es_destacado = 0,
@@ -17,12 +17,12 @@ class Proyecto {
 
         const [result] = await pool.execute(`
             INSERT INTO proyectos (
-                codigo, nombre, descripcion, usuario_id, pedido_id,
+                codigo, nombre, descripcion, usuario_id, order_id,
                 categoria, tecnologias, imagen_principal, url_demo,
                 url_produccion, repositorio, fecha_inicio, fecha_fin,
                 estado, es_destacado, es_publico, orden_portfolio, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [codigo, nombre, descripcion, usuario_id, pedido_id,
+            [codigo, nombre, descripcion, usuario_id, order_id,
              categoria, tecnologias, imagen_principal, url_demo,
              url_produccion, repositorio, fecha_inicio, fecha_fin,
              estado, es_destacado, es_publico, orden_portfolio, created_by]
@@ -56,10 +56,10 @@ class Proyecto {
     static async findAll(filters = {}) {
         let sql = `
             SELECT p.*, u.nombre as cliente_nombre, u.empresa as cliente_empresa,
-                   pe.numero_pedido, creator.nombre as created_by_name
+                   pe.numero_order, creator.nombre as created_by_name
             FROM proyectos p
             LEFT JOIN usuarios u ON p.usuario_id = u.id
-            LEFT JOIN pedidos pe ON p.pedido_id = pe.id
+            LEFT JOIN orders pe ON p.order_id = pe.id
             LEFT JOIN usuarios creator ON p.created_by = creator.id
             WHERE 1=1
         `;
@@ -97,9 +97,9 @@ class Proyecto {
         }
 
         if (filters.portfolio) {
-            sql += ' AND p.es_publico = 1 ORDER BY p.orden_portfolio ASC, p.created_at DESC';
+            sql += ' AND p.es_publico = 1 order BY p.orden_portfolio ASC, p.created_at DESC';
         } else {
-            sql += ' ORDER BY p.created_at DESC';
+            sql += ' order BY p.created_at DESC';
         }
 
         if (filters.limit) {
@@ -114,7 +114,7 @@ class Proyecto {
         const [result] = await pool.execute(`
             SELECT * FROM proyecto_imagenes
             WHERE proyecto_id = ?
-            ORDER BY orden ASC, created_at ASC
+            order BY orden ASC, created_at ASC
         `, [proyectoId]);
     }
 
@@ -162,7 +162,7 @@ class Proyecto {
         const lastProject = await pool.execute(`
             SELECT codigo FROM proyectos 
             WHERE codigo LIKE ? 
-            ORDER BY codigo DESC LIMIT 1
+            order BY codigo DESC LIMIT 1
         `, [`${categoria}-${year}-%`]);
 
         let nextNumber = 1;
@@ -179,10 +179,10 @@ class Proyecto {
             SELECT p.*, 
                    (SELECT url FROM proyecto_imagenes pi 
                     WHERE pi.proyecto_id = p.id 
-                    ORDER BY pi.orden ASC LIMIT 1) as imagen_principal_url
+                    order BY pi.orden ASC LIMIT 1) as imagen_principal_url
             FROM proyectos p
             WHERE p.es_publico = 1
-            ORDER BY p.es_destacado DESC, p.orden_portfolio ASC, p.fecha_fin DESC
+            order BY p.es_destacado DESC, p.orden_portfolio ASC, p.fecha_fin DESC
         `;
         
         const values = [];
@@ -199,10 +199,10 @@ class Proyecto {
             SELECT p.*, 
                    (SELECT url FROM proyecto_imagenes pi 
                     WHERE pi.proyecto_id = p.id 
-                    ORDER BY pi.orden ASC LIMIT 1) as imagen_principal_url
+                    order BY pi.orden ASC LIMIT 1) as imagen_principal_url
             FROM proyectos p
             WHERE p.es_publico = 1 AND p.es_destacado = 1
-            ORDER BY p.orden_portfolio ASC, p.fecha_fin DESC
+            order BY p.orden_portfolio ASC, p.fecha_fin DESC
         `);
     }
 }

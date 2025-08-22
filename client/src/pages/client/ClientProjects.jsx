@@ -72,13 +72,13 @@ const ClientProjects = () => {
 
   // Función para descargar información del proyecto
   const downloadProjectInfo = (project, format = 'txt') => {
-    const fileName = `proyecto-${project.numero_pedido || project.id}-info`;
+    const fileName = `proyecto-${project.numero_order || project.id}-info`;
     let content, mimeType, extension;
 
     switch (format) {
       case 'csv':
         content = `Campo,Valor
-Número de Proyecto,"${project.numero_pedido || 'N/A'}"
+Número de Proyecto,"${project.numero_order || 'N/A'}"
 Nombre,"${project.name || 'Sin nombre'}"
 Descripción,"${project.description || 'Sin descripción'}"
 Servicio,"${project.servicio || 'No especificado'}"
@@ -101,7 +101,7 @@ Generado el,"${new Date().toLocaleString('es-ES')}"`;
 
       case 'json': {
         const jsonData = {
-          numero_pedido: project.numero_pedido || 'N/A',
+          numero_order: project.numero_order || 'N/A',
           nombre: project.name || 'Sin nombre',
           descripcion: project.description || 'Sin descripción',
           servicio: project.servicio || 'No especificado',
@@ -137,7 +137,7 @@ Generado el,"${new Date().toLocaleString('es-ES')}"`;
 INFORMACIÓN DEL PROYECTO
 ========================
 
-Número de Proyecto: ${project.numero_pedido || 'N/A'}
+Número de Proyecto: ${project.numero_order || 'N/A'}
 Nombre: ${project.name || 'Sin nombre'}
 Descripción: ${project.description || 'Sin descripción'}
 Servicio: ${project.servicio || 'No especificado'}
@@ -271,7 +271,7 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
       
       if (confirmed) {
         // En un entorno real, aquí se redirigirá a PayPal, Stripe, etc.
-        alert(`Redirigiendo a la plataforma de pagos...\n\nMonto: ${formatCurrency(amount)}\nProyecto: ${project.name}\nNúmero de pedido: ${project.numero_pedido || project.id}`);
+        alert(`Redirigiendo a la plataforma de pagos...\n\nMonto: ${formatCurrency(amount)}\nProyecto: ${project.name}\nNúmero de order: ${project.numero_order || project.id}`);
         
         // Ejemplo de redirección a PayPal:
         // window.location.href = `/api/payments/paypal/create?orderId=${project.id}&amount=${amount}`;
@@ -283,7 +283,7 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
   };
 
   const isPaymentEnabled = (project) => {
-    // El pago está habilitado solo si el pedido está confirmado por el admin
+    // El pago está habilitado solo si el order está confirmado por el admin
     return project.status === 'confirmado';
   };
 

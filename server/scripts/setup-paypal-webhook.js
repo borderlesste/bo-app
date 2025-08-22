@@ -69,8 +69,8 @@ class PayPalWebhookSetup {
         { name: 'PAYMENT.CAPTURE.COMPLETED' },
         { name: 'PAYMENT.CAPTURE.DENIED' },
         { name: 'PAYMENT.CAPTURE.DECLINED' },
-        { name: 'CHECKOUT.ORDER.APPROVED' },
-        { name: 'CHECKOUT.ORDER.CANCELLED' }
+        { name: 'CHECKOUT.order.APPROVED' },
+        { name: 'CHECKOUT.order.CANCELLED' }
       ]
     };
     

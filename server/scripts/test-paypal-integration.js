@@ -12,8 +12,8 @@ const TEST_USER = {
 class PayPalIntegrationTest {
   constructor() {
     this.authToken = null;
-    this.testPedidoId = null;
-    this.paypalOrderId = null;
+    this.testorderId = null;
+    this.paypalorderId = null;
   }
 
   async runTests() {
@@ -23,10 +23,10 @@ class PayPalIntegrationTest {
     
     try {
       await this.test1_Authentication();
-      await this.test2_CreatePedido();
-      await this.test3_CheckPedidoStatus();
-      await this.test4_SimulatePedidoCapture();
-      await this.test5_VerifyPedidoCompletion();
+      await this.test2_Createorder();
+      await this.test3_CheckorderStatus();
+      await this.test4_SimulateorderCapture();
+      await this.test5_VerifyorderCompletion();
       await this.test6_TestWebhookProcessing();
       await this.test7_CheckAdminSummary();
       
@@ -90,11 +90,11 @@ class PayPalIntegrationTest {
     }
   }
 
-  // Test 2: Crear pedido con PayPal
-  async test2_CreatePedido() {
-    console.log('📝 Test 2: Crear pedido con orden PayPal');
+  // Test 2: Crear order con PayPal
+  async test2_Createorder() {
+    console.log('📝 Test 2: Crear order con orden PayPal');
     
-    const pedidoData = {
+    const orderData = {
       items: [
         {
           descripcion: 'Desarrollo de sitio web responsive',
@@ -112,8 +112,8 @@ class PayPalIntegrationTest {
     };
     
     const response = await axios.post(
-      `${API_BASE}/api/paypal/create-pedidos`,
-      pedidoData,
+      `${API_BASE}/api/paypal/create-orders`,
+      orderData,
       {
         headers: {
           'Cookie': this.authToken,
@@ -123,25 +123,25 @@ class PayPalIntegrationTest {
     );
     
     if (response.data.success) {
-      this.testPedidoId = response.data.data.pedido_id;
-      this.paypalOrderId = response.data.data.paypal_order_id;
+      this.testorderId = response.data.data.order_id;
+      this.paypalorderId = response.data.data.paypal_order_id;
       
-      console.log('✅ Pedido creado exitosamente');
-      console.log(`📝 Pedido ID: ${this.testPedidoId}`);
-      console.log(`📝 PayPal Order ID: ${this.paypalOrderId}`);
+      console.log('✅ order creado exitosamente');
+      console.log(`📝 order ID: ${this.testorderId}`);
+      console.log(`📝 PayPal order ID: ${this.paypalorderId}`);
       console.log(`📝 Total: $${response.data.data.total} ${response.data.data.currency}`);
       console.log(`📝 URL de aprobación: ${response.data.data.approve_url}`);
     } else {
-      throw new Error('Error creando pedido: ' + response.data.message);
+      throw new Error('Error creando order: ' + response.data.message);
     }
   }
 
-  // Test 3: Verificar estado del pedido
-  async test3_CheckPedidoStatus() {
-    console.log('📝 Test 3: Verificar estado del pedido');
+  // Test 3: Verificar estado del order
+  async test3_CheckorderStatus() {
+    console.log('📝 Test 3: Verificar estado del order');
     
     const response = await axios.get(
-      `${API_BASE}/api/paypal/pedidos/${this.testPedidoId}/status`,
+      `${API_BASE}/api/paypal/orders/${this.testorderId}/status`,
       {
         headers: {
           'Cookie': this.authToken
@@ -150,29 +150,29 @@ class PayPalIntegrationTest {
     );
     
     if (response.data.success) {
-      const pedido = response.data.data;
-      console.log('✅ Estado del pedido obtenido');
-      console.log(`📝 Estado: ${pedido.estado}`);
-      console.log(`📝 PayPal Order ID: ${pedido.paypal_order_id}`);
-      console.log(`📝 Total items: ${pedido.total_items}`);
-      console.log(`📝 Método de pago: ${pedido.payment_method}`);
+      const order = response.data.data;
+      console.log('✅ Estado del order obtenido');
+      console.log(`📝 Estado: ${order.estado}`);
+      console.log(`📝 PayPal order ID: ${order.paypal_order_id}`);
+      console.log(`📝 Total items: ${order.total_items}`);
+      console.log(`📝 Método de pago: ${order.payment_method}`);
     } else {
       throw new Error('Error obteniendo estado: ' + response.data.message);
     }
   }
 
   // Test 4: Simular captura de pago
-  async test4_SimulatePedidoCapture() {
+  async test4_SimulateorderCapture() {
     console.log('📝 Test 4: Simular captura de pago PayPal');
     
     const captureData = {
-      paypal_order_id: this.paypalOrderId,
-      pedido_id: this.testPedidoId
+      paypal_order_id: this.paypalorderId,
+      order_id: this.testorderId
     };
     
     try {
       const response = await axios.post(
-        `${API_BASE}/api/paypal/capture-pedidos`,
+        `${API_BASE}/api/paypal/capture-orders`,
         captureData,
         {
           headers: {
@@ -185,7 +185,7 @@ class PayPalIntegrationTest {
       if (response.data.success) {
         console.log('✅ Pago capturado exitosamente');
         console.log(`📝 Capture ID: ${response.data.data.paypal_capture_id}`);
-        console.log(`📝 Estado del pedido: ${response.data.data.status}`);
+        console.log(`📝 Estado del order: ${response.data.data.status}`);
         console.log(`📝 Email del pagador: ${response.data.data.payer_email || 'N/A'}`);
       } else {
         console.log('⚠️  Captura falló (esperado en sandbox sin pago real)');
@@ -197,12 +197,12 @@ class PayPalIntegrationTest {
     }
   }
 
-  // Test 5: Verificar finalización del pedido
-  async test5_VerifyPedidoCompletion() {
-    console.log('📝 Test 5: Verificar estado final del pedido');
+  // Test 5: Verificar finalización del order
+  async test5_VerifyorderCompletion() {
+    console.log('📝 Test 5: Verificar estado final del order');
     
     const response = await axios.get(
-      `${API_BASE}/api/paypal/pedidos/${this.testPedidoId}/status`,
+      `${API_BASE}/api/paypal/orders/${this.testorderId}/status`,
       {
         headers: {
           'Cookie': this.authToken
@@ -211,14 +211,14 @@ class PayPalIntegrationTest {
     );
     
     if (response.data.success) {
-      const pedido = response.data.data;
+      const order = response.data.data;
       console.log('✅ Estado final verificado');
-      console.log(`📝 Estado: ${pedido.estado}`);
-      console.log(`📝 Saldo pendiente: $${pedido.saldo_pendiente}`);
-      console.log(`📝 Pagos registrados: ${pedido.pagos.length}`);
+      console.log(`📝 Estado: ${order.estado}`);
+      console.log(`📝 Saldo pendiente: $${order.saldo_pendiente}`);
+      console.log(`📝 Pagos registrados: ${order.pagos.length}`);
       
-      if (pedido.pagos.length > 0) {
-        console.log(`📝 Último pago: ${pedido.pagos[0].estado} - $${pedido.pagos[0].monto}`);
+      if (order.pagos.length > 0) {
+        console.log(`📝 Último pago: ${order.pagos[0].estado} - $${order.pagos[0].monto}`);
       }
     } else {
       throw new Error('Error verificando estado final: ' + response.data.message);
@@ -240,7 +240,7 @@ class PayPalIntegrationTest {
         },
         supplementary_data: {
           related_ids: {
-            order_id: this.paypalOrderId
+            order_id: this.paypalorderId
           }
         },
         payee: {
@@ -292,9 +292,9 @@ class PayPalIntegrationTest {
       if (response.data.success) {
         const summary = response.data.data.summary;
         console.log('✅ Resumen de admin obtenido');
-        console.log(`📝 Total pedidos (30 días): ${summary.total_pedidos}`);
-        console.log(`📝 Pedidos confirmados: ${summary.pedidos_confirmados}`);
-        console.log(`📝 Pedidos pendientes: ${summary.pedidos_pendientes}`);
+        console.log(`📝 Total orders (30 días): ${summary.total_orders}`);
+        console.log(`📝 orders confirmados: ${summary.orders_confirmados}`);
+        console.log(`📝 orders pendientes: ${summary.orders_pendientes}`);
         console.log(`📝 Ingresos PayPal: $${summary.ingresos_paypal || 0}`);
         console.log(`📝 Clientes únicos: ${summary.clientes_unicos}`);
       } else {
@@ -306,12 +306,12 @@ class PayPalIntegrationTest {
     }
   }
 
-  // Test adicional: Listar pedidos
-  async testListPedidos() {
-    console.log('📝 Test adicional: Listar pedidos del usuario');
+  // Test adicional: Listar orders
+  async testListorders() {
+    console.log('📝 Test adicional: Listar orders del usuario');
     
     const response = await axios.get(
-      `${API_BASE}/api/paypal/pedidos?limit=5`,
+      `${API_BASE}/api/paypal/orders?limit=5`,
       {
         headers: {
           'Cookie': this.authToken
@@ -320,16 +320,16 @@ class PayPalIntegrationTest {
     );
     
     if (response.data.success) {
-      const { pedidos, pagination } = response.data.data;
-      console.log('✅ Lista de pedidos obtenida');
+      const { orders, pagination } = response.data.data;
+      console.log('✅ Lista de orders obtenida');
       console.log(`📝 Total encontrados: ${pagination.total}`);
-      console.log(`📝 Pedidos en respuesta: ${pedidos.length}`);
+      console.log(`📝 orders en respuesta: ${orders.length}`);
       
-      pedidos.forEach((pedido, index) => {
-        console.log(`📝 ${index + 1}. ${pedido.numero_pedido} - ${pedido.estado} - $${pedido.total}`);
+      orders.forEach((order, index) => {
+        console.log(`📝 ${index + 1}. ${order.numero_order} - ${order.estado} - $${order.total}`);
       });
     } else {
-      throw new Error('Error listando pedidos: ' + response.data.message);
+      throw new Error('Error listando orders: ' + response.data.message);
     }
   }
 }

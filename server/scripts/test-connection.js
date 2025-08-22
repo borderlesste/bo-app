@@ -31,12 +31,12 @@ async function testConnection() {
       try {
         const [clientes] = await connection.execute('SELECT COUNT(*) as count FROM usuarios');
         const [quotes] = await connection.execute('SELECT COUNT(*) as count FROM cotizaciones');
-        const [pedidos] = await connection.execute('SELECT COUNT(*) as count FROM pedidos');
+        const [orders] = await connection.execute('SELECT COUNT(*) as count FROM orders');
         
         console.log('📊 Conteo de registros:');
         console.log(`   - Usuarios: ${clientes[0].count}`);
         console.log(`   - Cotizaciones: ${quotes[0].count}`);
-        console.log(`   - Pedidos: ${pedidos[0].count}`);
+        console.log(`   - orders: ${orders[0].count}`);
       } catch (error) {
         console.log('⚠️  Error consultando datos:', error.message);
       }

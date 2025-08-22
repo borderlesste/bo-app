@@ -52,23 +52,23 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
   };
 
   // Filtrar órdenes por cliente seleccionado
-  const getClientOrders = () => {
+  const getClientorders = () => {
     if (!formData.usuario_id || !orders) return [];
     return orders.filter(order => order.usuario_id === parseInt(formData.usuario_id));
   };
 
   // Manejar selección de orden
-  const handleOrderChange = (e) => {
+  const handleorderChange = (e) => {
     const orderId = e.target.value;
-    const selectedOrder = orders.find(order => order.id === parseInt(orderId));
+    const selectedorder = orders.find(order => order.id === parseInt(orderId));
     
-    if (selectedOrder) {
+    if (selectedorder) {
       setFormData(prev => ({
         ...prev,
         order_id: orderId,
-        concepto: `Pago por Orden #${selectedOrder.id} - ${selectedOrder.concepto || selectedOrder.descripcion || 'Sin descripción'}`,
-        monto: selectedOrder.total || selectedOrder.monto_total || prev.monto,
-        moneda: selectedOrder.moneda || prev.moneda
+        concepto: `Pago por Orden #${selectedorder.id} - ${selectedorder.concepto || selectedorder.descripcion || 'Sin descripción'}`,
+        monto: selectedorder.total || selectedorder.monto_total || prev.monto,
+        moneda: selectedorder.moneda || prev.moneda
       }));
     } else {
       setFormData(prev => ({ ...prev, order_id: orderId }));
@@ -76,7 +76,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
   };
 
   // Obtener información de la orden seleccionada
-  const getSelectedOrderInfo = () => {
+  const getSelectedorderInfo = () => {
     if (!formData.order_id || !orders) return null;
     return orders.find(order => order.id === parseInt(formData.order_id));
   };
@@ -141,11 +141,11 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
                 <select 
                   name="order_id" 
                   value={formData.order_id} 
-                  onChange={handleOrderChange} 
+                  onChange={handleorderChange} 
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg appearance-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
                 >
                   <option value="">Seleccionar Orden (Opcional)</option>
-                  {getClientOrders().map(order => (
+                  {getClientorders().map(order => (
                     <option key={order.id} value={order.id}>
                       Orden #{order.id} - {order.concepto || order.descripcion || 'Sin descripción'} 
                       {order.total || order.monto_total ? ` ($${order.total || order.monto_total})` : ''}
@@ -156,7 +156,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
             )}
 
             {/* Información de la orden seleccionada */}
-            {getSelectedOrderInfo() && (
+            {getSelectedorderInfo() && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
                   <Package className="w-4 h-4" />
@@ -165,27 +165,27 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="font-medium text-gray-600 dark:text-gray-400">ID:</span>
-                    <span className="ml-2 text-gray-800 dark:text-gray-200">#{getSelectedOrderInfo().id}</span>
+                    <span className="ml-2 text-gray-800 dark:text-gray-200">#{getSelectedorderInfo().id}</span>
                   </div>
-                  {getSelectedOrderInfo().estado && (
+                  {getSelectedorderInfo().estado && (
                     <div>
                       <span className="font-medium text-gray-600 dark:text-gray-400">Estado:</span>
-                      <span className="ml-2 text-gray-800 dark:text-gray-200">{getSelectedOrderInfo().estado}</span>
+                      <span className="ml-2 text-gray-800 dark:text-gray-200">{getSelectedorderInfo().estado}</span>
                     </div>
                   )}
-                  {(getSelectedOrderInfo().total || getSelectedOrderInfo().monto_total) && (
+                  {(getSelectedorderInfo().total || getSelectedorderInfo().monto_total) && (
                     <div>
                       <span className="font-medium text-gray-600 dark:text-gray-400">Total:</span>
                       <span className="ml-2 text-gray-800 dark:text-gray-200">
-                        ${getSelectedOrderInfo().total || getSelectedOrderInfo().monto_total} {getSelectedOrderInfo().moneda || 'MXN'}
+                        ${getSelectedorderInfo().total || getSelectedorderInfo().monto_total} {getSelectedorderInfo().moneda || 'MXN'}
                       </span>
                     </div>
                   )}
-                  {getSelectedOrderInfo().fecha_creacion && (
+                  {getSelectedorderInfo().fecha_creacion && (
                     <div>
                       <span className="font-medium text-gray-600 dark:text-gray-400">Fecha:</span>
                       <span className="ml-2 text-gray-800 dark:text-gray-200">
-                        {new Date(getSelectedOrderInfo().fecha_creacion).toLocaleDateString()}
+                        {new Date(getSelectedorderInfo().fecha_creacion).toLocaleDateString()}
                       </span>
                     </div>
                   )}

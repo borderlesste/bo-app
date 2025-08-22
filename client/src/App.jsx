@@ -41,7 +41,7 @@ const ClientRequestForm = lazy(() => import('./pages/client/ClientRequestForm'))
 
 // Legacy client pages (to be removed)
 const QuotesPage = lazy(() => import('./pages/QuotesPage'));
-const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const ordersPage = lazy(() => import('./pages/ordersPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
@@ -151,10 +151,10 @@ function App() {
             }
           />
           <Route
-            path="/pedidos"
+            path="/orders"
             element={
               <ProtectedRoute adminOnly={true}>
-                <OrdersPage />
+                <ordersPage />
               </ProtectedRoute>
             }
           />

@@ -541,10 +541,10 @@ const PaymentsPage = () => {
                       <p className="text-sm text-ghost-600 dark:text-ghost-400">Cliente</p>
                       <p className="text-ghost-800 dark:text-ghost-200">{payment.cliente_email || payment.clienteEmail || 'Email no disponible'}</p>
                     </div>
-                    {payment.pedidoTitulo && (
+                    {payment.orderTitulo && (
                       <div>
                         <p className="text-sm text-ghost-600 dark:text-ghost-400">Proyecto</p>
-                        <p className="text-ghost-800 dark:text-ghost-200 font-medium">{payment.pedidoTitulo}</p>
+                        <p className="text-ghost-800 dark:text-ghost-200 font-medium">{payment.orderTitulo}</p>
                       </div>
                     )}
                     {payment.transaccion_id && (

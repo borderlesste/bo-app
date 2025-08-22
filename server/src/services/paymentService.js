@@ -16,7 +16,7 @@ const paymentService = {
       params.push(userId);
     }
     
-    query += ' ORDER BY p.fecha_pago DESC';
+    query += ' order BY p.fecha_pago DESC';
 
     const [rows] = await pool.execute(query, params);
     return rows;
@@ -38,7 +38,7 @@ const paymentService = {
     return rows[0];
   },
 
-  async createPayment(usuario_id, pedido_id, concepto, monto, metodo, estado, referencia, banco_origen) {
+  async createPayment(usuario_id, order_id, concepto, monto, metodo, estado, referencia, banco_origen) {
     const connection = await pool.getConnection();
     
     try {
@@ -53,11 +53,11 @@ const paymentService = {
       
       // Create payment record
       const [result] = await connection.execute(
-        'INSERT INTO pagos (numero_pago, usuario_id, pedido_id, tipo, concepto, monto, metodo_pago, estado, referencia, banco_origen, fecha_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        'INSERT INTO pagos (numero_pago, usuario_id, order_id, tipo, concepto, monto, metodo_pago, estado, referencia, banco_origen, fecha_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
         [
           `PAY-${Date.now()}`, 
           usuario_id, 
-          pedido_id, 
+          order_id, 
           tipo, 
           concepto, 
           monto, 
@@ -72,7 +72,7 @@ const paymentService = {
       
       // If payment is completed/applied, update order status automatically
       if (estadoCorregido === 'aplicado' || estadoCorregido === 'completado' || estadoCorregido === 'pagado') {
-        await this.updateOrderStatusOnPayment(connection, pedido_id, usuario_id, monto);
+        await this.updateorderstatusOnPayment(connection, order_id, usuario_id, monto);
       }
       
       await connection.commit();
@@ -104,7 +104,7 @@ const paymentService = {
     return methodMap[metodo] || 'otro';
   },
 
-  async updatePayment(id, usuario_id, pedido_id, concepto, monto, metodo, estado, referencia, banco_origen) {
+  async updatePayment(id, usuario_id, order_id, concepto, monto, metodo, estado, referencia, banco_origen) {
     const connection = await pool.getConnection();
     
     try {
@@ -114,21 +114,21 @@ const paymentService = {
       const metodoPagoMapped = this.mapPaymentMethod(metodo);
       
       // Get previous payment state
-      const [previousPayment] = await connection.execute('SELECT estado, pedido_id, usuario_id FROM pagos WHERE id = ?', [id]);
+      const [previousPayment] = await connection.execute('SELECT estado, order_id, usuario_id FROM pagos WHERE id = ?', [id]);
       if (previousPayment.length === 0) {
         throw new Error('Pago no encontrado.');
       }
       
       const previousState = previousPayment[0].estado;
-      const paymentPedidoId = pedido_id || previousPayment[0].pedido_id;
+      const paymentorderId = order_id || previousPayment[0].order_id;
       const paymentUsuarioId = usuario_id || previousPayment[0].usuario_id;
       
       // Update payment
       const [result] = await connection.execute(
-        'UPDATE pagos SET usuario_id = ?, pedido_id = ?, concepto = ?, monto = ?, metodo_pago = ?, estado = ?, referencia = ?, banco_origen = ?, updated_at = NOW() WHERE id = ?',
+        'UPDATE pagos SET usuario_id = ?, order_id = ?, concepto = ?, monto = ?, metodo_pago = ?, estado = ?, referencia = ?, banco_origen = ?, updated_at = NOW() WHERE id = ?',
         [
           paymentUsuarioId, 
-          paymentPedidoId, 
+          paymentorderId, 
           concepto, 
           monto, 
           metodoPagoMapped, 
@@ -147,8 +147,8 @@ const paymentService = {
       const wasNotCompleted = !['aplicado', 'completado', 'pagado'].includes(previousState);
       const isNowCompleted = ['aplicado', 'completado', 'pagado'].includes(estadoCorregido);
       
-      if (wasNotCompleted && isNowCompleted && paymentPedidoId) {
-        await this.updateOrderStatusOnPayment(connection, paymentPedidoId, paymentUsuarioId, monto);
+      if (wasNotCompleted && isNowCompleted && paymentorderId) {
+        await this.updateorderstatusOnPayment(connection, paymentorderId, paymentUsuarioId, monto);
       }
       
       await connection.commit();
@@ -165,18 +165,18 @@ const paymentService = {
   },
 
   // Method to update order status when payment is completed
-  async updateOrderStatusOnPayment(connection, pedido_id, usuario_id, monto) {
-    if (!pedido_id) return;
+  async updateorderstatusOnPayment(connection, order_id, usuario_id, monto) {
+    if (!order_id) return;
     
     try {
       // Get current order information
       const [orderInfo] = await connection.execute(
-        'SELECT estado, presupuesto_estimado, total, usuario_id FROM pedidos WHERE id = ?',
-        [pedido_id]
+        'SELECT estado, presupuesto_estimado, total, usuario_id FROM orders WHERE id = ?',
+        [order_id]
       );
       
       if (orderInfo.length === 0) {
-        console.log('⚠️ Pedido no encontrado para actualizar estado:', pedido_id);
+        console.log('⚠️ order no encontrado para actualizar estado:', order_id);
         return;
       }
       
@@ -184,14 +184,14 @@ const paymentService = {
       
       // Verify the payment belongs to the correct user
       if (order.usuario_id !== usuario_id) {
-        console.log('⚠️ El pago no pertenece al usuario del pedido');
+        console.log('⚠️ El pago no pertenece al usuario del order');
         return;
       }
       
       // Calculate total paid amount for this order
       const [paymentSum] = await connection.execute(
-        'SELECT SUM(monto) as total_pagado FROM pagos WHERE pedido_id = ? AND estado IN ("aplicado", "completado", "pagado")',
-        [pedido_id]
+        'SELECT SUM(monto) as total_pagado FROM pagos WHERE order_id = ? AND estado IN ("aplicado", "completado", "pagado")',
+        [order_id]
       );
       
       const totalPagado = parseFloat(paymentSum[0].total_pagado || 0);
@@ -200,7 +200,7 @@ const paymentService = {
       console.log(`💰 Pago procesado: $${monto}, Total pagado: $${totalPagado}, Esperado: $${expectedAmount}`);
       
       // Only update to 'completado' if:
-      // 1. Order is not already completed
+      // 1. order is not already completed
       // 2. Payment covers the expected amount (with 1% tolerance for rounding)
       const tolerance = expectedAmount * 0.01; // 1% tolerance
       const isFullyPaid = totalPagado >= (expectedAmount - tolerance);
@@ -208,29 +208,29 @@ const paymentService = {
       if (order.estado !== 'completado' && isFullyPaid && expectedAmount > 0) {
         // Update order status to completed
         await connection.execute(
-          'UPDATE pedidos SET estado = "completado", fecha_entrega_real = NOW(), updated_at = NOW() WHERE id = ?',
-          [pedido_id]
+          'UPDATE orders SET estado = "completado", fecha_entrega_real = NOW(), updated_at = NOW() WHERE id = ?',
+          [order_id]
         );
         
-        console.log(`✅ Pedido #${pedido_id} actualizado a estado "completado" tras pago completo`);
+        console.log(`✅ order #${order_id} actualizado a estado "completado" tras pago completo`);
         
         // Log the activity (if logging service is available)
         try {
           await connection.execute(
             'INSERT INTO actividades (usuario_id, tipo, descripcion, entidad_tipo, entidad_id, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
-            [usuario_id, 'pago_completado', `Pedido completado automáticamente tras recibir pago de $${monto}`, 'pedido', pedido_id]
+            [usuario_id, 'pago_completado', `order completado automáticamente tras recibir pago de $${monto}`, 'order', order_id]
           );
         } catch (logError) {
           console.log('⚠️ Error registrando actividad:', logError.message);
         }
       } else if (!isFullyPaid) {
-        console.log(`⏳ Pago parcial registrado. Faltan $${(expectedAmount - totalPagado).toFixed(2)} para completar el pedido.`);
+        console.log(`⏳ Pago parcial registrado. Faltan $${(expectedAmount - totalPagado).toFixed(2)} para completar el order.`);
       } else if (order.estado === 'completado') {
-        console.log('ℹ️ El pedido ya está completado.');
+        console.log('ℹ️ El order ya está completado.');
       }
       
     } catch (error) {
-      console.error('❌ Error actualizando estado del pedido tras pago:', error.message);
+      console.error('❌ Error actualizando estado del order tras pago:', error.message);
       throw error;
     }
   },

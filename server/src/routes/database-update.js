@@ -72,7 +72,7 @@ router.post('/update-for-clients', async (req, res) => {
         proyecto_id INT NOT NULL,
         imagen_url VARCHAR(500) NOT NULL,
         descripcion VARCHAR(255) NULL,
-        orden INT DEFAULT 0,
+        pedido INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_proyecto_id (proyecto_id),
         FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE CASCADE
@@ -117,7 +117,7 @@ router.post('/update-for-clients', async (req, res) => {
         cantidad DECIMAL(8,2) DEFAULT 1.00,
         precio_unitario DECIMAL(10,2) DEFAULT 0.00,
         subtotal DECIMAL(10,2) DEFAULT 0.00,
-        orden INT DEFAULT 0,
+        pedido INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_cotizacion_id (cotizacion_id),
         FOREIGN KEY (cotizacion_id) REFERENCES cotizaciones(id) ON DELETE CASCADE
@@ -340,7 +340,7 @@ router.post('/update-for-billing', async (req, res) => {
         impuesto_porcentaje DECIMAL(5,2) DEFAULT 16.00,
         impuesto_monto DECIMAL(12,2) DEFAULT 0.00,
         total DECIMAL(12,2) DEFAULT 0.00,
-        orden INT DEFAULT 0,
+        pedido INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_factura_id (factura_id),
         FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE
@@ -416,7 +416,7 @@ router.post('/update-for-billing', async (req, res) => {
       CREATE TABLE IF NOT EXISTS reportes_financieros (
         id INT AUTO_INCREMENT PRIMARY KEY,
         nombre VARCHAR(255) NOT NULL,
-        tipo ENUM('ingresos', 'facturas_pendientes', 'clientes_morosos', 'flujo_efectivo', 'personalizado') NOT NULL,
+        tipo ENUM('ingresos', 'facturas_pendientes', 'usuarios_morosos', 'flujo_efectivo', 'personalizado') NOT NULL,
         parametros JSON NULL,
         fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         generado_por INT NOT NULL,

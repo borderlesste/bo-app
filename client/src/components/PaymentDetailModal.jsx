@@ -216,12 +216,12 @@ const PaymentDetailModal = ({ isOpen, onClose, payment, onApprove, onReject }) =
                   </div>
                 </div>
 
-                {payment.pedidoTitulo && (
+                {payment.orderTitulo && (
                   <div className="flex items-start gap-3">
                     <FileText className="w-5 h-5 text-gray-600 mt-1" />
                     <div>
                       <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Proyecto</p>
-                      <p className="text-gray-800 dark:text-white">{payment.pedidoTitulo}</p>
+                      <p className="text-gray-800 dark:text-white">{payment.orderTitulo}</p>
                     </div>
                   </div>
                 )}

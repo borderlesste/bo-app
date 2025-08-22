@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getClientStats, getClientProjects, getClientPayments, getClientActivity, getClientQuotes, updateClientQuoteStatus, getClientProfile, updateClientProfile, changeClientPassword, getClientOrders, updateClientOrderStatus } = require('../controllers/clientDashboardController.js');
+const { getClientStats, getClientProjects, getClientPayments, getClientActivity, getClientQuotes, updateClientQuoteStatus, getClientProfile, updateClientProfile, changeClientPassword, getClientorders, updateClientorderstatus } = require('../controllers/clientDashboardController.js');
 const { isAuthenticated } = require('../middleware/authMiddleware.js');
 
 // Middleware para verificar que el usuario sea cliente
@@ -45,10 +45,10 @@ router.put('/profile', updateClientProfile);
 // PUT /client/change-password - Cambiar contraseña del cliente
 router.put('/change-password', changeClientPassword);
 
-// GET /client/orders - Obtener pedidos del cliente
-router.get('/orders', getClientOrders);
+// GET /client/orders - Obtener orders del cliente
+router.get('/orders', getClientorders);
 
-// PUT /client/orders/:id/status - Actualizar estado de pedido (cancelar/pausar/reactivar)
-router.put('/orders/:id/status', updateClientOrderStatus);
+// PUT /client/orders/:id/status - Actualizar estado de order (cancelar/pausar/reactivar)
+router.put('/orders/:id/status', updateClientorderstatus);
 
 module.exports = router;

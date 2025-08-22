@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { getClientOrders, updateClientOrderStatus } from '../api/axios';
-import { ordersAPI } from '../api/services';
+import { getClientorders, updateClientorderstatus } from '../api/axios';
+import { pedidosAPI } from '../api/services';
 import { useToast } from '../hooks/useToast';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -40,29 +40,29 @@ import {
   XCircle
 } from 'lucide-react';
 
-const OrdersList = () => {
+const ordersList = () => {
   const { success, error: showError } = useToast();
-  const [orders, setOrders] = useState([]);
+  const [orders, setorders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedorder, setSelectedorder] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [showOrderDetail, setShowOrderDetail] = useState(false);
+  const [showorderDetail, setShoworderDetail] = useState(false);
 
-    // Cargar pedidos cuando cambie el filtro
+    // Cargar orders cuando cambie el filtro
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    fetchorders();
+  }, [fetchorders]);
 
   // Buscar con debounce
   useEffect(() => {
-    const timeoutId = setTimeout(fetchOrders, 500);
+    const timeoutId = setTimeout(fetchorders, 500);
     return () => clearTimeout(timeoutId);
-  }, [fetchOrders]);
+  }, [fetchorders]);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchorders = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -73,36 +73,36 @@ const OrdersList = () => {
       
       try {
         // Try new API first
-        const response = await ordersAPI.getAll(params);
+        const response = await pedidosAPI.getAll(params);
         
         if (response.data) {
           const ordersData = Array.isArray(response.data.orders) ? response.data.orders : response.data;
-          setOrders(ordersData);
+          setorders(ordersData);
         }
       } catch (newApiError) {
         // Fallback to old API
         console.log('Fallback to old API');
-        const response = await getClientOrders();
+        const response = await getClientorders();
         
         if (response.data.success) {
-          setOrders(response.data.data);
+          setorders(response.data.data);
         } else {
-          setOrders(response.data || []);
+          setorders(response.data || []);
         }
       }
     } catch (err) {
-      setError('Error al cargar pedidos');
+      setError('Error al cargar orders');
       console.error(err);
     } finally {
       setLoading(false);
     }
   }, [filter, searchTerm]);
 
-  // Filtrar pedidos (ahora manejado por el backend)
-  const filteredOrders = orders;
+  // Filtrar orders (ahora manejado por el backend)
+  const filteredorders = orders;
 
-  // Manejar acciones en pedidos
-  const handleOrderAction = async (orderId, action) => {
+  // Manejar acciones en orders
+  const handleorderAction = async (orderId, action) => {
     try {
       setActionLoading(true);
       let response;
@@ -117,25 +117,25 @@ const OrdersList = () => {
       
       try {
         // Try new API first
-        response = await ordersAPI.updateStatus(orderId, newStatus, 'Cliente', `Estado cambiado por cliente a ${newStatus}`);
-        success(`Pedido ${action === 'cancel' ? 'cancelado' : action === 'resume' ? 'reanudado' : 'actualizado'} exitosamente`);
+        response = await pedidosAPI.updateStatus(orderId, newStatus, 'Cliente', `Estado cambiado por cliente a ${newStatus}`);
+        success(`order ${action === 'cancel' ? 'cancelado' : action === 'resume' ? 'reanudado' : 'actualizado'} exitosamente`);
       } catch (newApiError) {
         // Fallback to old API
         if (action === 'cancel') {
-          response = await updateClientOrderStatus(orderId, { status: 'cancelado' });
+          response = await updateClientorderstatus(orderId, { status: 'cancelado' });
         } else if (action === 'resume') {
-          response = await updateClientOrderStatus(orderId, { status: 'activo' });
+          response = await updateClientorderstatus(orderId, { status: 'activo' });
         }
 
         if (response?.data?.success) {
-          success(`Pedido ${action === 'cancel' ? 'cancelado' : 'reanudado'} exitosamente`);
+          success(`order ${action === 'cancel' ? 'cancelado' : 'reanudado'} exitosamente`);
         } else {
           showError(response?.data?.message || 'Error al procesar la acción');
           return;
         }
       }
       
-      fetchOrders(); // Recargar pedidos
+      fetchorders(); // Recargar orders
     } catch (err) {
       showError('Error al procesar la acción');
       console.error(err);
@@ -225,11 +225,11 @@ const OrdersList = () => {
   // Calcular estadísticas financieras
   const calculateFinancialStats = () => {
     const stats = {
-      totalOrders: orders.length,
+      totalorders: orders.length,
       totalValue: 0,
       completedValue: 0,
       pendingValue: 0,
-      averageOrderValue: 0
+      averageorderValue: 0
     };
 
     orders.forEach(order => {
@@ -243,7 +243,7 @@ const OrdersList = () => {
       }
     });
 
-    stats.averageOrderValue = stats.totalOrders > 0 ? stats.totalValue / stats.totalOrders : 0;
+    stats.averageorderValue = stats.totalorders > 0 ? stats.totalValue / stats.totalorders : 0;
     
     return stats;
   };
@@ -252,7 +252,7 @@ const OrdersList = () => {
     return (
       <div className="flex items-center justify-center py-8">
         <LoadingSpinner />
-        <span className="ml-2">Cargando pedidos...</span>
+        <span className="ml-2">Cargando orders...</span>
       </div>
     );
   }
@@ -264,7 +264,7 @@ const OrdersList = () => {
           <X className="w-12 h-12 mx-auto mb-2" />
           <p>{error}</p>
         </div>
-        <Button onClick={fetchOrders} variant="outline">
+        <Button onClick={fetchorders} variant="outline">
           Reintentar
         </Button>
       </Card>
@@ -279,7 +279,7 @@ const OrdersList = () => {
           <div className="flex-1 relative">
             <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
             <Input
-              placeholder="Buscar pedidos..."
+              placeholder="Buscar orders..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -305,7 +305,7 @@ const OrdersList = () => {
         </div>
 
         <div className="text-sm text-gray-600">
-          {filteredOrders.length} pedidos encontrados
+          {filteredorders.length} orders encontrados
         </div>
       </Card>
 
@@ -320,8 +320,8 @@ const OrdersList = () => {
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-600 dark:text-blue-400">Total Pedidos</p>
-                  <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">{calculateFinancialStats().totalOrders}</p>
+                  <p className="text-sm text-blue-600 dark:text-blue-400">Total orders</p>
+                  <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">{calculateFinancialStats().totalorders}</p>
                 </div>
                 <Package className="w-8 h-8 text-blue-600" />
               </div>
@@ -360,22 +360,22 @@ const OrdersList = () => {
           
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Valor promedio por pedido:</span>
+              <span className="text-gray-600 dark:text-gray-400">Valor promedio por order:</span>
               <span className="font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-1">
                 <DollarSign className="w-4 h-4" />
-                {formatCurrency(calculateFinancialStats().averageOrderValue)}
+                {formatCurrency(calculateFinancialStats().averageorderValue)}
               </span>
             </div>
           </div>
         </Card>
       )}
 
-      {/* Lista de pedidos */}
+      {/* Lista de orders */}
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Pedido</TableHead>
+              <TableHead>order</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Prioridad</TableHead>
@@ -386,18 +386,18 @@ const OrdersList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredOrders.length === 0 ? (
+            {filteredorders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
                   <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                  <p className="text-gray-500">No se encontraron pedidos</p>
+                  <p className="text-gray-500">No se encontraron orders</p>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredOrders.map((order) => (
+              filteredorders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">
-                    {order.numero_pedido || `#${order.id}`}
+                    {order.numero_order || `#${order.id}`}
                   </TableCell>
                   <TableCell>
                     <div className="max-w-xs">
@@ -419,7 +419,7 @@ const OrdersList = () => {
                   <TableCell>
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                      {formatDate(order.fecha_pedido || order.fecha_creacion || order.created_at)}
+                      {formatDate(order.fecha_order || order.fecha_creacion || order.created_at)}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -430,14 +430,14 @@ const OrdersList = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Dialog open={showOrderDetail && selectedOrder?.id === order.id}>
+                      <Dialog open={showorderDetail && selectedorder?.id === order.id}>
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setSelectedOrder(order);
-                              setShowOrderDetail(true);
+                              setSelectedorder(order);
+                              setShoworderDetail(true);
                             }}
                           >
                             <Eye className="w-4 h-4" />
@@ -446,14 +446,14 @@ const OrdersList = () => {
                         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>
-                              Pedido {order.numero_pedido || `#${order.id}`}
+                              order {order.numero_order || `#${order.id}`}
                             </DialogTitle>
                           </DialogHeader>
-                          <OrderDetailModal 
-                            order={selectedOrder}
+                          <orderDetailModal 
+                            order={selectedorder}
                             onClose={() => {
-                              setShowOrderDetail(false);
-                              setSelectedOrder(null);
+                              setShoworderDetail(false);
+                              setSelectedorder(null);
                             }}
                           />
                         </DialogContent>
@@ -464,9 +464,9 @@ const OrdersList = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOrderAction(order.id, 'pause')}
+                          onClick={() => handleorderAction(order.id, 'pause')}
                           disabled={actionLoading}
-                          title="Pausar pedido"
+                          title="Pausar order"
                         >
                           <Pause className="w-4 h-4" />
                         </Button>
@@ -476,9 +476,9 @@ const OrdersList = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleOrderAction(order.id, 'resume')}
+                          onClick={() => handleorderAction(order.id, 'resume')}
                           disabled={actionLoading}
-                          title="Reanudar pedido"
+                          title="Reanudar order"
                           className="bg-green-50 hover:bg-green-100"
                         >
                           <Play className="w-4 h-4" />
@@ -489,9 +489,9 @@ const OrdersList = () => {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleOrderAction(order.id, 'cancel')}
+                          onClick={() => handleorderAction(order.id, 'cancel')}
                           disabled={actionLoading}
-                          title="Cancelar pedido"
+                          title="Cancelar order"
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -508,8 +508,8 @@ const OrdersList = () => {
   );
 };
 
-// Componente modal para detalles de pedido
-const OrderDetailModal = ({ order, onClose }) => {
+// Componente modal para detalles de order
+const orderDetailModal = ({ order, onClose }) => {
   if (!order) return null;
 
   const formatCurrency = (amount) => {
@@ -554,19 +554,19 @@ const OrderDetailModal = ({ order, onClose }) => {
           </div>
         </div>
         <Badge className="text-lg px-3 py-1">
-          {order.numero_pedido || `#${order.id}`}
+          {order.numero_order || `#${order.id}`}
         </Badge>
       </div>
 
       {/* Información básica */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <h4 className="font-semibold mb-3">Información del Pedido</h4>
+          <h4 className="font-semibold mb-3">Información del order</h4>
           <div className="space-y-2 text-sm">
             <div><strong>Servicio:</strong> {order.titulo || order.servicio || 'No especificado'}</div>
             <div><strong>Prioridad:</strong> {order.prioridad || 'Normal'}</div>
             <div><strong>Estado:</strong> {order.estado}</div>
-            <div><strong>Fecha del Pedido:</strong> {formatDate(order.fecha_pedido || order.created_at)}</div>
+            <div><strong>Fecha del order:</strong> {formatDate(order.fecha_order || order.created_at)}</div>
             <div><strong>Fecha de Entrega:</strong> {formatDate(order.fecha_entrega_estimada)}</div>
           </div>
         </div>
@@ -609,17 +609,17 @@ const OrderDetailModal = ({ order, onClose }) => {
   );
 };
 
-// PropTypes para OrderDetailModal
-OrderDetailModal.propTypes = {
+// PropTypes para orderDetailModal
+orderDetailModal.propTypes = {
   order: PropTypes.shape({
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    numero_pedido: PropTypes.string,
+    numero_order: PropTypes.string,
     titulo: PropTypes.string,
     servicio: PropTypes.string,
     descripcion: PropTypes.string,
     estado: PropTypes.string,
     prioridad: PropTypes.string,
-    fecha_pedido: PropTypes.string,
+    fecha_order: PropTypes.string,
     created_at: PropTypes.string,
     updated_at: PropTypes.string,
     fecha_entrega_estimada: PropTypes.string,
@@ -630,4 +630,4 @@ OrderDetailModal.propTypes = {
   onClose: PropTypes.func.isRequired
 };
 
-export default OrdersList;
+export default ordersList;

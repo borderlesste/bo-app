@@ -216,11 +216,11 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
               </div>
             </div>
 
-            {/* Order Association */}
+            {/* order Association */}
             {orders && orders.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Asociar a Pedido (Opcional)
+                  Asociar a order (Opcional)
                 </label>
                 <select
                   name="order_id"
@@ -228,10 +228,10 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                 >
-                  <option value="">Sin asociar a pedido</option>
+                  <option value="">Sin asociar a order</option>
                   {orders.map(order => (
                     <option key={order.id} value={order.id}>
-                      Pedido #{order.id} - {order.titulo || 'Sin título'}
+                      order #{order.id} - {order.titulo || 'Sin título'}
                     </option>
                   ))}
                 </select>

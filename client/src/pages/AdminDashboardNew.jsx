@@ -101,7 +101,7 @@ const AdminDashboardNew = () => {
         console.log('Nueva acci�n de cliente');
         break;
       case 'new_order':
-        console.log('Nueva acci�n de pedido');
+        console.log('Nueva acci�n de order');
         break;
       case 'new_payment':
         console.log('Nueva acci�n de pago');

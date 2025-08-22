@@ -1,11 +1,11 @@
 const { validationResult } = require('express-validator');
-const { orderService } = require('../services/orderService.js');
+const { orderservice } = require('../services/orderservice.js');
 const notificationService = require('../services/notificationService.js');
 
-// Obtener todos los pedidos (admin) o los pedidos de un usuario (cliente)
-exports.getOrders = async (req, res) => {
+// Obtener todos los orders (admin) o los orders de un usuario (cliente)
+exports.getorders = async (req, res) => {
   try {
-    const orders = await orderService.getOrders(req.user.id, req.user.rol);
+    const orders = await orderservice.getorders(req.user.id, req.user.rol);
     res.json({
       success: true,
       data: orders
@@ -14,13 +14,13 @@ exports.getOrders = async (req, res) => {
     console.error('Error fetching orders:', err);
     res.status(500).json({ 
       success: false,
-      message: 'Error al obtener los pedidos.' 
+      message: 'Error al obtener los orders.' 
     });
   }
 };
 
-// Obtener resumen de pedidos para admin (con información completa)
-exports.getOrdersSummaryForAdmin = async (req, res) => {
+// Obtener resumen de orders para admin (con información completa)
+exports.getordersSummaryForAdmin = async (req, res) => {
   try {
     if (req.user.rol !== 'admin') {
       return res.status(403).json({
@@ -29,7 +29,7 @@ exports.getOrdersSummaryForAdmin = async (req, res) => {
       });
     }
 
-    const orders = await orderService.getOrdersSummaryForAdmin();
+    const orders = await orderservice.getordersSummaryForAdmin();
     res.json({
       success: true,
       data: orders
@@ -38,16 +38,16 @@ exports.getOrdersSummaryForAdmin = async (req, res) => {
     console.error('Error fetching orders summary for admin:', err);
     res.status(500).json({ 
       success: false,
-      message: 'Error al obtener el resumen de pedidos.' 
+      message: 'Error al obtener el resumen de orders.' 
     });
   }
 };
 
-// Obtener un pedido por ID
-exports.getOrderById = async (req, res) => {
+// Obtener un order por ID
+exports.getorderById = async (req, res) => {
   const { id } = req.params;
   try {
-    const order = await orderService.getOrderById(id);
+    const order = await orderservice.getorderById(id);
     res.json(order);
   } catch (error) {
     console.error(`Error fetching order with id ${id}:`, error);
@@ -55,8 +55,8 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
-// Crear un nuevo pedido
-exports.createOrder = async (req, res) => {
+// Crear un nuevo order
+exports.createorder = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -66,23 +66,23 @@ exports.createOrder = async (req, res) => {
   const usuario_id = req.user.id; // Obtener el ID del usuario autenticado
 
   try {
-    const newOrder = await orderService.createOrder(usuario_id, orderData);
+    const neworder = await orderservice.createorder(usuario_id, orderData);
     res.status(201).json({ 
       success: true, 
       message: 'Solicitud enviada correctamente',
-      data: newOrder 
+      data: neworder 
     });
   } catch (err) {
     console.error('Error creating order:', err);
     res.status(500).json({ 
       success: false, 
-      message: 'Error al crear el pedido.' 
+      message: 'Error al crear el order.' 
     });
   }
 };
 
-// Actualizar un pedido
-exports.updateOrder = async (req, res) => {
+// Actualizar un order
+exports.updateorder = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -91,8 +91,8 @@ exports.updateOrder = async (req, res) => {
   const { id } = req.params;
   
   try {
-    // Obtener el pedido antes de actualizarlo para comparar estados
-    const originalOrder = await orderService.getOrderById(id);
+    // Obtener el order antes de actualizarlo para comparar estados
+    const originalorder = await orderservice.getorderById(id);
     
     // Solo pasar los campos que fueron enviados en el request
     const updateData = {};
@@ -102,22 +102,22 @@ exports.updateOrder = async (req, res) => {
     if (req.body.total !== undefined) updateData.total = req.body.total;
     if (req.body.fecha_entrega_estimada !== undefined) updateData.fecha_entrega_estimada = req.body.fecha_entrega_estimada;
     
-    const updatedOrder = await orderService.updateOrderPartial(id, updateData);
+    const updatedorder = await orderservice.updateorderPartial(id, updateData);
 
     // Si cambió el estado, crear notificación
-    if (updateData.estado && updateData.estado !== originalOrder.estado) {
+    if (updateData.estado && updateData.estado !== originalorder.estado) {
       try {
-        await notificationService.notifyOrderStatusChange(
-          { id, servicio: originalOrder.servicio },
+        await notificationService.notifyorderstatusChange(
+          { id, servicio: originalorder.servicio },
           updateData.estado,
-          originalOrder.usuario_id
+          originalorder.usuario_id
         );
 
-        // Si el pedido se completó, crear notificación especial
+        // Si el order se completó, crear notificación especial
         if (updateData.estado === 'completado') {
           await notificationService.notifyProjectCompleted(
-            { servicio: originalOrder.servicio },
-            originalOrder.usuario_id
+            { servicio: originalorder.servicio },
+            originalorder.usuario_id
           );
         }
       } catch (notificationError) {
@@ -125,42 +125,42 @@ exports.updateOrder = async (req, res) => {
       }
     }
 
-    res.json(updatedOrder);
+    res.json(updatedorder);
   } catch (err) {
     console.error(`Error updating order with id ${id}:`, err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// Cancelar un pedido (cliente)
-exports.cancelOrderClient = async (req, res) => {
+// Cancelar un order (cliente)
+exports.cancelorderClient = async (req, res) => {
   const { id } = req.params;
   try {
-    const canceledOrder = await orderService.cancelOrderClient(id, req.user.id);
-    res.json(canceledOrder);
+    const canceledorder = await orderservice.cancelorderClient(id, req.user.id);
+    res.json(canceledorder);
   } catch (err) {
     console.error(`Error canceling order with id ${id} by client ${req.user.id}:`, err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// Reanudar un pedido (cliente)
-exports.resumeOrderClient = async (req, res) => {
+// Reanudar un order (cliente)
+exports.resumeorderClient = async (req, res) => {
   const { id } = req.params;
   try {
-    const resumedOrder = await orderService.resumeOrderClient(id, req.user.id);
-    res.json(resumedOrder);
+    const resumedorder = await orderservice.resumeorderClient(id, req.user.id);
+    res.json(resumedorder);
   } catch (err) {
     console.error(`Error resuming order with id ${id} by client ${req.user.id}:`, err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// Eliminar un pedido
-exports.deleteOrder = async (req, res) => {
+// Eliminar un order
+exports.deleteorder = async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await orderService.deleteOrder(id);
+    const result = await orderservice.deleteorder(id);
     res.status(200).json(result);
   } catch (err) {
     console.error(`Error deleting order with id ${id}:`, err);

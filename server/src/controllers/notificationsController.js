@@ -6,7 +6,7 @@ const getNotifications = async (req, res) => {
     const userId = req.user.id;
     
     const [notifications] = await pool.execute(
-      'SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY created_at DESC',
+      'SELECT * FROM notificaciones WHERE usuario_id = ? order BY created_at DESC',
       [userId]
     );
     

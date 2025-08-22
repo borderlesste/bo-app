@@ -15,7 +15,7 @@ const getMonthlyStats = async (req, res) => {
         proyectos_iniciados as active_projects,
         proyectos_completados as completed_projects,
         cotizaciones_enviadas as pending_quotes,
-        pedidos_nuevos as total_orders,
+        orders_nuevos as total_orders,
         created_at
       FROM estadisticas_mensuales 
     `;
@@ -27,7 +27,7 @@ const getMonthlyStats = async (req, res) => {
       params.push(parseInt(year));
     }
     
-    query += ' ORDER BY anio DESC, mes DESC';
+    query += ' order BY anio DESC, mes DESC';
     
     if (months && !year) {
       query += ' LIMIT ?';
@@ -46,7 +46,7 @@ const getMonthlyStats = async (req, res) => {
       activeProjects: row.active_projects,
       completedProjects: row.completed_projects,
       pendingQuotes: row.pending_quotes,
-      totalOrders: row.total_orders,
+      totalorders: row.total_orders,
       date: row.created_at
     }));
     
@@ -90,7 +90,7 @@ const getGrowthStats = async (req, res) => {
           WHERE ms3.anio = ms1.anio AND ms3.mes <= ms1.mes
         ) as yearly_revenue
       FROM estadisticas_mensuales ms1
-      ORDER BY anio DESC, mes DESC
+      order BY anio DESC, mes DESC
       LIMIT ?
     `, [parseInt(months)]);
     
@@ -132,11 +132,11 @@ const getYearlyStats = async (req, res) => {
         AVG(proyectos_iniciados) as avg_active_projects,
         SUM(proyectos_completados) as total_completed_projects,
         SUM(cotizaciones_enviadas) as total_pending_quotes,
-        SUM(pedidos_nuevos) as total_orders,
+        SUM(orders_nuevos) as total_orders,
         COUNT(*) as months_recorded
       FROM estadisticas_mensuales
       GROUP BY anio
-      ORDER BY anio DESC
+      order BY anio DESC
     `);
     
     const formattedData = rows.map(row => ({
@@ -146,7 +146,7 @@ const getYearlyStats = async (req, res) => {
       avgActiveProjects: Math.round(row.avg_active_projects),
       totalCompletedProjects: row.total_completed_projects,
       totalPendingQuotes: row.total_pending_quotes,
-      totalOrders: row.total_orders,
+      totalorders: row.total_orders,
       monthsRecorded: row.months_recorded,
       avgMonthlyRevenue: parseFloat(row.total_revenue) / row.months_recorded
     }));
@@ -169,7 +169,7 @@ const getYearlyStats = async (req, res) => {
 // Crear o actualizar estadísticas de un mes específico
 const updateMonthlyStats = async (req, res) => {
   try {
-    const { year, month, revenue, newClients, activeProjects, completedProjects, pendingQuotes, totalOrders } = req.body;
+    const { year, month, revenue, newClients, activeProjects, completedProjects, pendingQuotes, totalorders } = req.body;
     
     if (!year || !month) {
       return res.status(400).json({
@@ -179,7 +179,7 @@ const updateMonthlyStats = async (req, res) => {
     }
     
     const [result] = await pool.execute(`
-      INSERT INTO estadisticas_mensuales (anio, mes, total_ingresos, nuevos_usuarios, proyectos_iniciados, proyectos_completados, cotizaciones_enviadas, pedidos_nuevos)
+      INSERT INTO estadisticas_mensuales (anio, mes, total_ingresos, nuevos_usuarios, proyectos_iniciados, proyectos_completados, cotizaciones_enviadas, orders_nuevos)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         total_ingresos = VALUES(total_ingresos),
@@ -187,7 +187,7 @@ const updateMonthlyStats = async (req, res) => {
         proyectos_iniciados = VALUES(proyectos_iniciados),
         proyectos_completados = VALUES(proyectos_completados),
         cotizaciones_enviadas = VALUES(cotizaciones_enviadas),
-        pedidos_nuevos = VALUES(pedidos_nuevos),
+        orders_nuevos = VALUES(orders_nuevos),
         updated_at = CURRENT_TIMESTAMP
     `, [
       year, 
@@ -197,7 +197,7 @@ const updateMonthlyStats = async (req, res) => {
       activeProjects || 0, 
       completedProjects || 0, 
       pendingQuotes || 0, 
-      totalOrders || 0
+      totalorders || 0
     ]);
     
     res.json({
@@ -211,7 +211,7 @@ const updateMonthlyStats = async (req, res) => {
         activeProjects: activeProjects || 0,
         completedProjects: completedProjects || 0,
         pendingQuotes: pendingQuotes || 0,
-        totalOrders: totalOrders || 0
+        totalorders: totalorders || 0
       }
     });
   } catch (error) {

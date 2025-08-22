@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getPayments, getOrders, getUsers, getQuotes } from '../api/axios';
+import { getPayments, getorders, getUsers, getQuotes } from '../api/axios';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -25,7 +25,7 @@ import {
 const FinanceReportsPage = ({ showNavigation = true }) => {
   const { user } = useAuth();
   const [payments, setPayments] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [orders, setorders] = useState([]);
   const [clients, setClients] = useState([]);
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ const FinanceReportsPage = ({ showNavigation = true }) => {
       setLoading(true);
       const [paymentsRes, ordersRes, usersRes, quotesRes] = await Promise.all([
         getPayments(),
-        getOrders(),
+        getorders(),
         getUsers(),
         getQuotes()
       ]);
@@ -51,7 +51,7 @@ const FinanceReportsPage = ({ showNavigation = true }) => {
         setPayments(paymentsRes.data.data);
       }
       if (ordersRes.data.success) {
-        setOrders(ordersRes.data.data);
+        setorders(ordersRes.data.data);
       }
       if (usersRes.data.success) {
         setClients(usersRes.data.data.filter(user => user.rol !== 'admin'));
@@ -124,26 +124,26 @@ const FinanceReportsPage = ({ showNavigation = true }) => {
     const previousRevenue = previousPayments.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
     const revenueGrowth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue * 100) : 100;
 
-    const currentOrders = filterByDateRange(orders, 'fecha_creacion');
-    const previousOrders = filterByPreviousDateRange(orders, 'fecha_creacion');
-    const ordersGrowth = previousOrders.length > 0 ? ((currentOrders.length - previousOrders.length) / previousOrders.length * 100) : 100;
+    const currentorders = filterByDateRange(orders, 'fecha_creacion');
+    const previousorders = filterByPreviousDateRange(orders, 'fecha_creacion');
+    const ordersGrowth = previousorders.length > 0 ? ((currentorders.length - previousorders.length) / previousorders.length * 100) : 100;
 
     const currentClients = filterByDateRange(clients);
     const previousClients = filterByPreviousDateRange(clients);
     const clientsGrowth = previousClients.length > 0 ? ((currentClients.length - previousClients.length) / previousClients.length * 100) : 100;
 
-    const avgOrderValue = currentOrders.length > 0 ? currentRevenue / currentOrders.length : 0;
-    const conversionRate = quotes.length > 0 ? (currentOrders.length / quotes.length * 100) : 0;
+    const avgorderValue = currentorders.length > 0 ? currentRevenue / currentorders.length : 0;
+    const conversionRate = quotes.length > 0 ? (currentorders.length / quotes.length * 100) : 0;
 
     return {
       currentRevenue,
       previousRevenue,
       revenueGrowth: Math.round(revenueGrowth * 100) / 100,
-      currentOrders: currentOrders.length,
+      currentorders: currentorders.length,
       ordersGrowth: Math.round(ordersGrowth * 100) / 100,
       currentClients: currentClients.length,
       clientsGrowth: Math.round(clientsGrowth * 100) / 100,
-      avgOrderValue: Math.round(avgOrderValue * 100) / 100,
+      avgorderValue: Math.round(avgorderValue * 100) / 100,
       conversionRate: Math.round(conversionRate * 100) / 100
     };
   };
@@ -212,7 +212,7 @@ const FinanceReportsPage = ({ showNavigation = true }) => {
         return paymentDate >= monthStart && paymentDate <= monthEnd;
       });
       
-      const monthOrders = orders.filter(order => {
+      const monthorders = orders.filter(order => {
         const orderDate = new Date(order.fecha_creacion);
         return orderDate >= monthStart && orderDate <= monthEnd;
       });
@@ -220,7 +220,7 @@ const FinanceReportsPage = ({ showNavigation = true }) => {
       months.push({
         month: date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' }),
         revenue: monthPayments.reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0),
-        orders: monthOrders.length,
+        orders: monthorders.length,
         payments: monthPayments.length
       });
     }
@@ -280,17 +280,17 @@ MÉTRICAS PRINCIPALES
 ====================
 • Ingresos Actuales: ${formatCurrency(metrics.currentRevenue)}
 • Crecimiento de Ingresos: ${metrics.revenueGrowth > 0 ? '+' : ''}${metrics.revenueGrowth}%
-• Pedidos: ${metrics.currentOrders}
-• Crecimiento de Pedidos: ${metrics.ordersGrowth > 0 ? '+' : ''}${metrics.ordersGrowth}%
+• orders: ${metrics.currentorders}
+• Crecimiento de orders: ${metrics.ordersGrowth > 0 ? '+' : ''}${metrics.ordersGrowth}%
 • Nuevos Clientes: ${metrics.currentClients}
 • Crecimiento de Clientes: ${metrics.clientsGrowth > 0 ? '+' : ''}${metrics.clientsGrowth}%
-• Valor Promedio por Pedido: ${formatCurrency(metrics.avgOrderValue)}
+• Valor Promedio por order: ${formatCurrency(metrics.avgorderValue)}
 • Tasa de Conversión: ${metrics.conversionRate}%
 
 ANÁLISIS MENSUAL
 ================
 ${monthlyData.map(month => 
-  `${month.month}: ${formatCurrency(month.revenue)} (${month.orders} pedidos, ${month.payments} pagos)`
+  `${month.month}: ${formatCurrency(month.revenue)} (${month.orders} orders, ${month.payments} pagos)`
 ).join('\n')}
 
 MÉTODOS DE PAGO
@@ -337,8 +337,8 @@ Pago Promedio: ${formatCurrency(client.avgPayment)}
 MÉTRICAS ADICIONALES
 ====================
 • Contribución a ingresos totales: ${((client.total / calculateFinancialMetrics().currentRevenue) * 100).toFixed(2)}%
-• Frecuencia de pago: ${(client.payments / metrics.currentOrders * 100).toFixed(1)}% de todos los pedidos
-• Clasificación: ${client.total > metrics.avgOrderValue * 5 ? 'Cliente Premium' : client.total > metrics.avgOrderValue * 2 ? 'Cliente Valioso' : 'Cliente Regular'}
+• Frecuencia de pago: ${(client.payments / metrics.currentorders * 100).toFixed(1)}% de todos los orders
+• Clasificación: ${client.total > metrics.avgorderValue * 5 ? 'Cliente Premium' : client.total > metrics.avgorderValue * 2 ? 'Cliente Valioso' : 'Cliente Regular'}
 
 ANÁLISIS
 ========
@@ -346,9 +346,9 @@ ${client.payments === 1 ?
   'Cliente nuevo con un solo pago realizado.' : 
   `Cliente recurrente con ${client.payments} pagos realizados.`}
 
-${client.avgPayment > metrics.avgOrderValue ? 
-  'Este cliente genera pedidos por encima del promedio.' : 
-  'Este cliente realiza pedidos dentro del rango promedio.'}
+${client.avgPayment > metrics.avgorderValue ? 
+  'Este cliente genera orders por encima del promedio.' : 
+  'Este cliente realiza orders dentro del rango promedio.'}
 
 ---
 Vista previa generada automáticamente
@@ -512,9 +512,9 @@ Vista previa generada automáticamente
               <Package className="w-8 h-8 text-blue-600" />
             </div>
             <div className="text-3xl font-bold text-blue-600 mb-2">
-              {metrics.currentOrders}
+              {metrics.currentorders}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Pedidos</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">orders</div>
             <div className="flex items-center justify-center gap-1 text-xs">
               {metrics.ordersGrowth > 0 ? (
                 <TrendingUp className="w-3 h-3 text-green-500" />
@@ -532,11 +532,11 @@ Vista previa generada automáticamente
               <Target className="w-8 h-8 text-purple-600" />
             </div>
             <div className="text-3xl font-bold text-purple-600 mb-2">
-              {formatCurrency(metrics.avgOrderValue)}
+              {formatCurrency(metrics.avgorderValue)}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Valor Promedio</div>
             <div className="text-xs text-purple-600">
-              por pedido
+              por order
             </div>
           </Card>
 
@@ -549,7 +549,7 @@ Vista previa generada automáticamente
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Conversión</div>
             <div className="text-xs text-orange-600">
-              cotización → pedido
+              cotización → order
             </div>
           </Card>
         </div>
@@ -576,7 +576,7 @@ Vista previa generada automáticamente
                       <p className="font-medium text-gray-800 dark:text-gray-100">
                         {formatCurrency(month.revenue)}
                       </p>
-                      <p className="text-xs text-gray-500">{month.orders} pedidos, {month.payments} pagos</p>
+                      <p className="text-xs text-gray-500">{month.orders} orders, {month.payments} pagos</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -686,8 +686,8 @@ Vista previa generada automáticamente
                 <span className="font-medium">{formatCurrency(metrics.currentRevenue)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Pedidos:</span>
-                <span className="font-medium">{metrics.currentOrders}</span>
+                <span>orders:</span>
+                <span className="font-medium">{metrics.currentorders}</span>
               </div>
               <div className="flex justify-between">
                 <span>Nuevos clientes:</span>
@@ -706,7 +706,7 @@ Vista previa generada automáticamente
             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <div className="flex justify-between">
                 <span>Valor promedio:</span>
-                <span className="font-medium">{formatCurrency(metrics.avgOrderValue)}</span>
+                <span className="font-medium">{formatCurrency(metrics.avgorderValue)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tasa conversión:</span>
@@ -735,7 +735,7 @@ Vista previa generada automáticamente
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Pedidos:</span>
+                <span>orders:</span>
                 <span className={`font-medium flex items-center gap-1 ${metrics.ordersGrowth > 0 ? 'text-green-600' : 'text-red-600'}`}>
                   {metrics.ordersGrowth > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {Math.abs(metrics.ordersGrowth)}%

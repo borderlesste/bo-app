@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Skeleton } from '../components';
-import { getOrders, updateOrder, updateOrderStatus, deleteOrder, createOrder, getClients } from '../api/axios';
-import OrdersNavigation from '../components/OrdersNavigation';
-import CreateOrderModal from '../components/CreateOrderModal';
+import { getorders, updateorder, updateorderstatus, deleteorder, createorder, getClients } from '../api/axios';
+import ordersNavigation from '../components/ordersNavigation';
+import CreateorderModal from '../components/CreateorderModal';
 import PropTypes from 'prop-types';
 import { 
   Search, 
@@ -26,14 +26,14 @@ import {
   Package
 } from 'lucide-react';
 
-const OrdersPage = ({ showNavigation = true }) => {
-  const [orders, setOrders] = useState([]);
+const ordersPage = ({ showNavigation = true }) => {
+  const [orders, setorders] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedorder, setSelectedorder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -45,18 +45,18 @@ const OrdersPage = ({ showNavigation = true }) => {
     fecha_entrega_estimada: ''
   });
 
-  // Cargar pedidos y clientes desde la API
+  // Cargar orders y clientes desde la API
   useEffect(() => {
-    fetchOrders();
+    fetchorders();
     fetchClients();
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchorders = async () => {
     try {
       setLoading(true);
-      const response = await getOrders();
+      const response = await getorders();
       if (response.data.success) {
-        setOrders(response.data.data);
+        setorders(response.data.data);
       }
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -76,11 +76,11 @@ const OrdersPage = ({ showNavigation = true }) => {
     }
   };
 
-  const handleCreateOrder = async (orderData) => {
+  const handleCreateorder = async (orderData) => {
     try {
-      const response = await createOrder(orderData);
+      const response = await createorder(orderData);
       if (response.data.success) {
-        await fetchOrders(); // Refresh the orders list
+        await fetchorders(); // Refresh the orders list
         return response.data;
       }
     } catch (error) {
@@ -91,9 +91,9 @@ const OrdersPage = ({ showNavigation = true }) => {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const response = await updateOrderStatus(id, newStatus);
+      const response = await updateorderstatus(id, newStatus);
       if (response.data.success) {
-        setOrders(orders.map(order => 
+        setorders(orders.map(order => 
           order.id === id ? { ...order, estado: newStatus } : order
         ));
       }
@@ -104,14 +104,14 @@ const OrdersPage = ({ showNavigation = true }) => {
 
   const handleUpdatePriority = async (id, newPriority) => {
     try {
-      const response = await updateOrder(id, { prioridad: newPriority });
+      const response = await updateorder(id, { prioridad: newPriority });
       if (response.data.success) {
-        setOrders(orders.map(order => 
+        setorders(orders.map(order => 
           order.id === id ? { ...order, prioridad: newPriority } : order
         ));
-        // Update selectedOrder if it's the same order being updated
-        if (selectedOrder && selectedOrder.id === id) {
-          setSelectedOrder({ ...selectedOrder, prioridad: newPriority });
+        // Update selectedorder if it's the same order being updated
+        if (selectedorder && selectedorder.id === id) {
+          setSelectedorder({ ...selectedorder, prioridad: newPriority });
         }
       }
     } catch (error) {
@@ -119,8 +119,8 @@ const OrdersPage = ({ showNavigation = true }) => {
     }
   };
 
-  const handleEditOrder = (order) => {
-    setSelectedOrder(order);
+  const handleEditorder = (order) => {
+    setSelectedorder(order);
     setEditForm({
       descripcion: order.descripcion || '',
       estado: order.estado || '',
@@ -141,26 +141,26 @@ const OrdersPage = ({ showNavigation = true }) => {
 
   const handleSaveEdit = async () => {
     try {
-      const response = await updateOrder(selectedOrder.id, editForm);
+      const response = await updateorder(selectedorder.id, editForm);
       if (response.data.success) {
-        setOrders(orders.map(order => 
-          order.id === selectedOrder.id ? { ...order, ...editForm } : order
+        setorders(orders.map(order => 
+          order.id === selectedorder.id ? { ...order, ...editForm } : order
         ));
         setShowEditModal(false);
-        setSelectedOrder(null);
+        setSelectedorder(null);
       }
     } catch (error) {
       console.error('Error updating order:', error);
-      alert('Error al actualizar el pedido');
+      alert('Error al actualizar el order');
     }
   };
 
   const handleDelete = async (id) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este pedido?')) {
+    if (confirm('¿Estás seguro de que quieres eliminar este order?')) {
       try {
-        const response = await deleteOrder(id);
+        const response = await deleteorder(id);
         if (response.data.success) {
-          setOrders(orders.filter(order => order.id !== id));
+          setorders(orders.filter(order => order.id !== id));
         }
       } catch (error) {
         console.error('Error deleting order:', error);
@@ -212,11 +212,11 @@ const OrdersPage = ({ showNavigation = true }) => {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
+  const filteredorders = orders.filter(order => {
     const statusMatch = filter === 'all' || order.estado === filter;
     const priorityMatch = priorityFilter === 'all' || order.prioridad === priorityFilter;
     const searchMatch = searchTerm === '' || 
-      order.numero_pedido?.toString().includes(searchTerm) ||
+      order.numero_order?.toString().includes(searchTerm) ||
       order.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.cliente_nombre?.toLowerCase().includes(searchTerm.toLowerCase());
     return statusMatch && priorityMatch && searchMatch;
@@ -239,11 +239,11 @@ const OrdersPage = ({ showNavigation = true }) => {
     }).format(amount);
   };
 
-  const exportOrders = () => {
-    const dataStr = JSON.stringify(filteredOrders, null, 2);
+  const exportorders = () => {
+    const dataStr = JSON.stringify(filteredorders, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
-    const exportFileDefaultName = `pedidos_${new Date().toISOString().split('T')[0]}.json`;
+    const exportFileDefaultName = `orders_${new Date().toISOString().split('T')[0]}.json`;
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -277,14 +277,14 @@ const OrdersPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <OrdersNavigation />}
+        {showNavigation && <ordersNavigation />}
         
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl lg:text-4xl font-heading font-bold text-gray-800 dark:text-gray-100 mb-4">
-                📦 Gestión de Pedidos
+                📦 Gestión de orders
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
                 Administra todos los proyectos y órdenes de trabajo de tus clientes
@@ -294,7 +294,7 @@ const OrdersPage = ({ showNavigation = true }) => {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={exportOrders}
+                onClick={exportorders}
                 className="flex items-center gap-2"
               >
                 <Download className="w-4 h-4" />
@@ -307,7 +307,7 @@ const OrdersPage = ({ showNavigation = true }) => {
                 className="flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
-                Nuevo Pedido
+                Nuevo order
               </Button>
             </div>
           </div>
@@ -422,16 +422,16 @@ const OrdersPage = ({ showNavigation = true }) => {
           </div>
         </Card>
 
-        {/* Orders List */}
+        {/* orders List */}
         <div className="grid gap-6">
-          {filteredOrders.map((order) => (
+          {filteredorders.map((order) => (
             <Card key={order.id} variant="gradient" hover className="group">
               <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
                       <Package className="w-5 h-5 inline mr-2" />
-                      Pedido #{order.numero_pedido}
+                      order #{order.numero_order}
                     </h3>
                     <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.estado)}`}>
                       {getStatusIcon(order.estado)}
@@ -488,7 +488,7 @@ const OrdersPage = ({ showNavigation = true }) => {
                     size="sm" 
                     className="w-full flex items-center justify-center gap-2"
                     onClick={() => {
-                      setSelectedOrder(order);
+                      setSelectedorder(order);
                       setShowModal(true);
                     }}
                   >
@@ -500,7 +500,7 @@ const OrdersPage = ({ showNavigation = true }) => {
                     variant="secondary" 
                     size="sm" 
                     className="w-full flex items-center justify-center gap-2"
-                    onClick={() => handleEditOrder(order)}
+                    onClick={() => handleEditorder(order)}
                   >
                     <Edit className="w-4 h-4" />
                     Editar
@@ -581,28 +581,28 @@ const OrdersPage = ({ showNavigation = true }) => {
         </div>
 
         {/* Empty State */}
-        {filteredOrders.length === 0 && (
+        {filteredorders.length === 0 && (
           <Card variant="gradient" className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Package className="w-16 h-16 mx-auto" />
             </div>
             <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              No hay pedidos
+              No hay orders
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              No se encontraron pedidos que coincidan con los filtros seleccionados
+              No se encontraron orders que coincidan con los filtros seleccionados
             </p>
           </Card>
         )}
 
-        {/* Order Details Modal */}
-        {showModal && selectedOrder && (
+        {/* order Details Modal */}
+        {showModal && selectedorder && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                    Detalles del Pedido #{selectedOrder.numero_pedido}
+                    Detalles del order #{selectedorder.numero_order}
                   </h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -616,27 +616,27 @@ const OrdersPage = ({ showNavigation = true }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Número de Pedido
+                        Número de order
                       </label>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">#{selectedOrder.numero_pedido}</p>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">#{selectedorder.numero_order}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Estado Actual
                       </label>
                       <div className="flex gap-2 items-center">
-                        <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedOrder.estado)}`}>
-                          {getStatusIcon(selectedOrder.estado)}
-                          {selectedOrder.estado}
+                        <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedorder.estado)}`}>
+                          {getStatusIcon(selectedorder.estado)}
+                          {selectedorder.estado}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(selectedOrder.prioridad)}`}>
-                            {getPriorityIcon(selectedOrder.prioridad)}
-                            {selectedOrder.prioridad}
+                          <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(selectedorder.prioridad)}`}>
+                            {getPriorityIcon(selectedorder.prioridad)}
+                            {selectedorder.prioridad}
                           </span>
                           <select
-                            value={selectedOrder.prioridad}
-                            onChange={(e) => handleUpdatePriority(selectedOrder.id, e.target.value)}
+                            value={selectedorder.prioridad}
+                            onChange={(e) => handleUpdatePriority(selectedorder.id, e.target.value)}
                             className="ml-2 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-1 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
                             title="Cambiar prioridad"
                           >
@@ -652,36 +652,36 @@ const OrdersPage = ({ showNavigation = true }) => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Cliente
                       </label>
-                      <p className="text-gray-900 dark:text-gray-100">{selectedOrder.cliente_nombre || 'No especificado'}</p>
+                      <p className="text-gray-900 dark:text-gray-100">{selectedorder.cliente_nombre || 'No especificado'}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Valor del Proyecto
                       </label>
                       <div>
-                        {selectedOrder.presupuesto_estimado > 0 && (
-                          <p className="text-lg font-bold text-blue-600">Presupuesto Estimado: {formatCurrency(selectedOrder.presupuesto_estimado)}</p>
+                        {selectedorder.presupuesto_estimado > 0 && (
+                          <p className="text-lg font-bold text-blue-600">Presupuesto Estimado: {formatCurrency(selectedorder.presupuesto_estimado)}</p>
                         )}
-                        {selectedOrder.subtotal > 0 && (
-                          <p className="text-lg font-bold text-gray-600">Subtotal: {formatCurrency(selectedOrder.subtotal)}</p>
+                        {selectedorder.subtotal > 0 && (
+                          <p className="text-lg font-bold text-gray-600">Subtotal: {formatCurrency(selectedorder.subtotal)}</p>
                         )}
-                        {selectedOrder.descuento > 0 && (
-                          <p className="text-sm text-gray-500">Descuento: {formatCurrency(selectedOrder.descuento)}</p>
+                        {selectedorder.descuento > 0 && (
+                          <p className="text-sm text-gray-500">Descuento: {formatCurrency(selectedorder.descuento)}</p>
                         )}
-                        {selectedOrder.iva > 0 && (
-                          <p className="text-sm text-gray-500">IVA: {formatCurrency(selectedOrder.iva)}</p>
+                        {selectedorder.iva > 0 && (
+                          <p className="text-sm text-gray-500">IVA: {formatCurrency(selectedorder.iva)}</p>
                         )}
-                        {selectedOrder.total > 0 && (
-                          <p className="text-2xl font-bold text-green-600">Total: {formatCurrency(selectedOrder.total)}</p>
+                        {selectedorder.total > 0 && (
+                          <p className="text-2xl font-bold text-green-600">Total: {formatCurrency(selectedorder.total)}</p>
                         )}
-                        {selectedOrder.anticipo > 0 && (
-                          <p className="text-md text-blue-600">Anticipo: {formatCurrency(selectedOrder.anticipo)}</p>
+                        {selectedorder.anticipo > 0 && (
+                          <p className="text-md text-blue-600">Anticipo: {formatCurrency(selectedorder.anticipo)}</p>
                         )}
-                        {selectedOrder.saldo_pendiente > 0 && (
-                          <p className="text-md text-orange-600">Saldo: {formatCurrency(selectedOrder.saldo_pendiente)}</p>
+                        {selectedorder.saldo_pendiente > 0 && (
+                          <p className="text-md text-orange-600">Saldo: {formatCurrency(selectedorder.saldo_pendiente)}</p>
                         )}
-                        {(!selectedOrder.presupuesto_estimado || selectedOrder.presupuesto_estimado === 0) && 
-                         (!selectedOrder.total || selectedOrder.total === 0) && (
+                        {(!selectedorder.presupuesto_estimado || selectedorder.presupuesto_estimado === 0) && 
+                         (!selectedorder.total || selectedorder.total === 0) && (
                           <p className="text-lg text-gray-500">Sin valor especificado</p>
                         )}
                       </div>
@@ -690,23 +690,23 @@ const OrdersPage = ({ showNavigation = true }) => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Fecha de Inicio
                       </label>
-                      <p className="text-gray-900 dark:text-gray-100">{formatDate(selectedOrder.fecha_inicio)}</p>
+                      <p className="text-gray-900 dark:text-gray-100">{formatDate(selectedorder.fecha_inicio)}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Fecha de Entrega
                       </label>
                       <p className="text-gray-900 dark:text-gray-100">
-                        {selectedOrder.fecha_entrega_deseada && (
-                          <>Deseada por cliente: {formatDate(selectedOrder.fecha_entrega_deseada)}<br/></>
+                        {selectedorder.fecha_entrega_deseada && (
+                          <>Deseada por cliente: {formatDate(selectedorder.fecha_entrega_deseada)}<br/></>
                         )}
-                        {selectedOrder.fecha_entrega_estimada && (
-                          <>Estimada por admin: {formatDate(selectedOrder.fecha_entrega_estimada)}<br/></>
+                        {selectedorder.fecha_entrega_estimada && (
+                          <>Estimada por admin: {formatDate(selectedorder.fecha_entrega_estimada)}<br/></>
                         )}
-                        {selectedOrder.fecha_entrega_real && (
-                          <>Real: {formatDate(selectedOrder.fecha_entrega_real)}</>
+                        {selectedorder.fecha_entrega_real && (
+                          <>Real: {formatDate(selectedorder.fecha_entrega_real)}</>
                         )}
-                        {!selectedOrder.fecha_entrega_deseada && !selectedOrder.fecha_entrega_estimada && !selectedOrder.fecha_entrega_real && (
+                        {!selectedorder.fecha_entrega_deseada && !selectedorder.fecha_entrega_estimada && !selectedorder.fecha_entrega_real && (
                           <span className="text-gray-500">No especificada</span>
                         )}
                       </p>
@@ -715,33 +715,33 @@ const OrdersPage = ({ showNavigation = true }) => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Descripción del Pedido
+                      Descripción del order
                     </label>
                     <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
-                      <p className="text-gray-900 dark:text-gray-100 leading-relaxed">{selectedOrder.descripcion}</p>
+                      <p className="text-gray-900 dark:text-gray-100 leading-relaxed">{selectedorder.descripcion}</p>
                     </div>
                   </div>
 
                   <div className="flex gap-3 pt-4 border-t">
-                    {selectedOrder.estado === 'nuevo' && (
+                    {selectedorder.estado === 'nuevo' && (
                       <Button 
                         variant="success" 
                         className="flex items-center gap-2"
                         onClick={() => {
-                          handleUpdateStatus(selectedOrder.id, 'confirmado');
+                          handleUpdateStatus(selectedorder.id, 'confirmado');
                           setShowModal(false);
                         }}
                       >
                         <CheckCircle className="w-4 h-4" />
-                        Confirmar Pedido
+                        Confirmar order
                       </Button>
                     )}
-                    {selectedOrder.estado === 'confirmado' && (
+                    {selectedorder.estado === 'confirmado' && (
                       <Button 
                         variant="success" 
                         className="flex items-center gap-2"
                         onClick={() => {
-                          handleUpdateStatus(selectedOrder.id, 'en_proceso');
+                          handleUpdateStatus(selectedorder.id, 'en_proceso');
                           setShowModal(false);
                         }}
                       >
@@ -749,13 +749,13 @@ const OrdersPage = ({ showNavigation = true }) => {
                         Iniciar Proyecto
                       </Button>
                     )}
-                    {selectedOrder.estado === 'en_proceso' && (
+                    {selectedorder.estado === 'en_proceso' && (
                       <>
                         <Button 
                           variant="secondary" 
                           className="flex items-center gap-2"
                           onClick={() => {
-                            handleUpdateStatus(selectedOrder.id, 'en_pausa');
+                            handleUpdateStatus(selectedorder.id, 'en_pausa');
                             setShowModal(false);
                           }}
                         >
@@ -766,7 +766,7 @@ const OrdersPage = ({ showNavigation = true }) => {
                           variant="success" 
                           className="flex items-center gap-2"
                           onClick={() => {
-                            handleUpdateStatus(selectedOrder.id, 'completado');
+                            handleUpdateStatus(selectedorder.id, 'completado');
                             setShowModal(false);
                           }}
                         >
@@ -775,12 +775,12 @@ const OrdersPage = ({ showNavigation = true }) => {
                         </Button>
                       </>
                     )}
-                    {selectedOrder.estado === 'en_pausa' && (
+                    {selectedorder.estado === 'en_pausa' && (
                       <Button 
                         variant="success" 
                         className="flex items-center gap-2"
                         onClick={() => {
-                          handleUpdateStatus(selectedOrder.id, 'en_proceso');
+                          handleUpdateStatus(selectedorder.id, 'en_proceso');
                           setShowModal(false);
                         }}
                       >
@@ -793,11 +793,11 @@ const OrdersPage = ({ showNavigation = true }) => {
                       className="flex items-center gap-2"
                       onClick={() => {
                         setShowModal(false);
-                        handleEditOrder(selectedOrder);
+                        handleEditorder(selectedorder);
                       }}
                     >
                       <Edit className="w-4 h-4" />
-                      Editar Pedido
+                      Editar order
                     </Button>
                     <Button 
                       variant="ghost" 
@@ -813,13 +813,13 @@ const OrdersPage = ({ showNavigation = true }) => {
         )}
 
         {/* Modal de Edición */}
-        {showEditModal && selectedOrder && (
+        {showEditModal && selectedorder && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                    Editar Pedido #{selectedOrder.numero_pedido}
+                    Editar order #{selectedorder.numero_order}
                   </h2>
                   <button 
                     onClick={() => setShowEditModal(false)}
@@ -935,11 +935,11 @@ const OrdersPage = ({ showNavigation = true }) => {
           </div>
         )}
 
-        {/* Create Order Modal */}
-        <CreateOrderModal
+        {/* Create order Modal */}
+        <CreateorderModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onSave={handleCreateOrder}
+          onSave={handleCreateorder}
           clients={clients}
         />
       </div>
@@ -948,8 +948,8 @@ const OrdersPage = ({ showNavigation = true }) => {
 };
 
 // Props validation
-OrdersPage.propTypes = {
+ordersPage.propTypes = {
   showNavigation: PropTypes.bool
 };
 
-export default OrdersPage;
+export default ordersPage;

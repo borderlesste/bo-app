@@ -109,7 +109,7 @@ async function createSampleUsers() {
     const [finalUsers] = await pool.execute(`
       SELECT id, nombre, email, rol, estado, telefono, empresa, created_at 
       FROM usuarios 
-      ORDER BY id ASC
+      order BY id ASC
     `);
     
     console.log('\n📊 Usuarios creados exitosamente:');

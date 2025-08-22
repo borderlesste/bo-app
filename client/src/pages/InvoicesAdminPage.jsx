@@ -52,7 +52,7 @@ const InvoicesAdminPage = () => {
         estado: statusFilter === 'all' ? undefined : statusFilter,
         usuario_id: clientFilter === 'all' ? undefined : clientFilter,
         sortBy: 'created_at',
-        sortOrder: 'DESC'
+        sortorder: 'DESC'
       };
 
       const response = await getAdminInvoices(params);

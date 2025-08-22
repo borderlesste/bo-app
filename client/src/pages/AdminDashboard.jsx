@@ -33,9 +33,9 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  createOrder,
-  updateOrder,
-  deleteOrder,
+  createorder,
+  updateorder,
+  deleteorder,
   createAdminPayment,
   updateAdminPayment,
   deletePayment,
@@ -47,11 +47,11 @@ import {
   getFinancialSummary
 } from '../api/axios';
 import UserModal from '../components/UserModal';
-import OrderModal from '../components/OrderModal';
+import orderModal from '../components/orderModal';
 import PaymentModal from '../components/PaymentModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import QuotesPage from './QuotesPage';
-import OrdersPage from './OrdersPage';
+import ordersPage from './ordersPage';
 import HistoryPage from './HistoryPage';
 import ClientsViewPage from './ClientsViewPage';
 import ClientsNewPage from './ClientsNewPage';
@@ -82,14 +82,14 @@ const AdminDashboard = () => {
 
   // CRUD Data States
   const [clientes] = useState([]);
-  const [pedidos] = useState([]);
+  const [orders] = useState([]);
   const [pagos] = useState([]);
 
   // Modal States
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isOrderModalOpen, setOrderModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isorderModalOpen, setorderModalOpen] = useState(false);
+  const [selectedorder, setSelectedorder] = useState(null);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isChangePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
@@ -105,8 +105,8 @@ const AdminDashboard = () => {
     if (['dashboard', 'overview', 'analytics', 'quick-stats'].includes(optionId)) {
       setActiveTab(optionId);
     }
-    // Si es una opción de Pedidos y Cotizaciones, cambiar a la pestaña correspondiente
-    if (['cotizaciones', 'pedidos', 'historial'].includes(optionId)) {
+    // Si es una opción de orders y Cotizaciones, cambiar a la pestaña correspondiente
+    if (['cotizaciones', 'orders', 'historial'].includes(optionId)) {
       setActiveTab(optionId);
     }
     // Si es una opción de Gestión de Clientes, cambiar a la pestaña correspondiente
@@ -283,36 +283,36 @@ const AdminDashboard = () => {
     }
   };
 
-  // Order Handlers
-  const handleOpenOrderModal = (order = null) => {
-    setSelectedOrder(order);
-    setOrderModalOpen(true);
+  // order Handlers
+  const handleOpenorderModal = (order = null) => {
+    setSelectedorder(order);
+    setorderModalOpen(true);
   };
-  const handleCloseOrderModal = () => {
-    setSelectedOrder(null);
-    setOrderModalOpen(false);
+  const handleCloseorderModal = () => {
+    setSelectedorder(null);
+    setorderModalOpen(false);
   };
-  const handleSaveOrder = async (orderData) => {
+  const handleSaveorder = async (orderData) => {
     try {
-      if (selectedOrder) {
-        await updateOrder(selectedOrder.id, orderData);
+      if (selectedorder) {
+        await updateorder(selectedorder.id, orderData);
       } else {
-        await createOrder(orderData);
+        await createorder(orderData);
       }
       await fetchAllData();
     } catch (error) {
-      console.error("Error al guardar el pedido:", error);
+      console.error("Error al guardar el order:", error);
       throw error;
     }
   };
-  const handleDeleteOrder = async (orderId) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este pedido?")) {
+  const handleDeleteorder = async (orderId) => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar este order?")) {
       try {
-        await deleteOrder(orderId);
+        await deleteorder(orderId);
         await fetchAllData();
       } catch (error) {
-        console.error("Error al eliminar el pedido:", error);
-        setError("No se pudo eliminar el pedido.");
+        console.error("Error al eliminar el order:", error);
+        setError("No se pudo eliminar el order.");
       }
     }
   };
@@ -410,8 +410,8 @@ const AdminDashboard = () => {
       case 'clientes':
         handleOpenUserModal();
         break;
-      case 'pedidos':
-        handleOpenOrderModal();
+      case 'orders':
+        handleOpenorderModal();
         break;
       case 'pagos':
         handleOpenPaymentModal();
@@ -429,8 +429,8 @@ const AdminDashboard = () => {
         handleOpenUserModal();
         break;
       case 'new_order':
-        setActiveTab('pedidos');
-        handleOpenOrderModal();
+        setActiveTab('orders');
+        handleOpenorderModal();
         break;
       case 'new_payment':
         setActiveTab('pagos');
@@ -450,12 +450,12 @@ const AdminDashboard = () => {
   };
 
   // Calculated values for AdminPanel dashboard
-  const completedOrdersCount = pedidos.filter(p => p.estado?.toLowerCase() === 'completado').length;
+  const completedordersCount = orders.filter(p => p.estado?.toLowerCase() === 'completado').length;
   const totalIncome = pagos.reduce((sum, p) => 
     p.estado?.toLowerCase() === 'pagado' ? sum + parseFloat(p.monto || 0) : sum, 
     0
   );
-  const pendingOrdersCount = pedidos.filter(p => p.estado?.toLowerCase() === 'pendiente').length;
+  const pendingordersCount = orders.filter(p => p.estado?.toLowerCase() === 'pendiente').length;
 
   if (loading) {
     return (
@@ -590,7 +590,7 @@ const AdminDashboard = () => {
                     <option value="inactivo">Inactivo</option>
                   </>
                 )}
-                {activeTab === 'pedidos' && (
+                {activeTab === 'orders' && (
                   <>
                     <option value="pendiente">Pendiente</option>
                     <option value="en_proceso">En Progreso</option>
@@ -771,7 +771,7 @@ const AdminDashboard = () => {
                 <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Métricas de Conversión</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Cotizaciones a Pedidos</span>
+                    <span className="text-gray-600 dark:text-gray-400">Cotizaciones a orders</span>
                     <span className="font-semibold text-green-600">68%</span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -860,8 +860,8 @@ const AdminDashboard = () => {
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Pedidos Completados</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{completedOrdersCount}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">orders Completados</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{completedordersCount}</p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-blue-500" />
                 </div>
@@ -878,8 +878,8 @@ const AdminDashboard = () => {
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Pedidos Pendientes</p>
-                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{pendingOrdersCount}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">orders Pendientes</p>
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{pendingordersCount}</p>
                   </div>
                   <AlertCircle className="w-8 h-8 text-orange-500" />
                 </div>
@@ -960,7 +960,7 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {activeTab === "pedidos" && (
+          {activeTab === "orders" && (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700">
@@ -975,43 +975,43 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filterData(pedidos, ['cliente_nombre', 'descripcion']).map((pedido) => (
-                    <tr key={pedido.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  {filterData(orders, ['cliente_nombre', 'descripcion']).map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                       <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{pedido.cliente_nombre}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{order.cliente_nombre}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 dark:text-white">{pedido.descripcion}</div>
+                          <div className="text-sm text-gray-900 dark:text-white">{order.descripcion}</div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {getStatusIcon(pedido.estado)}
-                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(pedido.estado)}`}>
-                              {pedido.estado}
+                            {getStatusIcon(order.estado)}
+                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.estado)}`}>
+                              {order.estado}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className={`w-2 h-2 rounded-full mr-2 ${getPriorityColor(pedido.prioridad)}`}></div>
-                            <span className="text-sm text-gray-600 dark:text-gray-300">{pedido.prioridad}</span>
+                            <div className={`w-2 h-2 rounded-full mr-2 ${getPriorityColor(order.prioridad)}`}></div>
+                            <span className="text-sm text-gray-600 dark:text-gray-300">{order.prioridad}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">${pedido.valor?.toLocaleString()}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">${order.valor?.toLocaleString()}</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(pedido.fecha_creacion).toLocaleDateString()}
+                            {new Date(order.fecha_creacion).toLocaleDateString()}
                           </div>
                         </td>
                       <td className="px-6 py-4">
                         <div className="flex space-x-2">
-                          <button onClick={() => handleOpenOrderModal(pedido)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
+                          <button onClick={() => handleOpenorderModal(order)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
                             <Edit3 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDeleteOrder(pedido.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                          <button onClick={() => handleDeleteorder(order.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -1180,10 +1180,10 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* Pedidos Tab */}
-          {activeTab === "pedidos" && (
+          {/* orders Tab */}
+          {activeTab === "orders" && (
             <div>
-              <OrdersPage showNavigation={false} />
+              <ordersPage showNavigation={false} />
             </div>
           )}
 
@@ -1288,8 +1288,8 @@ const AdminDashboard = () => {
 
         {/* Modals */}
         <UserModal isOpen={isUserModalOpen} onClose={handleCloseUserModal} onSave={handleSaveUser} user={selectedUser} />
-        <OrderModal isOpen={isOrderModalOpen} onClose={handleCloseOrderModal} onSave={handleSaveOrder} order={selectedOrder} clients={clientes} />
-        <PaymentModal isOpen={isPaymentModalOpen} onClose={handleClosePaymentModal} onSave={handleSavePayment} payment={selectedPayment} clients={clientes} orders={pedidos} />
+        <orderModal isOpen={isorderModalOpen} onClose={handleCloseorderModal} onSave={handleSaveorder} order={selectedorder} clients={clientes} />
+        <PaymentModal isOpen={isPaymentModalOpen} onClose={handleClosePaymentModal} onSave={handleSavePayment} payment={selectedPayment} clients={clientes} orders={orders} />
         <ChangePasswordModal isOpen={isChangePasswordModalOpen} onClose={handleCloseChangePasswordModal} />
       </div>
     </DashboardLayout>

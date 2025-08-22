@@ -6,14 +6,14 @@ class NotificationService {
   }
 
   // Crear notificación general
-  async createNotification(clienteId, tipo, titulo, mensaje, leida = false) {
+  async createNotification(usuarioId, tipo, titulo, mensaje, leida = false) {
     try {
       const [result] = await pool.execute(
         'INSERT INTO notificaciones (usuario_id, tipo, titulo, mensaje, leida, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
-        [clienteId, tipo, titulo, mensaje, leida]
+        [usuarioId, tipo, titulo, mensaje, leida]
       );
 
-      console.log(`✅ Notificación creada: ${tipo} para cliente ${clienteId}`);
+      console.log(`✅ Notificación creada: ${tipo} para usuario ${usuarioId}`);
       return { success: true, notificationId: result.insertId };
     } catch (error) {
       console.error('❌ Error creando notificación:', error);
@@ -26,9 +26,9 @@ class NotificationService {
     return await this.createNotification(2, tipo, titulo, mensaje, false);
   }
 
-  // Notificación para cliente específico
-  async createClientNotification(clienteId, tipo, titulo, mensaje) {
-    return await this.createNotification(clienteId, tipo, titulo, mensaje, false);
+  // Notificación para usuario específico
+  async createUserNotification(usuarioId, tipo, titulo, mensaje) {
+    return await this.createNotification(usuarioId, tipo, titulo, mensaje, false);
   }
 
   // Notificación para nueva cotización
@@ -39,17 +39,17 @@ class NotificationService {
   }
 
   // Notificación para nuevo pago
-  async notifyNewPayment(paymentData, clientName) {
+  async notifyNewPayment(paymentData, userName) {
     const titulo = 'Nuevo Pago';
-    const mensaje = `Nuevo pago recibido de ${clientName} por $${paymentData.monto.toLocaleString('es-MX')}`;
+    const mensaje = `Nuevo pago recibido de ${userName} por $${paymentData.monto.toLocaleString('es-MX')}`;
     return await this.createAdminNotification('nuevo_pago', titulo, mensaje);
   }
 
-  // Notificación para nuevo cliente registrado
-  async notifyNewClient(clientData) {
-    const titulo = 'Nuevo Cliente';
-    const mensaje = `Nuevo cliente registrado: ${clientData.nombre} (${clientData.email})`;
-    return await this.createAdminNotification('nuevo_cliente', titulo, mensaje);
+  // Notificación para nuevo usuario registrado
+  async notifyNewUser(userData) {
+    const titulo = 'Nuevo Usuario';
+    const mensaje = `Nuevo usuario registrado: ${userData.nombre} (${userData.email})`;
+    return await this.createAdminNotification('nuevo_usuario', titulo, mensaje);
   }
 
   // Notificación para nuevo contacto
@@ -59,56 +59,56 @@ class NotificationService {
     return await this.createAdminNotification('nuevo_contacto', titulo, mensaje);
   }
 
-  // Notificaci�n para cambio de estado de pedido
-  async notifyOrderStatusChange(orderData, newStatus, usuarioId) {
-    const mensajeAdmin = `Pedido #${orderData.id} cambi� a estado: ${newStatus}`;
-    const mensajeCliente = `Tu pedido "${orderData.servicio}" ha cambiado a estado: ${newStatus}`;
+  // Notificación para cambio de estado de pedido
+  async notifyOrderStatusChange(pedidoData, newStatus, usuarioId) {
+    const mensajeAdmin = `pedido #${pedidoData.id} cambió a estado: ${newStatus}`;
+    const mensajeUsuario = `Tu pedido "${pedidoData.servicio}" ha cambiado a estado: ${newStatus}`;
 
     // Notificar al admin
     await this.createAdminNotification('cambio_estado_pedido', 'Cambio de Estado', mensajeAdmin);
-    
-    // Notificar al cliente
+
+    // Notificar al usuario
     if (usuarioId && usuarioId !== 1) {
-      await this.createClientNotification(usuarioId, 'estado_pedido', 'Estado de Pedido', mensajeCliente);
+      await this.createUserNotification(usuarioId, 'estado_pedido', 'Estado de pedido', mensajeUsuario);
     }
 
     return { success: true };
   }
 
   // Notificación para pago vencido
-  async notifyOverduePayment(paymentData, clientName) {
+  async notifyOverduePayment(paymentData, userName) {
     const titulo = 'Pago Vencido';
-    const mensaje = `Pago vencido de ${clientName} por $${paymentData.monto.toLocaleString('es-MX')}`;
+    const mensaje = `Pago vencido de ${userName} por $${paymentData.monto.toLocaleString('es-MX')}`;
     return await this.createAdminNotification('pago_vencido', titulo, mensaje);
   }
 
-  // Notificaci�n para proyecto completado
+  // Notificación para proyecto completado
   async notifyProjectCompleted(projectData, usuarioId) {
     const mensajeAdmin = `Proyecto "${projectData.servicio}" marcado como completado`;
-    const mensajeCliente = `Tu proyecto "${projectData.servicio}" ha sido completado`;
+    const mensajeUsuario = `Tu proyecto "${projectData.servicio}" ha sido completado`;
 
     // Notificar al admin
     await this.createAdminNotification('proyecto_completado', 'Proyecto Completado', mensajeAdmin);
     
     // Notificar al cliente
     if (usuarioId && usuarioId !== 1) {
-      await this.createClientNotification(usuarioId, 'proyecto_completado', 'Proyecto Completado', mensajeCliente);
+      await this.createClientNotification(usuarioId, 'proyecto_completado', 'Proyecto Completado', mensajeUsuario);
     }
 
     return { success: true };
   }
 
   // Notificación para cotización convertida a pedido
-  async notifyQuoteConverted(quoteData, orderId) {
+  async notifyQuoteConverted(quoteData, pedido_id) {
     const titulo = 'Cotización Convertida';
-    const mensaje = `Cotización de ${quoteData.nombre} convertida a pedido #${orderId}`;
+    const mensaje = `Cotización de ${quoteData.nombre} convertida a pedido #${pedido_id}`;
     return await this.createAdminNotification('cotizacion_convertida', titulo, mensaje);
   }
 
   // Notificación para nueva factura
-  async notifyNewInvoice(invoiceData, clientName) {
+  async notifyNewInvoice(invoiceData, usuario_nombre) {
     const titulo = 'Nueva Factura';
-    const mensaje = `Nueva factura ${invoiceData.numero_factura} generada para ${clientName} por $${invoiceData.total.toLocaleString('es-MX')}`;
+    const mensaje = `Nueva factura ${invoiceData.numero_factura} generada para ${usuario_nombre} por $${invoiceData.total.toLocaleString('es-MX')}`;
     return await this.createAdminNotification('nueva_factura', titulo, mensaje);
   }
 
@@ -116,7 +116,7 @@ class NotificationService {
   async getUserNotifications(userId, limit = 50) {
     try {
       const [notifications] = await pool.execute(
-        'SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY created_at DESC LIMIT ?',
+        'SELECT * FROM notificaciones WHERE usuario_id = ? order BY created_at DESC LIMIT ?',
         [userId, limit]
       );
 

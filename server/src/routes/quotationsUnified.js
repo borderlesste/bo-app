@@ -8,7 +8,7 @@ const {
   createQuotation,
   updateQuotation,
   deleteQuotation,
-  convertQuotationToOrder,
+  convertQuotationToorder,
   getQuotationStats
 } = require('../controllers/quotationsUnified.js');
 
@@ -89,7 +89,7 @@ router.delete('/:id', [
 router.post('/:id/convert', [
   param('id').isInt({ min: 1 }),
   body('convert_to').isIn(['order', 'project'])
-], handleValidationErrors, convertQuotationToOrder);
+], handleValidationErrors, convertQuotationToorder);
 
 // DEPRECATION NOTICE for legacy routes
 router.all('/legacy-*', (req, res) => {

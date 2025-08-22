@@ -70,7 +70,7 @@ const NotificationsPage = () => {
     switch (tipo) {
       case 'pago_recibido':
         return { icon: '💰', color: 'text-green-600 bg-green-100 dark:bg-green-900/20' };
-      case 'nuevo_pedido':
+      case 'nuevo_order':
         return { icon: '📋', color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20' };
       case 'proyecto_completado':
         return { icon: '✅', color: 'text-green-600 bg-green-100 dark:bg-green-900/20' };
@@ -90,7 +90,7 @@ const NotificationsPage = () => {
   const getNotificationTitle = (tipo) => {
     switch (tipo) {
       case 'pago_recibido': return 'Pago Recibido';
-      case 'nuevo_pedido': return 'Nueva Cotización';
+      case 'nuevo_order': return 'Nueva Cotización';
       case 'proyecto_completado': return 'Proyecto Completado';
       case 'pago_vencido': return 'Pago Vencido';
       case 'mensaje_cliente': return 'Mensaje de Cliente';
@@ -105,7 +105,7 @@ const NotificationsPage = () => {
       case 'unread': return !notification.leida;
       case 'read': return notification.leida;
       case 'payments': return ['pago_recibido', 'pago_vencido', 'pago_pendiente'].includes(notification.tipo);
-      case 'projects': return ['nuevo_pedido', 'proyecto_completado'].includes(notification.tipo);
+      case 'projects': return ['nuevo_order', 'proyecto_completado'].includes(notification.tipo);
       case 'messages': return notification.tipo === 'mensaje_cliente';
       case 'system': return notification.tipo === 'sistema';
       default: return true;

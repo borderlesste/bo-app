@@ -137,9 +137,9 @@ async function insertSampleData(connection) {
       ('Elena Castro', 'elena@example.com', '+52 55 1122 3344', 'Backend & APIs', 'Necesito APIs para conectar mi sistema de inventario', 'Pendiente')
     `);
 
-    // Insertar pedidos de prueba
+    // Insertar orders de prueba
     await connection.execute(`
-      INSERT INTO pedidos (usuario_id, servicio, descripcion, estado, prioridad, total, fecha_entrega_estimada) VALUES 
+      INSERT INTO orders (usuario_id, servicio, descripcion, estado, prioridad, total, fecha_entrega_estimada) VALUES 
       (2, 'Desarrollo Web', 'Sitio web corporativo con panel de administración', 'En progreso', 'Alta', 25000.00, '2024-02-15'),
       (3, 'Apps Móviles', 'Aplicación móvil para delivery', 'Pendiente', 'Media', 45000.00, '2024-03-01'),
       (4, 'Backend & APIs', 'Sistema de APIs RESTful', 'Completado', 'Baja', 18000.00, '2024-01-25')

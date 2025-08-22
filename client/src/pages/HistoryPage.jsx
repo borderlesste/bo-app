@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getQuotes, getOrders, getPayments } from '../api/axios';
-import OrdersNavigation from '../components/OrdersNavigation';
+import { getQuotes, getorders, getPayments } from '../api/axios';
+import ordersNavigation from '../components/ordersNavigation';
 import { 
   Search, 
   Filter, 
@@ -30,7 +30,7 @@ import {
 const HistoryPage = ({ showNavigation = true }) => {
   const { user } = useAuth();
   const [quotes, setQuotes] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [orders, setorders] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -68,7 +68,7 @@ const HistoryPage = ({ showNavigation = true }) => {
       setLoading(true);
       const [quotesRes, ordersRes, paymentsRes] = await Promise.all([
         getQuotes(),
-        getOrders(),
+        getorders(),
         getPayments()
       ]);
 
@@ -76,7 +76,7 @@ const HistoryPage = ({ showNavigation = true }) => {
         setQuotes(quotesRes.data.data);
       }
       if (ordersRes.data.success) {
-        setOrders(ordersRes.data.data);
+        setorders(ordersRes.data.data);
       }
       if (paymentsRes.data.success) {
         setPayments(paymentsRes.data.data);
@@ -110,12 +110,12 @@ const HistoryPage = ({ showNavigation = true }) => {
       });
     });
 
-    // Agregar pedidos
+    // Agregar orders
     orders.forEach(order => {
       items.push({
         id: `order-${order.id}`,
         type: 'order',
-        title: `Pedido #${order.id} - ${order.servicio}`,
+        title: `order #${order.id} - ${order.servicio}`,
         subtitle: `Cliente: ${order.cliente_nombre || 'No especificado'}`,
         description: order.descripcion,
         status: order.estado,
@@ -171,7 +171,7 @@ const HistoryPage = ({ showNavigation = true }) => {
       switch (status.toLowerCase()) {
         case 'pendiente': case 'nuevo': return <Clock className="w-4 h-4" />;
         case 'contactado': return <CheckCircle className="w-4 h-4" />;
-        case 'convertido a pedido': return <ArrowRight className="w-4 h-4" />;
+        case 'convertido a order': return <ArrowRight className="w-4 h-4" />;
         case 'rechazado': return <XCircle className="w-4 h-4" />;
         default: return <AlertCircle className="w-4 h-4" />;
       }
@@ -198,7 +198,7 @@ const HistoryPage = ({ showNavigation = true }) => {
     switch (status.toLowerCase()) {
       case 'pendiente': case 'nuevo': return 'bg-yellow-500 text-white';
       case 'contactado': case 'en_proceso': return 'bg-blue-500 text-white';
-      case 'completado': case 'pagado': case 'convertido a pedido': return 'bg-green-500 text-white';
+      case 'completado': case 'pagado': case 'convertido a order': return 'bg-green-500 text-white';
       case 'cancelado': case 'rechazado': case 'vencido': return 'bg-red-500 text-white';
       default: return 'bg-gray-500 text-white';
     }
@@ -260,7 +260,7 @@ const HistoryPage = ({ showNavigation = true }) => {
         return {
           total: quotes.length,
           pending: quotes.filter(q => q.estado?.toLowerCase() === 'pendiente' || q.estado?.toLowerCase() === 'nuevo').length,
-          completed: quotes.filter(q => q.estado?.toLowerCase() === 'convertido a pedido').length
+          completed: quotes.filter(q => q.estado?.toLowerCase() === 'convertido a order').length
         };
       case 'order':
         return {
@@ -307,7 +307,7 @@ const HistoryPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <OrdersNavigation />}
+        {showNavigation && <ordersNavigation />}
         
         {/* Header */}
         <div className="mb-8">
@@ -317,7 +317,7 @@ const HistoryPage = ({ showNavigation = true }) => {
                 📚 Historial Completo
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
-                Visualiza el historial completo de cotizaciones, pedidos y pagos en una línea de tiempo unificada
+                Visualiza el historial completo de cotizaciones, orders y pagos en una línea de tiempo unificada
               </p>
               {user && (
                 <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -363,7 +363,7 @@ const HistoryPage = ({ showNavigation = true }) => {
             <div className="text-3xl font-bold text-green-600 mb-2">
               {getStatsForType('order').total}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pedidos</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">orders</div>
             <div className="text-xs text-gray-500">
               {getStatsForType('order').pending} pendientes, {getStatsForType('order').completed} completados
             </div>
@@ -432,7 +432,7 @@ const HistoryPage = ({ showNavigation = true }) => {
                 className="flex items-center gap-2"
               >
                 <Package className="w-4 h-4" />
-                Pedidos ({orders.length})
+                orders ({orders.length})
               </Button>
               <Button
                 variant={filter === 'payment' ? 'primary' : 'ghost'}
@@ -591,7 +591,7 @@ const HistoryPage = ({ showNavigation = true }) => {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                     Detalles del {selectedItem.type === 'quote' ? 'Cotización' : 
-                                selectedItem.type === 'order' ? 'Pedido' : 'Pago'}
+                                selectedItem.type === 'order' ? 'order' : 'Pago'}
                   </h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -606,7 +606,7 @@ const HistoryPage = ({ showNavigation = true }) => {
                     <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(selectedItem.type)}`}>
                       {getTypeIcon(selectedItem.type)}
                       {selectedItem.type === 'quote' ? 'Cotización' : 
-                       selectedItem.type === 'order' ? 'Pedido' : 'Pago'}
+                       selectedItem.type === 'order' ? 'order' : 'Pago'}
                     </span>
                     <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedItem.status)}`}>
                       {getStatusIcon(selectedItem.status, selectedItem.type)}

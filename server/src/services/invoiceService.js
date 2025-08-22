@@ -5,7 +5,7 @@ const invoiceService = {
   async getInvoices(userId, role) {
     let query = `
       SELECT 
-        f.id, f.numero_factura, f.usuario_id, f.cliente_nombre, f.cliente_email,
+        f.id, f.numero_factura, f.usuario_id, f.usuario_nombre, f.usuario_email,
         f.pedido_id, f.pago_id, f.concepto, f.subtotal, f.iva, f.total,
         f.estado, f.fecha_emision, f.fecha_vencimiento, f.metodo_pago,
         f.moneda, f.notas, f.referencia_transferencia, f.created_at, f.updated_at,
@@ -21,8 +21,8 @@ const invoiceService = {
       query += ' WHERE f.usuario_id = ?';
       params.push(userId);
     }
-    
-    query += ' ORDER BY f.fecha_emision DESC';
+
+    query += ' pedido BY f.fecha_emision DESC';
 
     const [rows] = await pool.execute(query, params);
     return rows;
@@ -32,7 +32,7 @@ const invoiceService = {
   async getInvoiceById(id) {
     const [rows] = await pool.execute(
       `SELECT 
-        f.id, f.numero_factura, f.usuario_id, f.cliente_nombre, f.cliente_email,
+        f.id, f.numero_factura, f.usuario_id, f.usuario_nombre, f.usuario_email,
         f.pedido_id, f.pago_id, f.concepto, f.subtotal, f.iva, f.total,
         f.estado, f.fecha_emision, f.fecha_vencimiento, f.metodo_pago,
         f.moneda, f.notas, f.referencia_transferencia, f.created_at, f.updated_at,
@@ -57,11 +57,11 @@ const invoiceService = {
     
     // Obtener el último número de factura del año actual
     const [rows] = await pool.execute(
-      'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? ORDER BY numero_factura DESC LIMIT 1',
+      'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? pedido BY numero_factura DESC LIMIT 1',
       [`${prefix}%`]
     );
-    
-    let nextNumber = 1;
+
+    let lastNumber = 0;
     if (rows.length > 0) {
       const lastNumber = rows[0].numero_factura.split('-')[2];
       nextNumber = parseInt(lastNumber) + 1;
@@ -77,18 +77,18 @@ const invoiceService = {
       fecha_vencimiento, metodo_pago, moneda = 'MXN', notas, referencia_transferencia
     } = invoiceData;
 
-    // Obtener datos del cliente
-    const [clientRows] = await pool.execute(
+    // Obtener datos del usuario
+    const [userRows] = await pool.execute(
       'SELECT nombre, email FROM usuarios WHERE id = ?',
       [usuario_id]
     );
-    
-    if (clientRows.length === 0) {
-      throw new Error('Cliente no encontrado');
+
+    if (userRows.length === 0) {
+      throw new Error('Usuario no encontrado');
     }
 
-    const cliente_nombre = clientRows[0].nombre;
-    const cliente_email = clientRows[0].email;
+    const usuario_nombre = userRows[0].nombre;
+    const usuario_email = userRows[0].email;
 
     // Generar número de factura
     const numero_factura = await this.generateInvoiceNumber();
@@ -100,7 +100,7 @@ const invoiceService = {
         moneda, notas, referencia_transferencia
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        numero_factura, usuario_id, cliente_nombre, cliente_email, pedido_id, pago_id,
+        numero_factura, usuario_id, usuario_nombre, usuario_email, pedido_id, pago_id,
         concepto, subtotal, iva, total, fecha_vencimiento, metodo_pago,
         moneda, notas, referencia_transferencia
       ]
@@ -113,31 +113,31 @@ const invoiceService = {
   // Actualizar una factura
   async updateInvoice(id, invoiceData) {
     const {
-      usuario_id, pedido_id, pago_id, concepto, subtotal, iva, total,
+      usuario_id, order_id, pago_id, concepto, subtotal, iva, total,
       estado, fecha_vencimiento, metodo_pago, moneda, notas, referencia_transferencia
     } = invoiceData;
 
-    // Obtener datos del cliente si se cambió el usuario_id
-    let cliente_nombre, cliente_email;
+    // Obtener datos del usuario si se cambió el usuario_id
+    let usuario_nombre, usuario_email;
     if (usuario_id) {
-      const [clientRows] = await pool.execute(
+      const [userRows] = await pool.execute(
         'SELECT nombre, email FROM usuarios WHERE id = ?',
         [usuario_id]
       );
-      
-      if (clientRows.length === 0) {
-        throw new Error('Cliente no encontrado');
+
+      if (userRows.length === 0) {
+        throw new Error('Usuario no encontrado');
       }
-      
-      cliente_nombre = clientRows[0].nombre;
-      cliente_email = clientRows[0].email;
+
+      usuario_nombre = userRows[0].nombre;
+      usuario_email = userRows[0].email;
     }
 
     const [result] = await pool.execute(
       `UPDATE facturas SET 
         usuario_id = COALESCE(?, usuario_id),
-        cliente_nombre = COALESCE(?, cliente_nombre),
-        cliente_email = COALESCE(?, cliente_email),
+        usuario_nombre = COALESCE(?, usuario_nombre),
+        usuario_email = COALESCE(?, usuario_email),
         pedido_id = ?,
         pago_id = ?,
         concepto = COALESCE(?, concepto),
@@ -152,7 +152,7 @@ const invoiceService = {
         referencia_transferencia = ?
        WHERE id = ?`,
       [
-        usuario_id, cliente_nombre, cliente_email, pedido_id, pago_id,
+        usuario_id, usuario_nombre, usuario_email, pedido_id, pago_id,
         concepto, subtotal, iva, total, estado, fecha_vencimiento,
         metodo_pago, moneda, notas, referencia_transferencia, id
       ]
@@ -200,7 +200,7 @@ const invoiceService = {
     // Obtener datos del pago
     const [paymentRows] = await pool.execute(
       `SELECT 
-        p.id, p.usuario_id, p.pedido_id, p.concepto, p.monto, p.metodo_pago,
+        p.id, p.usuario_id, p.order_id, p.concepto, p.monto, p.metodo_pago,
         p.referencia_transferencia, c.nombre, c.email
        FROM pagos p
        JOIN usuarios c ON p.usuario_id = c.id

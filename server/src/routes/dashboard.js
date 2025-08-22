@@ -5,7 +5,10 @@ const {
   getRecentActivity, 
   getTopClients, 
   getChartsData, 
-  getFinancialSummary 
+  getFinancialSummary,
+  getAdvancedMetrics,
+  getTrends,
+  getAlerts
 } = require('../controllers/dashboardController.js');
 const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware.js');
 
@@ -27,5 +30,14 @@ router.get('/charts', getChartsData);
 
 // GET /admin/financial-summary - Obtener resumen financiero detallado
 router.get('/financial-summary', getFinancialSummary);
+
+// GET /admin/advanced-metrics - Obtener métricas avanzadas del negocio
+router.get('/advanced-metrics', getAdvancedMetrics);
+
+// GET /admin/trends - Obtener tendencias y comparaciones
+router.get('/trends', getTrends);
+
+// GET /admin/alerts - Obtener alertas y notificaciones importantes
+router.get('/alerts', getAlerts);
 
 module.exports = router;

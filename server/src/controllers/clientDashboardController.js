@@ -19,7 +19,7 @@ const getClientStats = async (req, res) => {
           SUM(CASE WHEN estado IN ('nuevo', 'en_pausa') THEN 1 ELSE 0 END) as pending,
           COALESCE(AVG(CASE WHEN presupuesto_estimado > 0 THEN presupuesto_estimado END), 0) as averageValue,
           COALESCE(SUM(CASE WHEN presupuesto_estimado > 0 THEN presupuesto_estimado END), 0) as totalValue
-        FROM pedidos 
+        FROM orders 
         WHERE usuario_id = ?
       `, [usuarioId]),
       
@@ -139,7 +139,7 @@ const getClientProjects = async (req, res) => {
     const [projects] = await pool.execute(`
       SELECT 
         id,
-        numero_pedido,
+        numero_order,
         descripcion as name,
         descripcion,
         servicio,
@@ -154,16 +154,16 @@ const getClientProjects = async (req, res) => {
         created_at as date,
         updated_at as deliveryDate,
         notas_adicionales
-      FROM pedidos 
+      FROM orders 
       WHERE usuario_id = ?
-      ORDER BY created_at DESC
+      order BY created_at DESC
       LIMIT 20
     `, [usuarioId]);
 
     // Formatear proyectos
     const formattedProjects = projects.map(project => ({
       id: project.id,
-      numero_pedido: project.numero_pedido,
+      numero_order: project.numero_order,
       name: project.name || 'Proyecto sin nombre',
       description: project.descripcion || '',
       servicio: project.servicio,
@@ -200,7 +200,7 @@ const getClientPayments = async (req, res) => {
       SELECT 
         p.id,
         p.numero_pago,
-        p.pedido_id,
+        p.order_id,
         p.concepto,
         p.monto,
         p.moneda,
@@ -214,12 +214,12 @@ const getClientPayments = async (req, res) => {
         p.notas,
         p.created_at,
         p.updated_at,
-        ped.numero_pedido,
-        ped.descripcion as pedido_descripcion
+        ped.numero_order,
+        ped.descripcion as order_descripcion
       FROM pagos p
-      LEFT JOIN pedidos ped ON p.pedido_id = ped.id
+      LEFT JOIN orders ped ON p.order_id = ped.id
       WHERE p.usuario_id = ?
-      ORDER BY p.created_at DESC
+      order BY p.created_at DESC
       LIMIT 50
     `, [usuarioId]);
 
@@ -227,7 +227,7 @@ const getClientPayments = async (req, res) => {
     const formattedPayments = payments.map(payment => ({
       id: payment.id,
       numero_pago: payment.numero_pago,
-      pedido_id: payment.pedido_id,
+      order_id: payment.order_id,
       concepto: payment.concepto || 'Pago sin concepto',
       monto: parseFloat(payment.monto) || 0,
       moneda: payment.moneda || 'USD',
@@ -241,9 +241,9 @@ const getClientPayments = async (req, res) => {
       notas: payment.notas,
       created_at: payment.created_at,
       updated_at: payment.updated_at,
-      // Order info
-      numero_pedido: payment.numero_pedido,
-      pedido_descripcion: payment.pedido_descripcion
+      // order info
+      numero_order: payment.numero_order,
+      order_descripcion: payment.order_descripcion
     }));
 
     res.json(formattedPayments);
@@ -270,7 +270,7 @@ const getClientActivity = async (req, res) => {
         'normal' as priority
       FROM actividades 
       WHERE usuario_id = ?
-      ORDER BY created_at DESC
+      order BY created_at DESC
       LIMIT 10
     `, [usuarioId]);
 
@@ -281,9 +281,9 @@ const getClientActivity = async (req, res) => {
         CONCAT('Proyecto "', descripcion, '" cambió a estado: ', estado) as message,
         created_at as time,
         'normal' as priority
-      FROM pedidos 
+      FROM orders 
       WHERE usuario_id = ?
-      ORDER BY created_at DESC
+      order BY created_at DESC
       LIMIT 5
     `, [usuarioId]);
 
@@ -300,7 +300,7 @@ const getClientActivity = async (req, res) => {
         END as priority
       FROM pagos 
       WHERE usuario_id = ?
-      ORDER BY created_at DESC
+      order BY created_at DESC
       LIMIT 5
     `, [usuarioId]);
 
@@ -376,7 +376,7 @@ const getClientQuotes = async (req, res) => {
     }
     
     // Ordenar por fecha de creación descendente
-    query += ' ORDER BY created_at DESC';
+    query += ' order BY created_at DESC';
     
     // Agregar límite y offset para paginación
     query += ' LIMIT ? OFFSET ?';
@@ -723,8 +723,8 @@ const changeClientPassword = async (req, res) => {
   }
 };
 
-// Obtener pedidos del cliente
-const getClientOrders = async (req, res) => {
+// Obtener orders del cliente
+const getClientorders = async (req, res) => {
   try {
     const usuarioId = req.user.id;
     const { status, limit = 20, offset = 0 } = req.query;
@@ -736,12 +736,12 @@ const getClientOrders = async (req, res) => {
         descripcion,
         estado,
         total,
-        created_at as fecha_pedido,
+        created_at as fecha_order,
         updated_at as fecha_entrega,
         'media' as prioridad,
         created_at,
         updated_at
-      FROM pedidos 
+      FROM orders 
       WHERE usuario_id = ?
     `;
     
@@ -754,7 +754,7 @@ const getClientOrders = async (req, res) => {
     }
     
     // Ordenar por fecha de creación descendente
-    query += ' ORDER BY created_at DESC';
+    query += ' order BY created_at DESC';
     
     // Agregar límite y offset para paginación
     query += ' LIMIT ? OFFSET ?';
@@ -762,8 +762,8 @@ const getClientOrders = async (req, res) => {
     
     const [orders] = await pool.execute(query, queryParams);
     
-    // Obtener total de pedidos para paginación
-    let countQuery = 'SELECT COUNT(*) as total FROM pedidos WHERE usuario_id = ?';
+    // Obtener total de orders para paginación
+    let countQuery = 'SELECT COUNT(*) as total FROM orders WHERE usuario_id = ?';
     const countParams = [usuarioId];
     
     if (status) {
@@ -772,15 +772,15 @@ const getClientOrders = async (req, res) => {
     }
     
     const [countResult] = await pool.execute(countQuery, countParams);
-    const totalOrders = countResult[0].total;
+    const totalorders = countResult[0].total;
     
-    // Formatear pedidos
-    const formattedOrders = orders.map(order => ({
+    // Formatear orders
+    const formattedorders = orders.map(order => ({
       id: order.id,
       descripcion: order.descripcion,
       estado: order.estado,
       total: parseFloat(order.total) || 0,
-      fechaPedido: order.fecha_pedido,
+      fechaorder: order.fecha_order,
       fechaEntrega: order.fecha_entrega,
       prioridad: order.prioridad || 'media',
       createdAt: order.created_at,
@@ -789,26 +789,26 @@ const getClientOrders = async (req, res) => {
     
     res.json({
       success: true,
-      data: formattedOrders,
+      data: formattedorders,
       pagination: {
-        total: totalOrders,
+        total: totalorders,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        pages: Math.ceil(totalOrders / limit)
+        pages: Math.ceil(totalorders / limit)
       }
     });
   } catch (error) {
-    console.error('Error al obtener pedidos del cliente:', error);
+    console.error('Error al obtener orders del cliente:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Error al obtener pedidos del cliente',
+      message: 'Error al obtener orders del cliente',
       error: error.message 
     });
   }
 };
 
-// Actualizar estado de pedido por parte del cliente (solo cancelar)
-const updateClientOrderStatus = async (req, res) => {
+// Actualizar estado de order por parte del cliente (solo cancelar)
+const updateClientorderstatus = async (req, res) => {
   try {
     const usuarioId = req.user.id;
     const orderId = req.params.id;
@@ -819,37 +819,37 @@ const updateClientOrderStatus = async (req, res) => {
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Estado no válido. Los clientes solo pueden cancelar, pausar o reactivar pedidos.'
+        message: 'Estado no válido. Los clientes solo pueden cancelar, pausar o reactivar orders.'
       });
     }
     
-    // Verificar que el pedido pertenece al cliente
+    // Verificar que el order pertenece al cliente
     const [order] = await pool.execute(
-      'SELECT id, estado, usuario_id FROM pedidos WHERE id = ? AND usuario_id = ?',
+      'SELECT id, estado, usuario_id FROM orders WHERE id = ? AND usuario_id = ?',
       [orderId, usuarioId]
     );
     
     if (order.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Pedido no encontrado o no pertenece al cliente'
+        message: 'order no encontrado o no pertenece al cliente'
       });
     }
     
-    const currentOrder = order[0];
+    const currentorder = order[0];
     
-    // Verificar que el pedido esté en estado válido para ser modificado
+    // Verificar que el order esté en estado válido para ser modificado
     const validStatesForChange = ['pendiente', 'en progreso', 'pausado', 'activo'];
-    if (!validStatesForChange.includes(currentOrder.estado.toLowerCase())) {
+    if (!validStatesForChange.includes(currentorder.estado.toLowerCase())) {
       return res.status(400).json({
         success: false,
-        message: `No se puede modificar un pedido en estado "${currentOrder.estado}"`
+        message: `No se puede modificar un order en estado "${currentorder.estado}"`
       });
     }
     
-    // Actualizar el pedido
+    // Actualizar el order
     const updateQuery = `
-      UPDATE pedidos 
+      UPDATE orders 
       SET estado = ?, notas = ?, updated_at = CURRENT_TIMESTAMP 
       WHERE id = ? AND usuario_id = ?
     `;
@@ -861,18 +861,18 @@ const updateClientOrderStatus = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(400).json({
         success: false,
-        message: 'No se pudo actualizar el pedido'
+        message: 'No se pudo actualizar el order'
       });
     }
     
-    // Crear notificación para el admin si el pedido fue cancelado
+    // Crear notificación para el admin si el order fue cancelado
     if (status === 'cancelado') {
       try {
         const notificationService = require('../services/notificationService');
         await notificationService.createAdminNotification(
-          'pedido_cancelado',
-          'Pedido Cancelado',
-          `El cliente ha cancelado el pedido #${orderId}`
+          'order_cancelado',
+          'order Cancelado',
+          `El cliente ha cancelado el order #${orderId}`
         );
       } catch (notifError) {
         console.error('Error creating notification:', notifError);
@@ -882,7 +882,7 @@ const updateClientOrderStatus = async (req, res) => {
     
     res.json({
       success: true,
-      message: `Pedido ${status} exitosamente`,
+      message: `order ${status} exitosamente`,
       data: {
         id: orderId,
         estado: status,
@@ -890,10 +890,10 @@ const updateClientOrderStatus = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error al actualizar estado de pedido:', error);
+    console.error('Error al actualizar estado de order:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Error al actualizar estado de pedido',
+      message: 'Error al actualizar estado de order',
       error: error.message 
     });
   }
@@ -917,7 +917,7 @@ const getClientConversations = async (req, res) => {
       FROM mensajes m
       LEFT JOIN usuarios u ON u.id = m.remitente_id
       WHERE m.destinatario_id = ? OR m.remitente_id = ?
-      ORDER BY m.updated_at DESC
+      order BY m.updated_at DESC
       LIMIT 20
     `, [usuarioId, usuarioId]);
 
@@ -966,7 +966,7 @@ module.exports = {
   getClientProfile,
   updateClientProfile,
   changeClientPassword,
-  getClientOrders,
-  updateClientOrderStatus,
+  getClientorders,
+  updateClientorderstatus,
   getClientConversations
 };

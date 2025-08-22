@@ -246,7 +246,7 @@ class IntegrationsService {
   // Obtener todas las integraciones
   async getAllIntegrations() {
     const [rows] = await pool.execute(
-      'SELECT * FROM integraciones ORDER BY tipo, proveedor'
+      'SELECT * FROM integraciones order BY tipo, proveedor'
     );
     return rows;
   }
@@ -316,7 +316,7 @@ class IntegrationsService {
   // Obtener todos los webhooks
   async getAllWebhooks() {
     const [rows] = await pool.execute(
-      'SELECT * FROM webhooks ORDER BY nombre'
+      'SELECT * FROM webhooks order BY nombre'
     );
     
     return rows.map(webhook => ({

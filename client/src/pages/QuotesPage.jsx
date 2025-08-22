@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Skeleton } from '../components';
-import { getQuotes, updateQuote, deleteQuote, convertQuoteToOrder, createQuote } from '../api/axios';
-import OrdersNavigation from '../components/OrdersNavigation';
+import { getQuotes, updateQuote, deleteQuote, convertQuoteToorder, createQuote } from '../api/axios';
+import ordersNavigation from '../components/ordersNavigation';
 import CreateQuoteModal from '../components/CreateQuoteModal';
 import EditQuoteModal from '../components/EditQuoteModal';
 import PropTypes from 'prop-types';
@@ -109,14 +109,14 @@ const QuotesPage = ({ showNavigation = true }) => {
     }
   };
 
-  const handleConvertToOrder = async (id) => {
+  const handleConvertToorder = async (id) => {
     try {
-      const response = await convertQuoteToOrder(id);
+      const response = await convertQuoteToorder(id);
       if (response.data.success) {
         setQuotes(quotes.map(quote => 
           quote.id === id ? { ...quote, estado: 'aceptada' } : quote
         ));
-        alert('Cotización convertida a pedido exitosamente');
+        alert('Cotización convertida a order exitosamente');
       }
     } catch (error) {
       console.error('Error converting quote:', error);
@@ -207,7 +207,7 @@ const QuotesPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <OrdersNavigation />}
+        {showNavigation && <ordersNavigation />}
         
         {/* Header */}
         <div className="mb-8">
@@ -441,10 +441,10 @@ const QuotesPage = ({ showNavigation = true }) => {
                       variant="success" 
                       size="sm" 
                       className="w-full flex items-center justify-center gap-2"
-                      onClick={() => handleConvertToOrder(quote.id)}
+                      onClick={() => handleConvertToorder(quote.id)}
                     >
                       <ArrowRight className="w-4 h-4" />
-                      Convertir a Pedido
+                      Convertir a order
                     </Button>
                   )}
                   
@@ -601,12 +601,12 @@ const QuotesPage = ({ showNavigation = true }) => {
                         variant="success" 
                         className="flex items-center gap-2"
                         onClick={() => {
-                          handleConvertToOrder(selectedQuote.id);
+                          handleConvertToorder(selectedQuote.id);
                           setShowModal(false);
                         }}
                       >
                         <ArrowRight className="w-4 h-4" />
-                        Convertir a Pedido
+                        Convertir a order
                       </Button>
                     )}
                     <Button 

@@ -26,7 +26,7 @@ const DashboardLayout = ({ children, onSidebarOptionSelect }) => {
     const path = location.pathname;
     switch (path) {
       case '/cotizaciones': return 'cotizaciones';
-      case '/pedidos': return 'pedidos';
+      case '/orders': return 'orders';
       case '/historial': return 'historial';
       case '/ver-clientes': return 'ver-clientes';
       case '/nuevo-cliente': return 'nuevo-cliente';

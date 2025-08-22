@@ -76,12 +76,12 @@ const getClientProjects = async (req, res) => {
       SELECT 
         p.*,
         u.nombre as cliente_nombre
-      FROM pedidos p
+      FROM orders p
       LEFT JOIN usuarios u ON p.usuario_id = u.id
       WHERE p.usuario_id = ?
     `;
     
-    let countQuery = 'SELECT COUNT(*) as total FROM pedidos WHERE usuario_id = ?';
+    let countQuery = 'SELECT COUNT(*) as total FROM orders WHERE usuario_id = ?';
     let params = [usuarioId];
     let countParams = [usuarioId];
 
@@ -94,14 +94,14 @@ const getClientProjects = async (req, res) => {
     }
 
     if (search) {
-      query += ' AND (p.numero_pedido LIKE ? OR p.descripcion LIKE ?)';
-      countQuery += ' AND (numero_pedido LIKE ? OR descripcion LIKE ?)';
+      query += ' AND (p.numero_order LIKE ? OR p.descripcion LIKE ?)';
+      countQuery += ' AND (numero_order LIKE ? OR descripcion LIKE ?)';
       const searchParam = `%${search}%`;
       params.push(searchParam, searchParam);
       countParams.push(searchParam, searchParam);
     }
 
-    query += ' ORDER BY p.created_at DESC LIMIT ? OFFSET ?';
+    query += ' order BY p.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [projects] = await pool.execute(query, params);
@@ -164,7 +164,7 @@ const getClientQuotations = async (req, res) => {
       countParams.push(searchParam, searchParam);
     }
 
-    query += ' ORDER BY c.created_at DESC LIMIT ? OFFSET ?';
+    query += ' order BY c.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [quotations] = await pool.execute(query, params);
@@ -261,13 +261,13 @@ const getClientInvoices = async (req, res) => {
     let query = `
       SELECT 
         f.*,
-        ped.numero_pedido,
-        ped.descripcion as pedido_descripcion,
+        ped.numero_order,
+        ped.descripcion as order_descripcion,
         u.nombre as cliente_nombre,
         u.empresa as cliente_empresa,
         u.email as cliente_email
       FROM facturas f
-      LEFT JOIN pedidos ped ON f.pedido_id = ped.id
+      LEFT JOIN orders ped ON f.order_id = ped.id
       LEFT JOIN usuarios u ON f.usuario_id = u.id
       WHERE f.usuario_id = ?
     `;
@@ -306,7 +306,7 @@ const getClientInvoices = async (req, res) => {
       countParams.push(fechaHasta);
     }
 
-    query += ' ORDER BY f.created_at DESC LIMIT ? OFFSET ?';
+    query += ' order BY f.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [invoices] = await pool.execute(query, params);

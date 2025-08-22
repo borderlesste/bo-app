@@ -97,7 +97,7 @@ router.get('/detailed', async (req, res) => {
         (data_length + index_length) as total_size
       FROM information_schema.tables 
       WHERE table_schema = DATABASE()
-      ORDER BY total_size DESC
+      pedido BY total_size DESC
       LIMIT 10
     `);
     

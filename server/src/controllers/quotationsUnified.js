@@ -64,14 +64,14 @@ const getAllQuotations = async (req, res) => {
       FROM cotizaciones q 
       LEFT JOIN usuarios u ON q.usuario_id = u.id 
       WHERE ${whereClause}
-      ORDER BY q.${sort_by} ${sort_order}
+      order BY q.${sort_by} ${sort_order}
       LIMIT ? OFFSET ?
     `, [...params, parseInt(limit), offset]);
 
     // Get items for each quotation
     for (let quotation of quotations) {
       const [items] = await pool.execute(
-        'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? ORDER BY orden',
+        'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? order BY orden',
         [quotation.id]
       );
       quotation.items = items;
@@ -128,7 +128,7 @@ const getQuotationById = async (req, res) => {
 
     // Get quotation items
     const [items] = await pool.execute(
-      'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? ORDER BY orden',
+      'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? order BY orden',
       [id]
     );
 
@@ -394,7 +394,7 @@ const deleteQuotation = async (req, res) => {
 };
 
 // Convert quotation to order/project
-const convertQuotationToOrder = async (req, res) => {
+const convertQuotationToorder = async (req, res) => {
   try {
     const { id } = req.params;
     const { convert_to = 'order' } = req.body; // 'order' or 'project'
@@ -421,16 +421,16 @@ const convertQuotationToOrder = async (req, res) => {
 
     try {
       if (convert_to === 'order') {
-        // Convert to order (pedido)
-        const numeroPedido = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // Convert to order (order)
+        const numeroorder = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
         const [orderResult] = await connection.execute(`
-          INSERT INTO pedidos 
-          (numero_pedido, usuario_id, cotizacion_id, estado, subtotal, total, 
+          INSERT INTO orders 
+          (numero_order, usuario_id, cotizacion_id, estado, subtotal, total, 
            descripcion, created_at, updated_at) 
           VALUES (?, ?, ?, 'nuevo', ?, ?, ?, NOW(), NOW())
         `, [
-          numeroPedido,
+          numeroorder,
           quotation.usuario_id,
           id,
           quotation.precio_estimado || 0,
@@ -445,8 +445,8 @@ const convertQuotationToOrder = async (req, res) => {
 
         for (const item of quotationItems) {
           await connection.execute(`
-            INSERT INTO pedido_items 
-            (pedido_id, servicio_id, descripcion, cantidad, precio_unitario, descuento, orden) 
+            INSERT INTO order_items 
+            (order_id, servicio_id, descripcion, cantidad, precio_unitario, descuento, orden) 
             VALUES (?, ?, ?, ?, ?, ?, ?)
           `, [
             orderResult.insertId,
@@ -469,8 +469,8 @@ const convertQuotationToOrder = async (req, res) => {
 
         res.json({
           success: true,
-          message: 'Cotización convertida a pedido exitosamente',
-          data: { order_id: orderResult.insertId, numero_pedido: numeroPedido }
+          message: 'Cotización convertida a order exitosamente',
+          data: { order_id: orderResult.insertId, numero_order: numeroorder }
         });
 
       } else if (convert_to === 'project') {
@@ -543,7 +543,7 @@ const getQuotationStats = async (req, res) => {
       FROM cotizaciones 
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
       GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-      ORDER BY mes DESC
+      order BY mes DESC
     `);
 
     res.json({
@@ -568,6 +568,6 @@ module.exports = {
   createQuotation,
   updateQuotation,
   deleteQuotation,
-  convertQuotationToOrder,
+  convertQuotationToorder,
   getQuotationStats
 };

@@ -296,8 +296,8 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
     setStep('processing');
 
     const paymentRequestData = {
-      pedido_id: order.id,
-      concepto: `Pago del proyecto #${order.numero_pedido || order.id}`,
+      order_id: order.id,
+      concepto: `Pago del proyecto #${order.numero_order || order.id}`,
       monto: parseFloat(order.value)
     };
 
@@ -406,9 +406,9 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
 
   const renderPaymentForm = () => (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Order Summary */}
+      {/* order Summary */}
       <div className="bg-gray-50 p-4 rounded-lg">
-        <h4 className="font-medium text-gray-900">Proyecto #{order.numero_pedido || order.id}</h4>
+        <h4 className="font-medium text-gray-900">Proyecto #{order.numero_order || order.id}</h4>
         <p className="text-sm text-gray-600">{order.descripcion}</p>
         <div className="flex justify-between items-center mt-2">
           <span className="text-sm text-gray-500">Total a pagar:</span>

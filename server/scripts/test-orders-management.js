@@ -1,26 +1,26 @@
 #!/usr/bin/env node
 
 /**
- * Script para verificar que las tarjetas de pedidos en Gestión muestren todos los detalles
- * Simula lo que debería mostrar el dashboard de gestión de pedidos del admin
+ * Script para verificar que las tarjetas de orders en Gestión muestren todos los detalles
+ * Simula lo que debería mostrar el dashboard de gestión de orders del admin
  */
 
 const { pool } = require('../src/config/db.js');
-const { orderService } = require('../src/services/orderService.js');
+const { orderservice } = require('../src/services/orderservice.js');
 
-async function testOrdersManagementData() {
+async function testordersManagementData() {
   try {
-    console.log('🔍 VERIFICANDO TARJETAS DE GESTIÓN DE PEDIDOS - DATOS COMPLETOS');
+    console.log('🔍 VERIFICANDO TARJETAS DE GESTIÓN DE orderS - DATOS COMPLETOS');
     console.log('='.repeat(70));
 
     // Test the enhanced admin summary endpoint
-    const orders = await orderService.getOrdersSummaryForAdmin();
+    const orders = await orderservice.getordersSummaryForAdmin();
     
-    console.log(`📋 ENCONTRADOS ${orders.length} PEDIDOS EN GESTIÓN:`);
+    console.log(`📋 ENCONTRADOS ${orders.length} orderS EN GESTIÓN:`);
     console.log('');
 
     orders.forEach((order, index) => {
-      console.log(`${index + 1}. ╔══ TARJETA DE PEDIDO #${order.numero_pedido} ══╗`);
+      console.log(`${index + 1}. ╔══ TARJETA DE order #${order.numero_order} ══╗`);
       console.log('   ║                                                   ║');
       
       // Basic information section
@@ -88,7 +88,7 @@ async function testOrdersManagementData() {
     console.log('✅ RESUMEN DE CAMPOS DISPONIBLES EN LAS TARJETAS:');
     console.log('');
     console.log('📋 INFORMACIÓN BÁSICA:');
-    console.log('   • número_pedido, estado, prioridad, progreso_estimado');
+    console.log('   • número_order, estado, prioridad, progreso_estimado');
     console.log('   • urgencia_nivel, estado_descripcion, prioridad_descripcion');
     console.log('');
     console.log('👤 INFORMACIÓN DEL CLIENTE:');
@@ -112,7 +112,7 @@ async function testOrdersManagementData() {
     console.log('🔧 GESTIÓN Y ASIGNACIÓN:');
     console.log('   • created_by, assigned_to, cotizacion_id');
     console.log('');
-    console.log('🎯 TOTALES DISPONIBLES: ¡TODOS LOS DETALLES DEL PEDIDO!');
+    console.log('🎯 TOTALES DISPONIBLES: ¡TODOS LOS DETALLES DEL order!');
 
   } catch (error) {
     console.error('❌ Error:', error.message);
@@ -123,4 +123,4 @@ async function testOrdersManagementData() {
 }
 
 // Ejecutar el test
-testOrdersManagementData();
+testordersManagementData();

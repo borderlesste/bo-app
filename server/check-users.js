@@ -18,7 +18,7 @@ async function checkUsers() {
         const [userRows] = await connection.execute(`
             SELECT nombre, email, rol, estado, created_at 
             FROM usuarios 
-            ORDER BY created_at DESC 
+            order BY created_at DESC 
             LIMIT 10
         `);
         

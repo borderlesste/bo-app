@@ -138,7 +138,7 @@ router.post('/database-info', async (req, res) => {
     const tableNames = tables.map(table => Object.values(table)[0]);
     
     // Listar todos los usuarios
-    const [users] = await pool.execute('SELECT id, nombre, email, rol, estado, created_at FROM usuarios ORDER BY created_at DESC');
+    const [users] = await pool.execute('SELECT id, nombre, email, rol, estado, created_at FROM usuarios order BY created_at DESC');
     
     // Contar registros en tablas principales
     const counts = {};
@@ -409,7 +409,7 @@ router.post('/create-sample-data', async (req, res) => {
       {
         codigo: 'WEB001',
         nombre: 'Sistema de Gestión Empresarial',
-        descripcion: 'Plataforma completa para la gestión de clientes, pedidos y pagos de empresas. Incluye dashboard administrativo, gestión de usuarios y reportes avanzados.',
+        descripcion: 'Plataforma completa para la gestión de clientes, orders y pagos de empresas. Incluye dashboard administrativo, gestión de usuarios y reportes avanzados.',
         imagen_principal: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
         repositorio: 'https://github.com/borderlesste/saas-platform',
         url_demo: 'https://borderlesstechno.com',
@@ -437,7 +437,7 @@ router.post('/create-sample-data', async (req, res) => {
       {
         codigo: 'APP001',
         nombre: 'App Móvil de Delivery',
-        descripcion: 'Aplicación móvil para pedidos de comida con geolocalización, seguimiento en tiempo real y múltiples métodos de pago.',
+        descripcion: 'Aplicación móvil para orders de comida con geolocalización, seguimiento en tiempo real y múltiples métodos de pago.',
         imagen_principal: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80',
         repositorio: null,
         url_demo: null,

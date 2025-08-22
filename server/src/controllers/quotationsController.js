@@ -406,7 +406,7 @@ const convertQuotationToProject = async (req, res) => {
     // Generate project code
     const currentYear = new Date().getFullYear();
     const [lastProject] = await pool.execute(
-      'SELECT codigo FROM proyectos WHERE codigo LIKE ? ORDER BY id DESC LIMIT 1',
+      'SELECT codigo FROM proyectos WHERE codigo LIKE ? order BY id DESC LIMIT 1',
       [`PRY-${currentYear}-%`]
     );
 
@@ -534,7 +534,7 @@ const getQuotationStats = async (req, res) => {
        INNER JOIN cotizaciones c ON u.id = c.usuario_id
        WHERE u.rol = 'cliente'
        GROUP BY u.id
-       ORDER BY total_cotizaciones DESC
+       order BY total_cotizaciones DESC
        LIMIT 10`
     );
 

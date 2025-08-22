@@ -10,7 +10,7 @@ const AdminSidebar = ({ isOpen, onToggle, onOptionSelect, activeOption }) => {
   // Auto-expandir la sección correspondiente basada en la ruta actual
   useEffect(() => {
     const path = location.pathname;
-    if (['/cotizaciones', '/pedidos', '/historial'].includes(path)) {
+    if (['/cotizaciones', '/orders', '/historial'].includes(path)) {
       setActiveSection('orders');
     } else if (path === '/admin/dashboard') {
       setActiveSection('clients'); // Expandir "Gestión de Clientes" por defecto en AdminDashboard
@@ -33,11 +33,11 @@ const AdminSidebar = ({ isOpen, onToggle, onOptionSelect, activeOption }) => {
     },
     {
       id: 'orders',
-      title: 'Pedidos & Cotizaciones',
+      title: 'orders & Cotizaciones',
       icon: '📦',
       links: [
         { id: 'cotizaciones', label: 'Cotizaciones', icon: '📝' },
-        { id: 'pedidos', label: 'Pedidos', icon: '📦' },
+        { id: 'orders', label: 'orders', icon: '📦' },
         { id: 'historial', label: 'Historial', icon: '📚' },
       ]
     },

@@ -68,7 +68,7 @@ class Servicio {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' ORDER BY categoria ASC, nombre ASC';
+        sql += ' order BY categoria ASC, nombre ASC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -82,7 +82,7 @@ class Servicio {
         const [result] = await pool.execute(`
             SELECT * FROM servicios 
             WHERE estado = 'activo' 
-            ORDER BY categoria ASC, nombre ASC
+            order BY categoria ASC, nombre ASC
         `);
     }
 
@@ -90,7 +90,7 @@ class Servicio {
         const [result] = await pool.execute(`
             SELECT * FROM servicios 
             WHERE categoria = ? AND estado = 'activo'
-            ORDER BY nombre ASC
+            order BY nombre ASC
         `, [categoria]);
     }
 
@@ -100,7 +100,7 @@ class Servicio {
             FROM servicios 
             WHERE estado = 'activo'
             GROUP BY categoria
-            ORDER BY categoria ASC
+            order BY categoria ASC
         `);
     }
 
@@ -113,27 +113,27 @@ class Servicio {
         const usage = await pool.execute(`
             SELECT 
                 COUNT(DISTINCT ci.cotizacion_id) as cotizaciones_count,
-                COUNT(DISTINCT pi.pedido_id) as pedidos_count,
+                COUNT(DISTINCT pi.order_id) as orders_count,
                 SUM(pi.cantidad * pi.precio_unitario) as revenue_total
             FROM servicios s
             LEFT JOIN cotizacion_items ci ON s.id = ci.servicio_id
-            LEFT JOIN pedido_items pi ON s.id = pi.servicio_id
+            LEFT JOIN order_items pi ON s.id = pi.servicio_id
             WHERE s.id = ?
         `, [servicioId]);
 
-        return usage[0] || { cotizaciones_count: 0, pedidos_count: 0, revenue_total: 0 };
+        return usage[0] || { cotizaciones_count: 0, orders_count: 0, revenue_total: 0 };
     }
 
     static async getMostUsed(limit = 10) {
         const [result] = await pool.execute(`
             SELECT s.*, 
-                   COUNT(DISTINCT pi.pedido_id) as pedidos_count,
+                   COUNT(DISTINCT pi.order_id) as orders_count,
                    SUM(pi.cantidad * pi.precio_unitario) as revenue_total
             FROM servicios s
-            LEFT JOIN pedido_items pi ON s.id = pi.servicio_id
+            LEFT JOIN order_items pi ON s.id = pi.servicio_id
             WHERE s.estado = 'activo'
             GROUP BY s.id
-            ORDER BY pedidos_count DESC, revenue_total DESC
+            order BY orders_count DESC, revenue_total DESC
             LIMIT ?
         `, [limit]);
     }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { X, CheckCircle, User, DollarSign, Calendar, FileText, CreditCard, Building } from 'lucide-react';
 
-const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) => {
+const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, pedidos, user }) => {
   const [formData, setFormData] = useState({
     concepto: '',
     monto: '',
@@ -11,7 +11,7 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) 
     fecha: new Date().toISOString().split('T')[0],
     referencia: '',
     estado: 'pendiente',
-    order_id: ''
+    pedido_id: ''
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) 
         fecha: new Date().toISOString().split('T')[0],
         referencia: '',
         estado: 'pendiente',
-        order_id: ''
+        pedido_id: ''
       });
       setError(null);
     }
@@ -215,27 +215,26 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) 
               </div>
             </div>
 
-            {/* Order Association */}
-            {orders && orders.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Asociar a Pedido (Opcional)
-                </label>
-                <select
-                  name="order_id"
-                  value={formData.order_id}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="">Sin asociar a pedido</option>
-                  {orders.map(order => (
-                    <option key={order.id} value={order.id}>
-                      Pedido #{order.id} - {order.titulo || 'Sin título'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {/* Pedido Association */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Asociar a Pedido *
+              </label>
+              <select
+                name="pedido_id"
+                value={formData.pedido_id}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
+              >
+                <option value="">Seleccionar pedido</option>
+                {pedidos && pedidos.map(pedido => (
+                  <option key={pedido.id} value={pedido.id}>
+                    Pedido #{pedido.id} - {pedido.titulo || 'Sin título'}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Reference */}
             <div>
@@ -293,7 +292,7 @@ PaymentCreateModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   clients: PropTypes.array,
-  orders: PropTypes.array,
+  pedidos: PropTypes.array,
   user: PropTypes.object
 };
 

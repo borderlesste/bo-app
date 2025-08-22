@@ -59,7 +59,7 @@ const publicController = {
       
       // Get the admin user for notifications
       const [adminUser] = await connection.execute(
-        'SELECT id FROM usuarios WHERE rol = "admin" ORDER BY id ASC LIMIT 1'
+        'SELECT id FROM usuarios WHERE rol = "admin" order BY id ASC LIMIT 1'
       );
       
       if (adminUser.length > 0) {

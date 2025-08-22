@@ -20,7 +20,7 @@ async function addInvoicesTable() {
         usuario_id INT,
         cliente_nombre VARCHAR(255) NOT NULL,
         cliente_email VARCHAR(255),
-        pedido_id INT,
+        order_id INT,
         pago_id INT,
         concepto TEXT NOT NULL,
         subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -37,7 +37,7 @@ async function addInvoicesTable() {
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
-        FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE SET NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
         FOREIGN KEY (pago_id) REFERENCES pagos(id) ON DELETE SET NULL,
         
         INDEX idx_facturas_cliente (usuario_id),
@@ -64,7 +64,7 @@ async function addInvoicesTable() {
           fecha_emision, fecha_vencimiento, metodo_pago, notas
         )
         SELECT 
-          CONCAT('FAC-', YEAR(CURDATE()), '-', LPAD(ROW_NUMBER() OVER (ORDER BY p.id), 3, '0')) as numero_factura,
+          CONCAT('FAC-', YEAR(CURDATE()), '-', LPAD(ROW_NUMBER() OVER (order BY p.id), 3, '0')) as numero_factura,
           p.usuario_id,
           p.cliente_nombre,
           c.email as cliente_email,

@@ -64,7 +64,7 @@ class User {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' ORDER BY created_at DESC';
+        sql += ' order BY created_at DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';

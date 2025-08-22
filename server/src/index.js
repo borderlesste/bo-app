@@ -14,7 +14,7 @@ const ordersRoutes = require('./routes/orders.js');
 const paymentsRoutes = require('./routes/payments.js');
 const clientPaymentsRoutes = require('./routes/clientPayments.js');
 const paymentGatewayRoutes = require('./routes/paymentGateway.js');
-const paypalOrdersRoutes = require('./routes/paypalOrders.js');
+const paypalordersRoutes = require('./routes/paypalorders.js');
 const contactRoutes = require('./routes/contact.js');
 const usersRoutes = require('./routes/users.js');
 const notificationsRoutes = require('./routes/notifications.js');
@@ -36,6 +36,7 @@ const healthRoutes = require('./routes/health.js');
 // UNIFIED ROUTES (replaces duplicates)
 const quotationsUnifiedRoutes = require('./routes/quotationsUnified.js');
 const configurationUnifiedRoutes = require('./routes/configurationUnified.js');
+const pedidosRoutes = require('./routes/pedidos.js');
 
 // LEGACY ROUTES (for backward compatibility - will show deprecation warnings)
 const configRoutes = require('./routes/config.js');
@@ -176,10 +177,11 @@ app.use('/api/configuration-unified', configurationUnifiedRoutes);
 // CORE API ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/client-payments', clientPaymentsRoutes);
 app.use('/api/payment-gateway', paymentGatewayRoutes);
-app.use('/api/paypal', paypalOrdersRoutes);
+app.use('/api/paypal', paypalordersRoutes);
 app.use('/api/contacto', contactRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/notifications', notificationsRoutes);

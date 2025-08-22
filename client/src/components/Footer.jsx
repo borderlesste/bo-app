@@ -38,8 +38,8 @@ const Footer = () => {
             <div className="flex items-center space-x-2">
               <Code2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 dark:text-blue-400 flex-shrink-0" />
               <span className="text-base sm:text-xl font-bold text-gray-900 dark:text-white break-words">
-                <span className="hidden sm:inline">BORDERLESS TECHNO COMPANY</span>
-                <span className="sm:hidden">BORDERLESS</span>
+                <span className="hidden sm:inline">BorderLESS TECHNO COMPANY</span>
+                <span className="sm:hidden">BorderLESS</span>
               </span>
             </div>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 leading-relaxed">

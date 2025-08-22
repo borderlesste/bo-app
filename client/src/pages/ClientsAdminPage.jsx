@@ -62,7 +62,7 @@ const ClientsAdminPage = () => {
         search: searchQuery || undefined,
         estado: statusFilter === 'all' ? undefined : statusFilter,
         sortBy: 'created_at',
-        sortOrder: 'DESC'
+        sortorder: 'DESC'
       };
 
       const response = await getClients(params);

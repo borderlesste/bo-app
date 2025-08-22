@@ -6,7 +6,7 @@ const {
   createQuote,
   updateQuote,
   deleteQuote,
-  convertQuoteToOrder
+  convertQuoteToorder
 } = require('../controllers/quotesController.js');
 const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware.js');
 
@@ -31,6 +31,6 @@ router.put('/:id', [
   body('estado', 'El estado es obligatorio').not().isEmpty()
 ], updateQuote);
 router.delete('/:id', isAuthenticated, isAdmin, deleteQuote);
-router.post('/:id/convert', isAuthenticated, isAdmin, convertQuoteToOrder);
+router.post('/:id/convert', isAuthenticated, isAdmin, convertQuoteToorder);
 
 module.exports = router;

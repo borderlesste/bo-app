@@ -98,7 +98,7 @@ const CommunicationNotificationsPage = ({ showNavigation = true }) => {
       case 'error': case 'fallo': return <XCircle className="w-4 h-4" />;
       case 'success': case 'éxito': return <CheckCircle className="w-4 h-4" />;
       case 'payment': case 'pago': return <Mail className="w-4 h-4" />;
-      case 'order': case 'pedido': return <MessageSquare className="w-4 h-4" />;
+      case 'order': case 'order': return <MessageSquare className="w-4 h-4" />;
       case 'system': case 'sistema': return <Zap className="w-4 h-4" />;
       default: return <Bell className="w-4 h-4" />;
     }
@@ -111,7 +111,7 @@ const CommunicationNotificationsPage = ({ showNavigation = true }) => {
       case 'error': case 'fallo': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
       case 'success': case 'éxito': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
       case 'payment': case 'pago': return 'text-purple-600 bg-purple-100 dark:bg-purple-900/20';
-      case 'order': case 'pedido': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/20';
+      case 'order': case 'order': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/20';
       case 'system': case 'sistema': return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
       default: return 'text-gray-600 bg-gray-100';
     }

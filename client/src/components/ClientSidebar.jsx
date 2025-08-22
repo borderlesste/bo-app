@@ -21,7 +21,7 @@ const ClientSidebar = ({ isOpen, onToggle, onOptionSelect }) => {
       icon: '📋',
       links: [
         { action: 'quotes', label: 'Mis Cotizaciones', icon: '📋' },
-        { action: 'orders', label: 'Mis Pedidos', icon: '📦' },
+        { action: 'orders', label: 'Mis orders', icon: '📦' },
         { action: 'new-request', label: 'Nueva Solicitud', icon: '➕' },
       ]
     },

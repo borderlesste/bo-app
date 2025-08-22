@@ -217,7 +217,7 @@ export const ClientDataProvider = ({ children }) => {
       // Normalizar datos
       const normalizedProjects = projectsData.map(project => ({
         id: project.id,
-        numero_pedido: project.numero_pedido,
+        numero_order: project.numero_order,
         name: project.name || project.descripcion || 'Proyecto sin nombre',
         description: project.description || project.descripcion || '',
         servicio: project.servicio,

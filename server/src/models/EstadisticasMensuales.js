@@ -10,7 +10,7 @@ class EstadisticasMensuales {
         const {
             anio, mes, total_ingresos = 0, total_egresos = 0, nuevos_usuarios = 0,
             usuarios_activos = 0, cotizaciones_enviadas = 0, cotizaciones_aceptadas = 0,
-            pedidos_nuevos = 0, pedidos_completados = 0, facturas_emitidas = 0,
+            orders_nuevos = 0, orders_completados = 0, facturas_emitidas = 0,
             facturas_pagadas = 0, proyectos_iniciados = 0, proyectos_completados = 0,
             ticket_promedio = 0
         } = estadisticasData;
@@ -19,7 +19,7 @@ class EstadisticasMensuales {
             INSERT INTO estadisticas_mensuales (
                 anio, mes, total_ingresos, total_egresos, nuevos_usuarios,
                 usuarios_activos, cotizaciones_enviadas, cotizaciones_aceptadas,
-                pedidos_nuevos, pedidos_completados, facturas_emitidas,
+                orders_nuevos, orders_completados, facturas_emitidas,
                 facturas_pagadas, proyectos_iniciados, proyectos_completados, ticket_promedio
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
@@ -29,8 +29,8 @@ class EstadisticasMensuales {
                 usuarios_activos = VALUES(usuarios_activos),
                 cotizaciones_enviadas = VALUES(cotizaciones_enviadas),
                 cotizaciones_aceptadas = VALUES(cotizaciones_aceptadas),
-                pedidos_nuevos = VALUES(pedidos_nuevos),
-                pedidos_completados = VALUES(pedidos_completados),
+                orders_nuevos = VALUES(orders_nuevos),
+                orders_completados = VALUES(orders_completados),
                 facturas_emitidas = VALUES(facturas_emitidas),
                 facturas_pagadas = VALUES(facturas_pagadas),
                 proyectos_iniciados = VALUES(proyectos_iniciados),
@@ -38,7 +38,7 @@ class EstadisticasMensuales {
                 ticket_promedio = VALUES(ticket_promedio)`,
             [anio, mes, total_ingresos, total_egresos, nuevos_usuarios,
              usuarios_activos, cotizaciones_enviadas, cotizaciones_aceptadas,
-             pedidos_nuevos, pedidos_completados, facturas_emitidas,
+             orders_nuevos, orders_completados, facturas_emitidas,
              facturas_pagadas, proyectos_iniciados, proyectos_completados, ticket_promedio]
         );
         return result.insertId || true;
@@ -49,7 +49,7 @@ class EstadisticasMensuales {
             SELECT * FROM estadisticas_mensuales
             WHERE (anio > ? OR (anio = ? AND mes >= ?))
             AND (anio < ? OR (anio = ? AND mes <= ?))
-            ORDER BY anio ASC, mes ASC
+            order BY anio ASC, mes ASC
         `, [anioInicio, anioInicio, mesInicio, anioFin, anioFin, mesFin]);
     }
 
@@ -60,7 +60,7 @@ class EstadisticasMensuales {
         const [result] = await pool.execute(`
             SELECT * FROM estadisticas_mensuales
             WHERE anio = ?
-            ORDER BY mes ASC
+            order BY mes ASC
         `, [lastYear]);
     }
 
@@ -70,7 +70,7 @@ class EstadisticasMensuales {
         const [result] = await pool.execute(`
             SELECT * FROM estadisticas_mensuales
             WHERE anio = ?
-            ORDER BY mes ASC
+            order BY mes ASC
         `, [currentYear]);
     }
 
@@ -106,7 +106,7 @@ class EstadisticasMensuales {
 
         const usuariosActivos = await pool.execute(`
             SELECT COUNT(DISTINCT usuario_id) as total
-            FROM pedidos 
+            FROM orders 
             WHERE created_at >= ? AND created_at <= ?
         `, [startDate, endDate]);
 
@@ -123,15 +123,15 @@ class EstadisticasMensuales {
             AND updated_at >= ? AND updated_at <= ?
         `, [startDate, endDate]);
 
-        const pedidosNuevos = await pool.execute(`
+        const ordersNuevos = await pool.execute(`
             SELECT COUNT(*) as total
-            FROM pedidos 
+            FROM orders 
             WHERE created_at >= ? AND created_at <= ?
         `, [startDate, endDate]);
 
-        const pedidosCompletados = await pool.execute(`
+        const ordersCompletados = await pool.execute(`
             SELECT COUNT(*) as total
-            FROM pedidos 
+            FROM orders 
             WHERE estado = 'completado'
             AND updated_at >= ? AND updated_at <= ?
         `, [startDate, endDate]);
@@ -164,7 +164,7 @@ class EstadisticasMensuales {
 
         const ticketPromedio = await pool.execute(`
             SELECT COALESCE(AVG(total), 0) as promedio
-            FROM pedidos 
+            FROM orders 
             WHERE created_at >= ? AND created_at <= ?
             AND total > 0
         `, [startDate, endDate]);
@@ -172,14 +172,15 @@ class EstadisticasMensuales {
         const estadisticas = {
             anio,
             mes,
+            semana,
             total_ingresos: ingresos[0].total,
             total_egresos: egresos[0].total,
             nuevos_usuarios: nuevosUsuarios[0].total,
             usuarios_activos: usuariosActivos[0].total,
             cotizaciones_enviadas: cotizacionesEnviadas[0].total,
             cotizaciones_aceptadas: cotizacionesAceptadas[0].total,
-            pedidos_nuevos: pedidosNuevos[0].total,
-            pedidos_completados: pedidosCompletados[0].total,
+            pedidos_nuevos: ordersNuevos[0].total,
+            pedidos_completados: ordersCompletados[0].total,
             facturas_emitidas: facturasEmitidas[0].total,
             facturas_pagadas: facturasPagadas[0].total,
             proyectos_iniciados: proyectosIniciados[0].total,
@@ -200,8 +201,8 @@ class EstadisticasMensuales {
         const comparison = {};
         const fields = [
             'total_ingresos', 'total_egresos', 'nuevos_usuarios', 'usuarios_activos',
-            'cotizaciones_enviadas', 'cotizaciones_aceptadas', 'pedidos_nuevos',
-            'pedidos_completados', 'facturas_emitidas', 'facturas_pagadas',
+            'cotizaciones_enviadas', 'cotizaciones_aceptadas', 'orders_nuevos',
+            'orders_completados', 'facturas_emitidas', 'facturas_pagadas',
             'proyectos_iniciados', 'proyectos_completados', 'ticket_promedio'
         ];
 

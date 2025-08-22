@@ -13,7 +13,7 @@ const getQuotes = async (req, res) => {
               q.created_at, u.nombre as cliente_nombre 
        FROM cotizaciones q 
        LEFT JOIN usuarios u ON q.usuario_id = u.id 
-       ORDER BY q.created_at DESC`
+       order BY q.created_at DESC`
     );
     
     res.json({
@@ -235,7 +235,7 @@ const deleteQuote = async (req, res) => {
 };
 
 // Convert quote to order
-const convertQuoteToOrder = async (req, res) => {
+const convertQuoteToorder = async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -285,19 +285,19 @@ const convertQuoteToOrder = async (req, res) => {
     
     // Generate order number
     const now = new Date();
-    const numeroPedido = `PED-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Date.now().toString().slice(-4)}`;
+    const numeroorder = `PED-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}-${Date.now().toString().slice(-4)}`;
     
     // Create order from quote
     const [orderResult] = await pool.execute(
-      `INSERT INTO pedidos (numero_pedido, usuario_id, cotizacion_id, descripcion, estado, prioridad, created_by) 
+      `INSERT INTO orders (numero_order, usuario_id, cotizacion_id, descripcion, estado, prioridad, created_by) 
        VALUES (?, ?, ?, ?, 'nuevo', 'normal', ?)`,
-      [numeroPedido, clienteId, id, `${quote.tipo_servicio}: ${quote.descripcion}`, req.user.id]
+      [numeroorder, clienteId, id, `${quote.tipo_servicio}: ${quote.descripcion}`, req.user.id]
     );
     
     // Update quote status
     await pool.execute(
       'UPDATE cotizaciones SET estado = ? WHERE id = ?',
-      ['Convertido a Pedido', id]
+      ['Convertido a order', id]
     );
 
     // Crear notificación de conversión
@@ -312,7 +312,7 @@ const convertQuoteToOrder = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Cotización convertida a pedido exitosamente',
+      message: 'Cotización convertida a order exitosamente',
       data: { 
         orderId: orderResult.insertId,
         clienteId: clienteId
@@ -333,5 +333,5 @@ module.exports = {
   createQuote,
   updateQuote,
   deleteQuote,
-  convertQuoteToOrder
+  convertQuoteToorder
 };

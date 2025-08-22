@@ -67,8 +67,8 @@ async function migratePayPalFields() {
     // Verificar que las columnas se agregaron correctamente
     console.log('🔍 Verificando estructura de tablas...');
     
-    const [pedidosColumns] = await connection.execute(`
-      SHOW COLUMNS FROM pedidos WHERE Field IN ('paypal_order_id', 'paypal_capture_id', 'payment_method')
+    const [ordersColumns] = await connection.execute(`
+      SHOW COLUMNS FROM orders WHERE Field IN ('paypal_order_id', 'paypal_capture_id', 'payment_method')
     `);
     
     const [pagosColumns] = await connection.execute(`
@@ -79,11 +79,11 @@ async function migratePayPalFields() {
       SHOW TABLES LIKE 'webhooks_paypal'
     `);
     
-    console.log(`✅ Campos agregados a pedidos: ${pedidosColumns.length}/3`);
+    console.log(`✅ Campos agregados a orders: ${ordersColumns.length}/3`);
     console.log(`✅ Campos agregados a pagos: ${pagosColumns.length}/4`);
     console.log(`✅ Tabla webhooks_paypal: ${webhooksExists.length > 0 ? 'Creada' : 'No encontrada'}`);
     
-    if (pedidosColumns.length === 3 && pagosColumns.length === 4 && webhooksExists.length > 0) {
+    if (ordersColumns.length === 3 && pagosColumns.length === 4 && webhooksExists.length > 0) {
       console.log('🎉 Todas las estructuras de PayPal están listas');
     } else {
       console.log('⚠️  Algunas estructuras pueden no haberse creado correctamente');

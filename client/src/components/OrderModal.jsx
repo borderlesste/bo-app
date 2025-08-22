@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { X, Package, DollarSign, User, Calendar, BarChart, CheckSquare } from 'lucide-react';
 
-const OrderModal = ({ isOpen, onClose, onSave, order, clients }) => {
+const orderModal = ({ isOpen, onClose, onSave, order, clients }) => {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState(null);
 
@@ -52,7 +52,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, clients }) => {
       await onSave(formData);
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Ocurrió un error al guardar el pedido.');
+      setError(err.response?.data?.message || 'Ocurrió un error al guardar el order.');
     }
   };
 
@@ -62,7 +62,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, clients }) => {
         <form onSubmit={handleSubmit}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-              {order ? 'Editar Pedido' : 'Crear Nuevo Pedido'}
+              {order ? 'Editar order' : 'Crear Nuevo order'}
             </h2>
             <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <X className="w-6 h-6" />
@@ -89,7 +89,7 @@ const OrderModal = ({ isOpen, onClose, onSave, order, clients }) => {
 
             <div className="relative">
               <Package className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
-              <input type="text" name="descripcion" value={formData.descripcion} onChange={handleChange} placeholder="Descripción del Pedido" required className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-slate-700 dark:text-white" />
+              <input type="text" name="descripcion" value={formData.descripcion} onChange={handleChange} placeholder="Descripción del order" required className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-slate-700 dark:text-white" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -167,9 +167,9 @@ const OrderModal = ({ isOpen, onClose, onSave, order, clients }) => {
   );
 };
 
-export default OrderModal;
+export default orderModal;
 
-OrderModal.propTypes = {
+orderModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,

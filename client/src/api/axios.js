@@ -285,14 +285,14 @@ export const deleteUser = (id) => api.delete(`/api/auth/users/${id}`);
 // --- Auth Management ---
 export const changePassword = (passwords) => api.post('/api/auth/change-password', passwords);
 
-// --- Order Management (Pedidos) ---
-export const getOrders = () => api.get('/api/orders');
-export const getOrder = (id) => api.get(`/api/orders/${id}`);
-export const createOrder = (orderData) => api.post('/api/orders', orderData);
-export const updateOrder = (id, orderData) => api.put(`/api/orders/${id}`, orderData);
-export const deleteOrder = (id) => api.delete(`/api/orders/${id}`);
-export const updateOrderStatus = (id, status) => api.put(`/api/orders/${id}/status`, { estado: status });
-export const getOrderItems = (orderId) => api.get(`/api/orders/${orderId}/items`);
+// --- order Management (orders) ---
+export const getorders = () => api.get('/api/orders');
+export const getorder = (id) => api.get(`/api/orders/${id}`);
+export const createorder = (orderData) => api.post('/api/orders', orderData);
+export const updateorder = (id, orderData) => api.put(`/api/orders/${id}`, orderData);
+export const deleteorder = (id) => api.delete(`/api/orders/${id}`);
+export const updateorderstatus = (id, status) => api.put(`/api/orders/${id}/status`, { estado: status });
+export const getorderItems = (orderId) => api.get(`/api/orders/${orderId}/items`);
 
 // --- Payment Management (Pagos) ---
 export const getPayments = () => api.get('/api/payments');
@@ -326,7 +326,7 @@ export const createQuote = (quoteData) => api.post('/api/quotes', quoteData);
 export const updateQuote = (id, quoteData) => api.put(`/api/quotes/${id}`, quoteData);
 export const deleteQuote = (id) => api.delete(`/api/quotes/${id}`);
 export const updateQuoteStatus = (id, status) => api.put(`/api/quotes/${id}/status`, { estado: status });
-export const convertQuoteToOrder = (id) => api.post(`/api/quotes/${id}/convert`);
+export const convertQuoteToorder = (id) => api.post(`/api/quotes/${id}/convert`);
 export const getQuoteItems = (quoteId) => api.get(`/api/quotes/${quoteId}/items`);
 
 
@@ -351,9 +351,9 @@ export const getClientProfile = () => api.get('/api/client/dashboard/profile');
 export const updateClientProfile = (data) => api.put('/api/client/dashboard/profile', data);
 export const changeClientPassword = (data) => api.put('/api/client/dashboard/change-password', data);
 
-// --- Client Orders Management ---
-export const getClientOrders = (params = {}) => api.get('/api/client/dashboard/orders', { params });
-export const updateClientOrderStatus = (id, data) => api.put(`/api/client/dashboard/orders/${id}/status`, data);
+// --- Client orders Management ---
+export const getClientorders = (params = {}) => api.get('/api/client/dashboard/orders', { params });
+export const updateClientorderstatus = (id, data) => api.put(`/api/client/dashboard/orders/${id}/status`, data);
 
 // --- Admin Dashboard Management ---
 export const getAdminStats = () => api.get('/api/admin/stats');
@@ -485,7 +485,7 @@ export const getInvoiceStats = () => api.get('/api/invoices/stats');
 export const generateInvoiceFromPayment = (paymentId) => api.post('/api/invoices/generate-from-payment', { pago_id: paymentId });
 export const updateOverdueInvoices = () => api.post('/api/invoices/update-overdue');
 export const getInvoiceItems = (invoiceId) => api.get(`/api/invoices/${invoiceId}/items`);
-export const generateInvoiceFromOrder = (orderId) => api.post('/api/invoices/generate-from-order', { pedido_id: orderId });
+export const generateInvoiceFromorder = (orderId) => api.post('/api/invoices/generate-from-order', { order_id: orderId });
 export const downloadClientInvoice = (invoiceId) => api.get(`/api/client/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
 
 // --- Notifications Management ---
@@ -541,10 +541,10 @@ export const addQuotationItem = (quotationId, itemData) => api.post(`/api/quotat
 export const updateQuotationItem = (itemId, itemData) => api.put(`/api/quotations/items/${itemId}`, itemData);
 export const deleteQuotationItem = (itemId) => api.delete(`/api/quotations/items/${itemId}`);
 
-// --- Enhanced Orders Management ---
-export const generateOrderNumber = () => api.get('/api/orders/generate-number');
-export const getOrderStatusHistory = (orderId) => api.get(`/api/orders/${orderId}/status-history`);
-export const getOrdersWithStatus = () => api.get('/api/orders/with-status');
+// --- Enhanced orders Management ---
+export const generateorderNumber = () => api.get('/api/orders/generate-number');
+export const getorderstatusHistory = (orderId) => api.get(`/api/orders/${orderId}/status-history`);
+export const getordersWithStatus = () => api.get('/api/orders/with-status');
 
 // --- Enhanced Projects Management ---
 export const generateProjectCode = (categoria = 'WEB') => api.get(`/api/projects/generate-code?categoria=${categoria}`);
