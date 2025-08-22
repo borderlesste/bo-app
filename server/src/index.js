@@ -76,8 +76,8 @@ const corsOptions = {
           'https://borderlesstechno.com', 
           'https://www.borderlesstechno.com',
           'https://bo-app-h21.vercel.app',
-          //'https://bo-app-git-pro-git-borderlesste.vercel.app',
-          //'https://bo-app-borderlesste.vercel.app'
+          'https://bo-appa.vercel.app',
+          'https://bo-app-n4uj.vercel.app'
         ]
       : [
           'http://localhost:5173', 

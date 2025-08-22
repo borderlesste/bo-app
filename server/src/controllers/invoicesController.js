@@ -122,8 +122,8 @@ const invoicesController = {
           u.telefono as cliente_telefono,
           u.direccion as cliente_direccion,
           u.rfc as cliente_rfc,
-          c.numero_cotizacion,
-          p.titulo as proyecto_titulo,
+          c.titulo as cotizacion_titulo,
+          p.nombre as proyecto_titulo,
           COALESCE(pagos_sum.total_pagado, 0) as total_pagado
         FROM facturas f
         INNER JOIN usuarios u ON f.usuario_id = u.id
@@ -155,11 +155,13 @@ const invoicesController = {
         ORDER BY orden ASC, id ASC
       `, [id]);
 
-      // Get payments
+      // Get applied payments
       const [payments] = await pool.execute(`
-        SELECT * FROM pagos 
-        WHERE factura_id = ? 
-        ORDER BY fecha_pago DESC
+        SELECT p.*, pa.monto_aplicado, pa.fecha_aplicacion
+        FROM pagos p
+        INNER JOIN pago_aplicaciones pa ON p.id = pa.pago_id
+        WHERE pa.factura_id = ? 
+        ORDER BY pa.fecha_aplicacion DESC
       `, [id]);
 
       const invoice = {
