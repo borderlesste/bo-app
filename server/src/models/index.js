@@ -1,6 +1,6 @@
 const User = require('./User');
 const Cotizacion = require('./Cotizacion');
-const order = require('./order');
+const Pedido = require('./Pedido');
 const Factura = require('./Factura');
 const Pago = require('./Pago');
 const Proyecto = require('./Proyecto');
@@ -13,7 +13,7 @@ const EstadisticasMensuales = require('./EstadisticasMensuales');
 module.exports = {
     User,
     Cotizacion,
-    order,
+    Pedido,
     Factura,
     Pago,
     Proyecto,
