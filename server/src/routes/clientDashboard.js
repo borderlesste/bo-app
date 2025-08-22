@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getClientStats, getClientProjects, getClientPayments, getClientActivity, getClientQuotes, updateClientQuoteStatus, getClientProfile, updateClientProfile, changeClientPassword, getClientorders, updateClientorderstatus } = require('../controllers/clientDashboardController.js');
+const { getClientStats, getClientProjects, getClientPayments, getClientActivity, getClientQuotes, updateClientQuoteStatus, getClientProfile, updateClientProfile, changeClientPassword, getClientpedidos, updateClientpedidostatus } = require('../controllers/clientDashboardController.js');
 const { isAuthenticated } = require('../middleware/authMiddleware.js');
 
 // Middleware para verificar que el usuario sea usuarios

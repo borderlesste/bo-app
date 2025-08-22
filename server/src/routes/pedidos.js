@@ -1,7 +1,7 @@
 const express = require('express');
 const { body } = require('express-validator');
 const {
-  getpedidos,
+  getPedidos,
   getpedidoById,
   getpedidosSummaryForAdmin,
   createpedido,
@@ -15,7 +15,7 @@ const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware.js');
 const router = express.Router();
 
 // --- Rutas para todos los usuarios autenticados ---
-router.get('/', isAuthenticated, getpedidos);
+router.get('/', isAuthenticated, getPedidos);
 router.get('/:id', isAuthenticated, getpedidoById);
 
 // --- Rutas para clientes ---
