@@ -47,8 +47,8 @@ exports.getpedidosSummaryForAdmin = async (req, res) => {
 exports.getpedidoById = async (req, res) => {
   const { id } = req.params;
   try {
-    const order = await pedidoservice.getorderById(id);
-    res.json(order);
+    const pedido = await pedidoservice.getpedidoById(id);
+    res.json(pedido);
   } catch (error) {
     console.error(`Error fetching order with id ${id}:`, error);
     res.status(500).json({ message: error.message });
@@ -66,11 +66,11 @@ exports.createpedido = async (req, res) => {
   const usuario_id = req.user.id; // Obtener el ID del usuario autenticado
 
   try {
-    const neworder = await pedidoservice.createorder(usuario_id, orderData);
+    const nuevoPedido = await pedidoservice.createpedido(usuario_id, orderData);
     res.status(201).json({ 
       success: true, 
       message: 'Solicitud enviada correctamente',
-      data: neworder 
+      data: nuevoPedido 
     });
   } catch (err) {
     console.error('Error creating order:', err);
@@ -92,7 +92,7 @@ exports.updatepedido = async (req, res) => {
   
   try {
     // Obtener el order antes de actualizarlo para comparar estados
-    const originalorder = await pedidoservice.getorderById(id);
+    const pedidoOriginal = await pedidoservice.getpedidoById(id);
     
     // Solo pasar los campos que fueron enviados en el request
     const updateData = {};
@@ -102,22 +102,22 @@ exports.updatepedido = async (req, res) => {
     if (req.body.total !== undefined) updateData.total = req.body.total;
     if (req.body.fecha_entrega_estimada !== undefined) updateData.fecha_entrega_estimada = req.body.fecha_entrega_estimada;
     
-    const updatedorder = await pedidoservice.updateorderPartial(id, updateData);
+    const pedidoActualizado = await pedidoservice.updatepedidoPartial(id, updateData);
 
     // Si cambió el estado, crear notificación
-    if (updateData.estado && updateData.estado !== originalorder.estado) {
+    if (updateData.estado && updateData.estado !== pedidoOriginal.estado) {
       try {
         await notificationService.notifypedidostatusChange(
-          { id, servicio: originalorder.servicio },
+          { id, servicio: pedidoOriginal.servicio },
           updateData.estado,
-          originalorder.usuario_id
+          pedidoOriginal.usuario_id
         );
 
         // Si el order se completó, crear notificación especial
         if (updateData.estado === 'completado') {
           await notificationService.notifyProjectCompleted(
-            { servicio: originalorder.servicio },
-            originalorder.usuario_id
+            { servicio: pedidoOriginal.servicio },
+            pedidoOriginal.usuario_id
           );
         }
       } catch (notificationError) {
@@ -125,7 +125,7 @@ exports.updatepedido = async (req, res) => {
       }
     }
 
-    res.json(updatedorder);
+    res.json(pedidoActualizado);
   } catch (err) {
     console.error(`Error updating order with id ${id}:`, err);
     res.status(500).json({ message: err.message });
@@ -136,8 +136,8 @@ exports.updatepedido = async (req, res) => {
 exports.cancelpedidoUsuario = async (req, res) => {
   const { id } = req.params;
   try {
-    const canceledorder = await pedidoservice.cancelorderClient(id, req.user.id);
-    res.json(canceledorder);
+    const pedidoCancelado = await pedidoservice.cancelpedidoClient(id, req.user.id);
+    res.json(pedidoCancelado);
   } catch (err) {
     console.error(`Error canceling order with id ${id} by client ${req.user.id}:`, err);
     res.status(500).json({ message: err.message });
@@ -148,8 +148,8 @@ exports.cancelpedidoUsuario = async (req, res) => {
 exports.resumepedidoUsuario = async (req, res) => {
   const { id } = req.params;
   try {
-    const resumedorder = await pedidoservice.resumeorderClient(id, req.user.id);
-    res.json(resumedorder);
+    const pedidoReanudado = await pedidoservice.resumepedidoClient(id, req.user.id);
+    res.json(pedidoReanudado);
   } catch (err) {
     console.error(`Error resuming order with id ${id} by client ${req.user.id}:`, err);
     res.status(500).json({ message: err.message });
@@ -160,7 +160,7 @@ exports.resumepedidoUsuario = async (req, res) => {
 exports.deletepedido = async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pedidoservice.deleteorder(id);
+    const result = await pedidoservice.deletepedido(id);
     res.status(200).json(result);
   } catch (err) {
     console.error(`Error deleting order with id ${id}:`, err);
