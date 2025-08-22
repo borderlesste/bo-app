@@ -19,7 +19,7 @@ const getClientStats = async (req, res) => {
           SUM(CASE WHEN estado IN ('nuevo', 'en_pausa') THEN 1 ELSE 0 END) as pending,
           COALESCE(AVG(CASE WHEN presupuesto_estimado > 0 THEN presupuesto_estimado END), 0) as averageValue,
           COALESCE(SUM(CASE WHEN presupuesto_estimado > 0 THEN presupuesto_estimado END), 0) as totalValue
-        FROM orders 
+        FROM pedidos 
         WHERE usuario_id = ?
       `, [usuarioId]),
       
@@ -154,7 +154,7 @@ const getClientProjects = async (req, res) => {
         created_at as date,
         updated_at as deliveryDate,
         notas_adicionales
-      FROM orders 
+      FROM pedidos 
       WHERE usuario_id = ?
       order BY created_at DESC
       LIMIT 20
@@ -200,7 +200,7 @@ const getClientPayments = async (req, res) => {
       SELECT 
         p.id,
         p.numero_pago,
-        p.order_id,
+        p.pedido_id,
         p.concepto,
         p.monto,
         p.moneda,
@@ -217,7 +217,7 @@ const getClientPayments = async (req, res) => {
         ped.numero_order,
         ped.descripcion as order_descripcion
       FROM pagos p
-      LEFT JOIN orders ped ON p.order_id = ped.id
+      LEFT JOIN pedidos ped ON p.pedido_id = ped.id
       WHERE p.usuario_id = ?
       order BY p.created_at DESC
       LIMIT 50
@@ -227,7 +227,7 @@ const getClientPayments = async (req, res) => {
     const formattedPayments = payments.map(payment => ({
       id: payment.id,
       numero_pago: payment.numero_pago,
-      order_id: payment.order_id,
+      pedido_id: payment.pedido_id,
       concepto: payment.concepto || 'Pago sin concepto',
       monto: parseFloat(payment.monto) || 0,
       moneda: payment.moneda || 'USD',
@@ -281,7 +281,7 @@ const getClientActivity = async (req, res) => {
         CONCAT('Proyecto "', descripcion, '" cambió a estado: ', estado) as message,
         created_at as time,
         'normal' as priority
-      FROM orders 
+      FROM pedidos 
       WHERE usuario_id = ?
       order BY created_at DESC
       LIMIT 5
@@ -723,8 +723,8 @@ const changeClientPassword = async (req, res) => {
   }
 };
 
-// Obtener orders del cliente
-const getClientorders = async (req, res) => {
+// Obtener pedidos del cliente
+const getClientpedidos = async (req, res) => {
   try {
     const usuarioId = req.user.id;
     const { status, limit = 20, offset = 0 } = req.query;
@@ -741,7 +741,7 @@ const getClientorders = async (req, res) => {
         'media' as prioridad,
         created_at,
         updated_at
-      FROM orders 
+      FROM pedidos 
       WHERE usuario_id = ?
     `;
     
@@ -760,10 +760,10 @@ const getClientorders = async (req, res) => {
     query += ' LIMIT ? OFFSET ?';
     queryParams.push(parseInt(limit), parseInt(offset));
     
-    const [orders] = await pool.execute(query, queryParams);
+    const [pedidos] = await pool.execute(query, queryParams);
     
-    // Obtener total de orders para paginación
-    let countQuery = 'SELECT COUNT(*) as total FROM orders WHERE usuario_id = ?';
+    // Obtener total de pedidos para paginación
+    let countQuery = 'SELECT COUNT(*) as total FROM pedidos WHERE usuario_id = ?';
     const countParams = [usuarioId];
     
     if (status) {
@@ -772,10 +772,10 @@ const getClientorders = async (req, res) => {
     }
     
     const [countResult] = await pool.execute(countQuery, countParams);
-    const totalorders = countResult[0].total;
+    const totalpedidos = countResult[0].total;
     
-    // Formatear orders
-    const formattedorders = orders.map(order => ({
+    // Formatear pedidos
+    const formattedpedidos = pedidos.map(order => ({
       id: order.id,
       descripcion: order.descripcion,
       estado: order.estado,
@@ -789,26 +789,26 @@ const getClientorders = async (req, res) => {
     
     res.json({
       success: true,
-      data: formattedorders,
+      data: formattedpedidos,
       pagination: {
-        total: totalorders,
+        total: totalpedidos,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        pages: Math.ceil(totalorders / limit)
+        pages: Math.ceil(totalpedidos / limit)
       }
     });
   } catch (error) {
-    console.error('Error al obtener orders del cliente:', error);
+    console.error('Error al obtener pedidos del cliente:', error);
     res.status(500).json({ 
       success: false,
-      message: 'Error al obtener orders del cliente',
+      message: 'Error al obtener pedidos del cliente',
       error: error.message 
     });
   }
 };
 
 // Actualizar estado de order por parte del cliente (solo cancelar)
-const updateClientorderstatus = async (req, res) => {
+const updateClientpedidostatus = async (req, res) => {
   try {
     const usuarioId = req.user.id;
     const orderId = req.params.id;
@@ -819,13 +819,13 @@ const updateClientorderstatus = async (req, res) => {
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Estado no válido. Los clientes solo pueden cancelar, pausar o reactivar orders.'
+        message: 'Estado no válido. Los clientes solo pueden cancelar, pausar o reactivar pedidos.'
       });
     }
     
     // Verificar que el order pertenece al cliente
     const [order] = await pool.execute(
-      'SELECT id, estado, usuario_id FROM orders WHERE id = ? AND usuario_id = ?',
+      'SELECT id, estado, usuario_id FROM pedidos WHERE id = ? AND usuario_id = ?',
       [orderId, usuarioId]
     );
     
@@ -849,7 +849,7 @@ const updateClientorderstatus = async (req, res) => {
     
     // Actualizar el order
     const updateQuery = `
-      UPDATE orders 
+      UPDATE pedidos 
       SET estado = ?, notas = ?, updated_at = CURRENT_TIMESTAMP 
       WHERE id = ? AND usuario_id = ?
     `;
@@ -966,7 +966,7 @@ module.exports = {
   getClientProfile,
   updateClientProfile,
   changeClientPassword,
-  getClientorders,
-  updateClientorderstatus,
+  getClientpedidos,
+  updateClientpedidostatus,
   getClientConversations
 };

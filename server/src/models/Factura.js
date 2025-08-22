@@ -8,7 +8,7 @@ class Factura {
 
     static async create(facturaData) {
         const {
-            numero_factura, serie, folio, usuario_id, order_id,
+            numero_factura, serie, folio, usuario_id, pedido_id,
             tipo = 'factura', estado = 'borrador', moneda = 'MXN',
             tipo_cambio = 1.0000, metodo_pago, forma_pago, uso_cfdi,
             fecha_vencimiento, notas, created_by
@@ -16,7 +16,7 @@ class Factura {
 
         const [result] = await pool.execute(`
             INSERT INTO facturas (
-                numero_factura, serie, folio, usuario_id, order_id, tipo,
+                numero_factura, serie, folio, usuario_id, pedido_id, tipo,
                 estado, moneda, tipo_cambio, metodo_pago, forma_pago,
                 uso_cfdi, fecha_vencimiento, notas, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -53,10 +53,10 @@ class Factura {
     static async findAll(filters = {}) {
         let sql = `
             SELECT f.*, u.nombre as cliente_nombre, u.empresa as cliente_empresa,
-                   p.numero_order, creator.nombre as created_by_name
+                   p.numero_pedido, creator.nombre as created_by_name
             FROM facturas f
             LEFT JOIN usuarios u ON f.usuario_id = u.id
-            LEFT JOIN orders p ON f.order_id = p.id
+            LEFT JOIN pedidos p ON f.pedido_id = p.id
             LEFT JOIN usuarios creator ON f.created_by = creator.id
             WHERE 1=1
         `;
@@ -105,9 +105,9 @@ class Factura {
 
     static async getItems(facturaId) {
         const [result] = await pool.execute(`
-            SELECT fi.*, pi.descripcion as order_item_descripcion
+            SELECT fi.*, pi.descripcion as pedido_item_descripcion
             FROM factura_items fi
-            LEFT JOIN order_items pi ON fi.order_item_id = pi.id
+            LEFT JOIN pedido_items pi ON fi.pedido_item_id = pi.id
             WHERE fi.factura_id = ?
             order BY fi.orden ASC
         `, [facturaId]);
@@ -115,16 +115,16 @@ class Factura {
 
     static async addItem(facturaId, itemData) {
         const {
-            order_item_id, clave_prod_serv, clave_unidad, descripcion,
+            pedido_item_id, clave_prod_serv, clave_unidad, descripcion,
             cantidad, precio_unitario, descuento = 0, orden = 0
         } = itemData;
         
         const [result] = await pool.execute(`
             INSERT INTO factura_items (
-                factura_id, order_item_id, clave_prod_serv, clave_unidad,
+                factura_id, pedido_item_id, clave_prod_serv, clave_unidad,
                 descripcion, cantidad, precio_unitario, descuento, orden
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [facturaId, order_item_id, clave_prod_serv, clave_unidad,
+        `, [facturaId, pedido_item_id, clave_prod_serv, clave_unidad,
             descripcion, cantidad, precio_unitario, descuento, orden]);
         return result.insertId;
     }

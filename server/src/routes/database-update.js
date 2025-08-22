@@ -217,7 +217,7 @@ router.post('/create-sample-clients', async (req, res) => {
     
     // Check if sample clients already exist
     const [existingClients] = await pool.execute(
-      'SELECT COUNT(*) as count FROM usuarios WHERE rol = "cliente"'
+      'SELECT COUNT(*) as count FROM usuarios WHERE rol = "usuarios"'
     );
     
     if (existingClients[0].count > 0) {
@@ -254,12 +254,12 @@ router.post('/create-sample-clients', async (req, res) => {
       }
     ];
     
-    const hashedPassword = await bcrypt.hash('cliente123', 10);
+    const hashedPassword = await bcrypt.hash('usuarios123', 10);
     
     for (const client of sampleClients) {
       await pool.execute(
         `INSERT INTO usuarios (nombre, email, password, telefono, direccion, empresa, rfc, rol, estado) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, 'cliente', 'activo')`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'usuarios', 'activo')`,
         [client.nombre, client.email, hashedPassword, client.telefono, client.direccion, client.empresa, client.rfc]
       );
     }
@@ -268,7 +268,7 @@ router.post('/create-sample-clients', async (req, res) => {
       success: true,
       message: `Created ${sampleClients.length} sample clients successfully`,
       clients: sampleClients.map(c => ({ nombre: c.nombre, email: c.email, empresa: c.empresa })),
-      default_password: 'cliente123'
+      default_password: 'usuarios123'
     });
     
   } catch (error) {

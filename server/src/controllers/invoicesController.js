@@ -53,10 +53,10 @@ const invoicesController = {
       const query = `
         SELECT 
           f.*,
-          u.nombre as cliente_nombre,
-          u.empresa as cliente_empresa,
-          u.email as cliente_email,
-          u.telefono as cliente_telefono,
+          u.nombre as usuarios_nombre,
+          u.empresa as usuarios_empresa,
+          u.email as usuarios_email,
+          u.telefono as usuarios_telefono,
           CASE 
             WHEN f.estado = 'pagada' THEN 'pagada'
             WHEN f.fecha_vencimiento < CURDATE() AND f.estado NOT IN ('pagada', 'cancelada') THEN 'vencida'
@@ -116,12 +116,12 @@ const invoicesController = {
       const [invoices] = await pool.execute(`
         SELECT 
           f.*,
-          u.nombre as cliente_nombre,
-          u.empresa as cliente_empresa,
-          u.email as cliente_email,
-          u.telefono as cliente_telefono,
-          u.direccion as cliente_direccion,
-          u.rfc as cliente_rfc,
+          u.nombre as usuarios_nombre,
+          u.empresa as usuarios_empresa,
+          u.email as usuarios_email,
+          u.telefono as usuarios_telefono,
+          u.direccion as usuarios_direccion,
+          u.rfc as usuarios_rfc,
           c.titulo as cotizacion_titulo,
           p.nombre as proyecto_titulo,
           COALESCE(pagos_sum.total_pagado, 0) as total_pagado
@@ -210,7 +210,7 @@ const invoicesController = {
         SELECT 
           id, nombre, email, telefono, empresa, rfc
         FROM usuarios 
-        WHERE rol = 'cliente' 
+        WHERE rol = 'usuarios' 
         AND estado = 'activo'
         AND (
           nombre LIKE ? OR 
@@ -231,7 +231,7 @@ const invoicesController = {
       const countQuery = `
         SELECT COUNT(*) as total
         FROM usuarios 
-        WHERE rol = 'cliente' 
+        WHERE rol = 'usuarios' 
         AND estado = 'activo'
         AND (
           nombre LIKE ? OR 
@@ -293,14 +293,14 @@ const invoicesController = {
 
       // Validate user exists and is active
       const [userCheck] = await connection.execute(
-        'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "cliente" AND estado = "activo"',
+        'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "usuarios" AND estado = "activo"',
         [usuario_id]
       );
 
       if (userCheck.length === 0) {
         return res.status(400).json({
           success: false,
-          message: 'Usuario no encontrado o no es un cliente activo'
+          message: 'Usuario no encontrado o no es un usuarios activo'
         });
       }
 
@@ -486,7 +486,7 @@ const invoicesController = {
 
       // Get quotation with items
       const [quotations] = await connection.execute(`
-        SELECT c.*, u.nombre as cliente_nombre
+        SELECT c.*, u.nombre as usuarios_nombre
         FROM cotizaciones c
         INNER JOIN usuarios u ON c.usuario_id = u.id
         WHERE c.id = ? AND c.estado = 'aprobada'
@@ -638,7 +638,7 @@ const invoicesController = {
           f.total,
           f.fecha_vencimiento,
           DATEDIFF(CURDATE(), f.fecha_vencimiento) as dias_vencido,
-          u.nombre as cliente_nombre
+          u.nombre as usuarios_nombre
         FROM facturas f
         INNER JOIN usuarios u ON f.usuario_id = u.id
         WHERE f.fecha_vencimiento < CURDATE() 

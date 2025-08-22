@@ -21,14 +21,14 @@ exports.register = async (req, res) => {
     req.session.userEmail = user.email;
     req.session.userName = user.nombre;
     
-    // Registrar actividad de nuevo cliente (solo si no es admin)
+    // Registrar actividad de nuevo usuarios (solo si no es admin)
     if (user.rol !== 'admin') {
       await logActivity(
         'new_client',
-        `Nuevo cliente registrado: ${user.nombre}`,
+        `Nuevo usuarios registrado: ${user.nombre}`,
         user.id,
         user.id,
-        'cliente'
+        'usuarios'
       );
 
       // Enviar email de bienvenida (no bloquear si falla)
@@ -44,14 +44,14 @@ exports.register = async (req, res) => {
           console.log('⚠️ Error enviando email de bienvenida:', err.message);
         });
 
-      // Crear notificación de nuevo cliente
+      // Crear notificación de nuevo usuarios
       try {
         await notificationService.notifyNewClient({
           nombre: user.nombre,
           email: user.email
         });
       } catch (notificationError) {
-        console.log('⚠️ Error creando notificación de nuevo cliente:', notificationError);
+        console.log('⚠️ Error creando notificación de nuevo usuarios:', notificationError);
       }
     }
     
@@ -135,8 +135,8 @@ exports.login = async (req, res) => {
           userDetails = {
             nombre: email.split('@')[0].replace('.', ' ').replace(/\\b\\w/g, l => l.toUpperCase()),
             email: email,
-            password: req.body.password || 'cliente123',
-            rol: 'cliente',
+            password: req.body.password || 'usuarios123',
+            rol: 'usuarios',
             telefono: '+52 55 0000 0000',
             direccion: 'Dirección por definir',
             empresa: 'Empresa del Cliente',

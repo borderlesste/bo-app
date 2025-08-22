@@ -10,7 +10,7 @@ class Mensaje {
         const {
             remitente_id, destinatario_id, remitente_email, destinatario_email,
             asunto, mensaje, tipo = 'consulta_general', prioridad = 'media',
-            parent_message_id, order_id, cotizacion_id, adjuntos,
+            parent_message_id, pedido_id, cotizacion_id, adjuntos,
             ip_address, user_agent
         } = mensajeData;
 
@@ -18,11 +18,11 @@ class Mensaje {
             INSERT INTO mensajes (
                 remitente_id, destinatario_id, remitente_email, destinatario_email,
                 asunto, mensaje, tipo, prioridad, parent_message_id,
-                order_id, cotizacion_id, adjuntos, ip_address, user_agent
+                pedido_id, cotizacion_id, adjuntos, ip_address, user_agent
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [remitente_id, destinatario_id, remitente_email, destinatario_email,
              asunto, mensaje, tipo, prioridad, parent_message_id,
-             order_id, cotizacion_id, JSON.stringify(adjuntos), ip_address, user_agent]
+             pedido_id, cotizacion_id, JSON.stringify(adjuntos), ip_address, user_agent]
         );
         return result.insertId;
     }
@@ -60,12 +60,12 @@ class Mensaje {
             SELECT m.*, 
                    remitente.nombre as remitente_nombre,
                    destinatario.nombre as destinatario_nombre,
-                   p.numero_order,
+                   p.numero_pedido,
                    c.titulo as cotizacion_titulo
             FROM mensajes m
             LEFT JOIN usuarios remitente ON m.remitente_id = remitente.id
             LEFT JOIN usuarios destinatario ON m.destinatario_id = destinatario.id
-            LEFT JOIN orders p ON m.order_id = p.id
+            LEFT JOIN pedidos p ON m.pedido_id = p.id
             LEFT JOIN cotizaciones c ON m.cotizacion_id = c.id
             WHERE 1=1
         `;
@@ -96,9 +96,9 @@ class Mensaje {
             values.push(filters.destinatario_id);
         }
 
-        if (filters.order_id) {
-            sql += ' AND m.order_id = ?';
-            values.push(filters.order_id);
+        if (filters.pedido_id) {
+            sql += ' AND m.pedido_id = ?';
+            values.push(filters.pedido_id);
         }
 
         if (filters.search) {

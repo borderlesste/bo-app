@@ -10,7 +10,7 @@ const getQuotes = async (req, res) => {
       `SELECT q.id, q.usuario_id, q.nombre, q.email, 
               q.titulo, q.descripcion, q.precio_estimado,
               q.estado, q.prioridad, q.fecha_expiracion,
-              q.created_at, u.nombre as cliente_nombre 
+              q.created_at, u.nombre as usuarios_nombre 
        FROM cotizaciones q 
        LEFT JOIN usuarios u ON q.usuario_id = u.id 
        order BY q.created_at DESC`
@@ -38,7 +38,7 @@ const getQuoteById = async (req, res) => {
       `SELECT q.id, q.numero_cotizacion, q.nombre_prospecto, q.email_prospecto,
               q.telefono_prospecto, q.empresa_prospecto, q.tipo_servicio, q.descripcion,
               q.estado, q.subtotal, q.total, q.fecha_emision, q.fecha_vencimiento,
-              q.notas, q.created_at, u.nombre as cliente_nombre, u.email as cliente_email
+              q.notas, q.created_at, u.nombre as usuarios_nombre, u.email as usuarios_email
        FROM cotizaciones q 
        LEFT JOIN usuarios u ON q.usuario_id = u.id 
        WHERE q.id = ?`,
@@ -105,7 +105,7 @@ const createQuote = async (req, res) => {
         descripcion
       });
       
-      // Enviar email de bienvenida al cliente
+      // Enviar email de bienvenida al usuarios
       await emailService.sendWelcomeEmail({
         nombre,
         email
@@ -255,9 +255,9 @@ const convertQuoteToorder = async (req, res) => {
     const quote = cotizaciones[0];
     
     // Check if quote has a client_id, if not, we need to create or find a client
-    let clienteId = quote.usuario_id;
+    let usuariosId = quote.usuario_id;
     
-    if (!clienteId) {
+    if (!usuariosId) {
       // Try to find existing client by email
       const [existingClient] = await pool.execute(
         'SELECT id FROM usuarios WHERE email = ?',
@@ -265,21 +265,21 @@ const convertQuoteToorder = async (req, res) => {
       );
       
       if (existingClient.length > 0) {
-        clienteId = existingClient[0].id;
+        usuariosId = existingClient[0].id;
       } else {
         // Create new client from quote data
         const [newClient] = await pool.execute(
           `INSERT INTO usuarios (nombre, email, telefono, empresa, direccion, password, rol) 
-           VALUES (?, ?, ?, ?, 'Dirección pendiente', '$2b$10$defaulthash', 'cliente')`,
+           VALUES (?, ?, ?, ?, 'Dirección pendiente', '$2b$10$defaulthash', 'usuarios')`,
           [quote.nombre_prospecto, quote.email_prospecto, quote.telefono_prospecto || '', quote.empresa_prospecto || null]
         );
-        clienteId = newClient.insertId;
+        usuariosId = newClient.insertId;
       }
       
       // Update quote with client_id
       await pool.execute(
         'UPDATE cotizaciones SET usuario_id = ? WHERE id = ?',
-        [clienteId, id]
+        [usuariosId, id]
       );
     }
     
@@ -289,9 +289,9 @@ const convertQuoteToorder = async (req, res) => {
     
     // Create order from quote
     const [orderResult] = await pool.execute(
-      `INSERT INTO orders (numero_order, usuario_id, cotizacion_id, descripcion, estado, prioridad, created_by) 
+      `INSERT INTO pedidos (numero_order, usuario_id, cotizacion_id, descripcion, estado, prioridad, created_by) 
        VALUES (?, ?, ?, ?, 'nuevo', 'normal', ?)`,
-      [numeroorder, clienteId, id, `${quote.tipo_servicio}: ${quote.descripcion}`, req.user.id]
+      [numeroorder, usuariosId, id, `${quote.tipo_servicio}: ${quote.descripcion}`, req.user.id]
     );
     
     // Update quote status
@@ -315,7 +315,7 @@ const convertQuoteToorder = async (req, res) => {
       message: 'Cotización convertida a order exitosamente',
       data: { 
         orderId: orderResult.insertId,
-        clienteId: clienteId
+        usuariosId: usuariosId
       }
     });
   } catch (error) {

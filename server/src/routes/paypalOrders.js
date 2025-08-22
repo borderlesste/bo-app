@@ -21,7 +21,7 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // 🔄 PASO 1 y 2: Crear order en MySQL y orden en PayPal
-router.post('/create-orders', 
+router.post('/create-pedidos', 
   [
     isAuthenticated,
     body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
@@ -62,7 +62,7 @@ router.post('/create-orders',
         });
       }
     } catch (error) {
-      console.error('❌ Error in create-orders:', error);
+      console.error('❌ Error in create-pedidos:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor',
@@ -73,28 +73,28 @@ router.post('/create-orders',
 );
 
 // 🔄 PASO 4: Capturar pago de PayPal y actualizar order
-router.post('/capture-orders',
+router.post('/capture-pedidos',
   [
     isAuthenticated,
-    body('paypal_order_id').notEmpty().withMessage('PayPal order ID es obligatorio'),
-    body('order_id').optional().isInt().withMessage('ID de order debe ser un entero')
+    body('paypal_pedido_id').notEmpty().withMessage('PayPal order ID es obligatorio'),
+    body('pedido_id').optional().isInt().withMessage('ID de order debe ser un entero')
   ],
   handleValidationErrors,
   async (req, res) => {
     try {
-      const { paypal_order_id, order_id } = req.body;
+      const { paypal_pedido_id, pedido_id } = req.body;
       const userId = req.user.id;
       
-      console.log('🔄 Capturing PayPal payment:', paypal_order_id);
+      console.log('🔄 Capturing PayPal payment:', paypal_pedido_id);
       
       // Verificar que el order pertenece al usuario (seguridad)
-      if (order_id) {
-        const [orders] = await pool.execute(
-          'SELECT * FROM orders WHERE id = ? AND usuario_id = ?',
-          [order_id, userId]
+      if (pedido_id) {
+        const [pedidos] = await pool.execute(
+          'SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?',
+          [pedido_id, userId]
         );
         
-        if (orders.length === 0) {
+        if (pedidos.length === 0) {
           return res.status(404).json({
             success: false,
             message: 'order no encontrado o no autorizado'
@@ -102,7 +102,7 @@ router.post('/capture-orders',
         }
       }
       
-      const result = await paymentGatewayService.capturePayPalorder(paypal_order_id);
+      const result = await paymentGatewayService.capturePayPalorder(paypal_pedido_id);
 
       if (result.success) {
         res.json({
@@ -117,7 +117,7 @@ router.post('/capture-orders',
         });
       }
     } catch (error) {
-      console.error('❌ Error in capture-orders:', error);
+      console.error('❌ Error in capture-pedidos:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -127,7 +127,7 @@ router.post('/capture-orders',
 );
 
 // 📋 Obtener estado del order
-router.get('/orders/:orderId/status',
+router.get('/pedidos/:orderId/status',
   [
     isAuthenticated,
     param('orderId').isInt().withMessage('ID de order debe ser un entero')
@@ -138,38 +138,38 @@ router.get('/orders/:orderId/status',
       const { orderId } = req.params;
       const userId = req.user.id;
 
-      const [orders] = await pool.execute(
+      const [pedidos] = await pool.execute(
         `SELECT p.*, 
                 COUNT(pi.id) as total_items,
                 SUM(CASE WHEN pi.estado = 'completado' THEN 1 ELSE 0 END) as items_completados
-         FROM orders p 
-         LEFT JOIN order_items pi ON p.id = pi.order_id
+         FROM pedidos p 
+         LEFT JOIN order_items pi ON p.id = pi.pedido_id
          WHERE p.id = ? AND p.usuario_id = ?
          GROUP BY p.id`,
         [orderId, userId]
       );
 
-      if (orders.length === 0) {
+      if (pedidos.length === 0) {
         return res.status(404).json({
           success: false,
           message: 'order no encontrado'
         });
       }
 
-      const order = orders[0];
+      const order = pedidos[0];
       
       // Obtener items del order
       const [items] = await pool.execute(
-        'SELECT * FROM order_items WHERE order_id = ? order BY orden',
+        'SELECT * FROM order_items WHERE pedido_id = ? order BY orden',
         [orderId]
       );
       
       // Obtener pagos relacionados
       const [pagos] = await pool.execute(
         `SELECT * FROM pagos 
-         WHERE paypal_order_id = ? OR referencia LIKE ?
+         WHERE paypal_pedido_id = ? OR referencia LIKE ?
          order BY created_at DESC`,
-        [order.paypal_order_id, `%${order.numero_order}%`]
+        [order.paypal_pedido_id, `%${order.numero_order}%`]
       );
 
       res.json({
@@ -197,8 +197,8 @@ router.get('/orders/:orderId/status',
   }
 );
 
-// 📋 Listar orders del usuario
-router.get('/orders',
+// 📋 Listar pedidos del usuario
+router.get('/pedidos',
   [isAuthenticated],
   async (req, res) => {
     try {
@@ -213,12 +213,12 @@ router.get('/orders',
         params.push(estado);
       }
       
-      const [orders] = await pool.execute(
+      const [pedidos] = await pool.execute(
         `SELECT p.*, 
                 COUNT(pi.id) as total_items,
                 SUM(CASE WHEN pi.estado = 'completado' THEN 1 ELSE 0 END) as items_completados
-         FROM orders p 
-         LEFT JOIN order_items pi ON p.id = pi.order_id
+         FROM pedidos p 
+         LEFT JOIN order_items pi ON p.id = pi.pedido_id
          ${whereClause}
          GROUP BY p.id
          order BY p.created_at DESC
@@ -226,16 +226,16 @@ router.get('/orders',
         [...params, parseInt(limit), parseInt(offset)]
       );
 
-      // Contar total de orders
+      // Contar total de pedidos
       const [countResult] = await pool.execute(
-        `SELECT COUNT(*) as total FROM orders p ${whereClause}`,
+        `SELECT COUNT(*) as total FROM pedidos p ${whereClause}`,
         params
       );
 
       res.json({
         success: true,
         data: {
-          orders,
+          pedidos,
           pagination: {
             total: countResult[0].total,
             limit: parseInt(limit),
@@ -245,7 +245,7 @@ router.get('/orders',
         }
       });
     } catch (error) {
-      console.error('❌ Error listing orders:', error);
+      console.error('❌ Error listing pedidos:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
@@ -298,13 +298,13 @@ router.get('/admin/payment-summary',
       
       const [summary] = await pool.execute(`
         SELECT 
-          COUNT(*) as total_orders,
-          SUM(CASE WHEN estado = 'confirmado' THEN 1 ELSE 0 END) as orders_confirmados,
-          SUM(CASE WHEN estado = 'nuevo' THEN 1 ELSE 0 END) as orders_pendientes,
+          COUNT(*) as total_pedidos,
+          SUM(CASE WHEN estado = 'confirmado' THEN 1 ELSE 0 END) as pedidos_confirmados,
+          SUM(CASE WHEN estado = 'nuevo' THEN 1 ELSE 0 END) as pedidos_pendientes,
           SUM(CASE WHEN payment_method = 'paypal' THEN total ELSE 0 END) as ingresos_paypal,
           SUM(total) as ingresos_totales,
           COUNT(DISTINCT usuario_id) as clientes_unicos
-        FROM orders 
+        FROM pedidos 
         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       `);
       

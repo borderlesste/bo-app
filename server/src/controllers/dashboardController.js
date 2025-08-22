@@ -5,11 +5,11 @@ const getAdminStats = async (req, res) => {
   try {
     // Obtener estadísticas básicas
     const statsQueries = await Promise.all([
-      // Total de clientes
+      // Total de usuarioss
       pool.execute('SELECT COUNT(*) as total FROM usuarios WHERE rol != "admin"'),
       
-      // Proyectos activos (orders en progreso) 
-      pool.execute('SELECT COUNT(*) as total FROM orders WHERE estado IN ("nuevo", "confirmado", "en_proceso")'),
+      // Proyectos activos (pedidos en progreso) 
+      pool.execute('SELECT COUNT(*) as total FROM pedidos WHERE estado IN ("nuevo", "confirmado", "en_proceso")'),
       
       // Cotizaciones pendientes
       pool.execute('SELECT COUNT(*) as total FROM cotizaciones WHERE estado = "Pendiente"'),
@@ -24,12 +24,12 @@ const getAdminStats = async (req, res) => {
       `),
       
       // Proyectos completados
-      pool.execute('SELECT COUNT(*) as total FROM orders WHERE estado = "completado"'),
+      pool.execute('SELECT COUNT(*) as total FROM pedidos WHERE estado = "completado"'),
       
       // Pagos pendientes (monto total)
       pool.execute('SELECT COALESCE(SUM(monto), 0) as total FROM pagos WHERE estado = "pendiente"'),
       
-      // Nuevos clientes este mes
+      // Nuevos usuarioss este mes
       pool.execute(`
         SELECT COUNT(*) as total 
         FROM usuarios 
@@ -39,7 +39,7 @@ const getAdminStats = async (req, res) => {
       `),
       
       // Valor promedio de proyectos
-      pool.execute('SELECT AVG(total) as promedio FROM orders WHERE total IS NOT NULL'),
+      pool.execute('SELECT AVG(total) as promedio FROM pedidos WHERE total IS NOT NULL'),
 
       // Total de proyectos en portfolio
       pool.execute('SELECT COUNT(*) as total FROM proyectos WHERE es_publico = 1'),
@@ -135,7 +135,7 @@ const getRecentActivity = async (req, res) => {
   }
 };
 
-// Obtener mejores clientes
+// Obtener mejores usuarioss
 const getTopClients = async (req, res) => {
   try {
     const [clients] = await pool.execute(`
@@ -152,7 +152,7 @@ const getTopClients = async (req, res) => {
         END as status
       FROM usuarios c
       LEFT JOIN pagos p ON c.id = p.usuario_id AND p.estado = 'aplicado'
-      LEFT JOIN orders pe ON c.id = pe.usuario_id
+      LEFT JOIN pedidos pe ON c.id = pe.usuario_id
       WHERE c.rol != 'admin'
       GROUP BY c.id, c.nombre, c.email
       HAVING COUNT(DISTINCT pe.id) > 0 OR SUM(p.monto) > 0
@@ -172,9 +172,9 @@ const getTopClients = async (req, res) => {
       data: formattedClients
     });
   } catch (error) {
-    console.error('Error al obtener mejores clientes:', error);
+    console.error('Error al obtener mejores usuarioss:', error);
     res.status(500).json({ 
-      message: 'Error al obtener mejores clientes',
+      message: 'Error al obtener mejores usuarioss',
       error: error.message 
     });
   }
@@ -209,7 +209,7 @@ const getChartsData = async (req, res) => {
       order BY count DESC
     `);
 
-    // Crecimiento de clientes por mes (últimos 6 meses)
+    // Crecimiento de usuarioss por mes (últimos 6 meses)
     const [clientGrowth] = await pool.execute(`
       SELECT 
         DATE_FORMAT(created_at, '%Y-%m') as month,
@@ -295,7 +295,7 @@ const getFinancialSummary = async (req, res) => {
         (SELECT COALESCE(SUM(monto), 0) FROM pagos WHERE estado = 'pendiente') as pending_income,
         (SELECT COALESCE(SUM(total), 0) FROM facturas WHERE estado IN ('emitida', 'timbrada')) as pending_invoices,
         (SELECT COALESCE(SUM(precio_estimado), 0) FROM cotizaciones WHERE estado = 'Pendiente') as pending_quotes,
-        (SELECT COALESCE(AVG(total), 0) FROM orders WHERE total IS NOT NULL) as avg_project_value,
+        (SELECT COALESCE(AVG(total), 0) FROM pedidos WHERE total IS NOT NULL) as avg_project_value,
         (SELECT COUNT(*) FROM cotizaciones WHERE estado = 'Aprobada' AND MONTH(created_at) = MONTH(CURRENT_DATE())) as accepted_quotes_month
     `);
 
@@ -320,7 +320,7 @@ const getAdvancedMetrics = async (req, res) => {
     
     const [metrics] = await pool.execute(`
       SELECT 
-        -- Conversión de cotizaciones a orders
+        -- Conversión de cotizaciones a pedidos
         (SELECT COUNT(*) FROM cotizaciones WHERE estado = 'Aprobada' AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as quotes_approved,
         (SELECT COUNT(*) FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_quotes,
         
@@ -330,9 +330,9 @@ const getAdvancedMetrics = async (req, res) => {
         -- Valor promedio de cotizaciones
         (SELECT AVG(precio_estimado) FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)) as avg_quote_value,
         
-        -- Retención de clientes (clientes con más de un proyecto)
-        (SELECT COUNT(DISTINCT usuario_id) FROM orders GROUP BY usuario_id HAVING COUNT(*) > 1) as returning_clients,
-        (SELECT COUNT(DISTINCT usuario_id) FROM orders) as total_clients_with_orders,
+        -- Retención de usuarioss (usuarioss con más de un proyecto)
+        (SELECT COUNT(DISTINCT usuario_id) FROM pedidos GROUP BY usuario_id HAVING COUNT(*) > 1) as returning_clients,
+        (SELECT COUNT(DISTINCT usuario_id) FROM pedidos) as total_clients_with_pedidos,
         
         -- Ingresos por fuente
         (SELECT COUNT(*) FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND usuario_id IS NULL) as direct_leads,
@@ -343,7 +343,7 @@ const getAdvancedMetrics = async (req, res) => {
         (SELECT COALESCE(SUM(total), 0) FROM facturas WHERE fecha_emision >= DATE_SUB(NOW(), INTERVAL ? DAY)) as total_invoiced,
         
         -- Carga de trabajo
-        (SELECT COUNT(*) FROM orders WHERE estado IN ('nuevo', 'confirmado', 'en_proceso')) as active_workload,
+        (SELECT COUNT(*) FROM pedidos WHERE estado IN ('nuevo', 'confirmado', 'en_proceso')) as active_workload,
         (SELECT COUNT(*) FROM usuarios WHERE rol = 'empleado' AND estado = 'activo') as available_staff
     `, Array(8).fill(period));
 
@@ -351,7 +351,7 @@ const getAdvancedMetrics = async (req, res) => {
     
     // Calcular métricas derivadas
     const conversionRate = data.total_quotes > 0 ? (data.quotes_approved / data.total_quotes * 100) : 0;
-    const retentionRate = data.total_clients_with_orders > 0 ? (data.returning_clients / data.total_clients_with_orders * 100) : 0;
+    const retentionRate = data.total_clients_with_pedidos > 0 ? (data.returning_clients / data.total_clients_with_pedidos * 100) : 0;
     const collectionEfficiency = data.total_invoiced > 0 ? (data.collected_invoices / data.total_invoiced * 100) : 0;
     const workloadPerStaff = data.available_staff > 0 ? (data.active_workload / data.available_staff) : data.active_workload;
 
@@ -385,12 +385,12 @@ const getTrends = async (req, res) => {
       SELECT 
         COUNT(DISTINCT u.id) as new_clients,
         COUNT(DISTINCT c.id) as new_quotes,
-        COUNT(DISTINCT p.id) as new_orders,
+        COUNT(DISTINCT p.id) as new_pedidos,
         COALESCE(SUM(pg.monto), 0) as revenue,
         COUNT(DISTINCT f.id) as invoices_issued
       FROM usuarios u
       LEFT JOIN cotizaciones c ON u.id = c.usuario_id AND c.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-      LEFT JOIN orders p ON u.id = p.usuario_id AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN pedidos p ON u.id = p.usuario_id AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       LEFT JOIN pagos pg ON u.id = pg.usuario_id AND pg.estado = 'aplicado' AND pg.fecha_pago >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       LEFT JOIN facturas f ON u.id = f.usuario_id AND f.fecha_emision >= DATE_SUB(NOW(), INTERVAL 30 DAY)
       WHERE u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) AND u.rol != 'admin'
@@ -400,12 +400,12 @@ const getTrends = async (req, res) => {
       SELECT 
         COUNT(DISTINCT u.id) as new_clients,
         COUNT(DISTINCT c.id) as new_quotes,
-        COUNT(DISTINCT p.id) as new_orders,
+        COUNT(DISTINCT p.id) as new_pedidos,
         COALESCE(SUM(pg.monto), 0) as revenue,
         COUNT(DISTINCT f.id) as invoices_issued
       FROM usuarios u
       LEFT JOIN cotizaciones c ON u.id = c.usuario_id AND c.created_at BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
-      LEFT JOIN orders p ON u.id = p.usuario_id AND p.created_at BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
+      LEFT JOIN pedidos p ON u.id = p.usuario_id AND p.created_at BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
       LEFT JOIN pagos pg ON u.id = pg.usuario_id AND pg.estado = 'aplicado' AND pg.fecha_pago BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
       LEFT JOIN facturas f ON u.id = f.usuario_id AND f.fecha_emision BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY)
       WHERE u.created_at BETWEEN DATE_SUB(NOW(), INTERVAL 60 DAY) AND DATE_SUB(NOW(), INTERVAL 30 DAY) AND u.rol != 'admin'
@@ -428,7 +428,7 @@ const getTrends = async (req, res) => {
         growth: {
           clients: calculateGrowth(current.new_clients, previous.new_clients),
           quotes: calculateGrowth(current.new_quotes, previous.new_quotes),
-          orders: calculateGrowth(current.new_orders, previous.new_orders),
+          pedidos: calculateGrowth(current.new_pedidos, previous.new_pedidos),
           revenue: calculateGrowth(parseFloat(current.revenue), parseFloat(previous.revenue)),
           invoices: calculateGrowth(current.invoices_issued, previous.invoices_issued)
         }
@@ -485,7 +485,7 @@ const getAlerts = async (req, res) => {
 
     // Proyectos con retraso
     const [delayedProjects] = await pool.execute(`
-      SELECT COUNT(*) as count FROM orders 
+      SELECT COUNT(*) as count FROM pedidos 
       WHERE fecha_entrega_estimada < CURDATE() AND estado IN ('nuevo', 'confirmado', 'en_proceso')
     `);
 
@@ -502,9 +502,9 @@ const getAlerts = async (req, res) => {
     // Clientes sin actividad reciente
     const [inactiveClients] = await pool.execute(`
       SELECT COUNT(*) as count FROM usuarios u
-      WHERE u.rol = 'cliente' AND u.estado = 'activo'
+      WHERE u.rol = 'usuarios' AND u.estado = 'activo'
       AND u.id NOT IN (
-        SELECT DISTINCT usuario_id FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+        SELECT DISTINCT usuario_id FROM pedidos WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
         UNION
         SELECT DISTINCT usuario_id FROM cotizaciones WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
       )
@@ -514,9 +514,9 @@ const getAlerts = async (req, res) => {
       alerts.push({
         type: 'info',
         title: 'Clientes Inactivos',
-        message: `${inactiveClients[0].count} clientes sin actividad en los últimos 90 días`,
+        message: `${inactiveClients[0].count} usuarioss sin actividad en los últimos 90 días`,
         count: inactiveClients[0].count,
-        action: 'Ver clientes'
+        action: 'Ver usuarioss'
       });
     }
 

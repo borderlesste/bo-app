@@ -69,25 +69,25 @@ async function consultarClientes() {
         console.log(`   Primer cliente: ${new Date(stats.primer_cliente).toLocaleDateString('es-ES')}`);
         console.log(`   Último cliente: ${new Date(stats.ultimo_cliente).toLocaleDateString('es-ES')}`);
         
-        // 5. Información relacionada (orders y pagos por cliente)
+        // 5. Información relacionada (pedidos y pagos por cliente)
         const [relationRows] = await connection.execute(`
             SELECT 
                 c.nombre,
                 c.email,
-                COUNT(DISTINCT p.id) as total_orders,
+                COUNT(DISTINCT p.id) as total_pedidos,
                 COUNT(DISTINCT pg.id) as total_pagos,
                 COALESCE(SUM(pg.monto), 0) as total_pagado
             FROM usuarios c
-            LEFT JOIN orders p ON c.id = p.usuario_id
+            LEFT JOIN pedidos p ON c.id = p.usuario_id
             LEFT JOIN pagos pg ON c.id = pg.usuario_id
             GROUP BY c.id, c.nombre, c.email
-            order BY total_orders DESC
+            order BY total_pedidos DESC
         `);
         
         console.log(`\n💼 ACTIVIDAD POR CLIENTE:`);
         relationRows.forEach((rel, index) => {
             console.log(`   ${index + 1}. ${rel.nombre}`);
-            console.log(`      orders: ${rel.total_orders}`);
+            console.log(`      pedidos: ${rel.total_pedidos}`);
             console.log(`      Pagos: ${rel.total_pagos}`);
             console.log(`      Total pagado: $${parseFloat(rel.total_pagado).toFixed(2)}\n`);
         });

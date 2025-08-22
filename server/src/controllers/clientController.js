@@ -76,12 +76,12 @@ const getClientProjects = async (req, res) => {
       SELECT 
         p.*,
         u.nombre as cliente_nombre
-      FROM orders p
+      FROM pedidos p
       LEFT JOIN usuarios u ON p.usuario_id = u.id
       WHERE p.usuario_id = ?
     `;
     
-    let countQuery = 'SELECT COUNT(*) as total FROM orders WHERE usuario_id = ?';
+    let countQuery = 'SELECT COUNT(*) as total FROM pedidos WHERE usuario_id = ?';
     let params = [usuarioId];
     let countParams = [usuarioId];
 
@@ -267,7 +267,7 @@ const getClientInvoices = async (req, res) => {
         u.empresa as cliente_empresa,
         u.email as cliente_email
       FROM facturas f
-      LEFT JOIN orders ped ON f.order_id = ped.id
+      LEFT JOIN pedidos ped ON f.pedido_id = ped.id
       LEFT JOIN usuarios u ON f.usuario_id = u.id
       WHERE f.usuario_id = ?
     `;

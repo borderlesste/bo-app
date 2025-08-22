@@ -8,7 +8,7 @@ class Proyecto {
 
     static async create(proyectoData) {
         const {
-            codigo, nombre, descripcion, usuario_id, order_id,
+            codigo, nombre, descripcion, usuario_id, pedido_id,
             categoria = 'web', tecnologias, imagen_principal,
             url_demo, url_produccion, repositorio, fecha_inicio,
             fecha_fin, estado = 'planificacion', es_destacado = 0,
@@ -17,12 +17,12 @@ class Proyecto {
 
         const [result] = await pool.execute(`
             INSERT INTO proyectos (
-                codigo, nombre, descripcion, usuario_id, order_id,
+                codigo, nombre, descripcion, usuario_id, pedido_id,
                 categoria, tecnologias, imagen_principal, url_demo,
                 url_produccion, repositorio, fecha_inicio, fecha_fin,
                 estado, es_destacado, es_publico, orden_portfolio, created_by
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [codigo, nombre, descripcion, usuario_id, order_id,
+            [codigo, nombre, descripcion, usuario_id, pedido_id,
              categoria, tecnologias, imagen_principal, url_demo,
              url_produccion, repositorio, fecha_inicio, fecha_fin,
              estado, es_destacado, es_publico, orden_portfolio, created_by]
@@ -56,10 +56,10 @@ class Proyecto {
     static async findAll(filters = {}) {
         let sql = `
             SELECT p.*, u.nombre as cliente_nombre, u.empresa as cliente_empresa,
-                   pe.numero_order, creator.nombre as created_by_name
+                   pe.numero_pedido, creator.nombre as created_by_name
             FROM proyectos p
             LEFT JOIN usuarios u ON p.usuario_id = u.id
-            LEFT JOIN orders pe ON p.order_id = pe.id
+            LEFT JOIN pedidos pe ON p.pedido_id = pe.id
             LEFT JOIN usuarios creator ON p.created_by = creator.id
             WHERE 1=1
         `;

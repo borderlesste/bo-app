@@ -380,7 +380,7 @@ const convertQuotationToProject = async (req, res) => {
 
     // Check if quotation exists and is approved
     const [existingQuotation] = await pool.execute(
-      `SELECT c.*, u.nombre as cliente_nombre 
+      `SELECT c.*, u.nombre as usuarios_nombre 
        FROM cotizaciones c 
        LEFT JOIN usuarios u ON c.usuario_id = u.id 
        WHERE c.id = ?`,
@@ -532,7 +532,7 @@ const getQuotationStats = async (req, res) => {
         SUM(CASE WHEN c.estado = 'aprobada' THEN c.total ELSE 0 END) as valor_aprobado
        FROM usuarios u
        INNER JOIN cotizaciones c ON u.id = c.usuario_id
-       WHERE u.rol = 'cliente'
+       WHERE u.rol = 'usuarios'
        GROUP BY u.id
        order BY total_cotizaciones DESC
        LIMIT 10`

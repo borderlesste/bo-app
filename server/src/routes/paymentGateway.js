@@ -300,7 +300,7 @@ router.get('/bank-transfers/pending',
           ped.descripcion as proyecto_descripcion
         FROM pagos p
         JOIN usuarios u ON p.usuario_id = u.id
-        LEFT JOIN orders ped ON p.order_id = ped.id
+        LEFT JOIN pedidos ped ON p.pedido_id = ped.id
         WHERE p.metodo_pago = 'Transferencia Bancaria' 
         AND p.estado = 'pendiente'
         order BY p.created_at DESC

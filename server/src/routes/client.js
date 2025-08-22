@@ -32,10 +32,10 @@ const clientRateLimit = rateLimit({
 
 // Middleware to ensure user is a client
 const requireClient = (req, res, next) => {
-  if (req.user.rol !== 'cliente') {
+  if (req.user.rol !== 'usuarios') {
     return res.status(403).json({
       success: false,
-      error: 'Acceso de cliente requerido'
+      error: 'Acceso de usuarios requerido'
     });
   }
   next();

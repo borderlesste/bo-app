@@ -21,8 +21,8 @@ async function createSampleUsers() {
       {
         nombre: 'Juan Carlos Pérez',
         email: 'juan.perez@ejemplo.com',
-        password: 'cliente123',
-        rol: 'cliente',
+        password: 'usuarios123',
+        rol: 'usuarios',
         estado: 'activo',
         telefono: '+52 55 2345 6789',
         direccion: 'Calle Reforma 456, CDMX',
@@ -32,8 +32,8 @@ async function createSampleUsers() {
       {
         nombre: 'María Elena González',
         email: 'maria.gonzalez@ejemplo.com',
-        password: 'cliente123',
-        rol: 'cliente',
+        password: 'usuarios123',
+        rol: 'usuarios',
         estado: 'activo',
         telefono: '+52 55 3456 7890',
         direccion: 'Blvd. Miguel de Cervantes 789, Guadalajara',
@@ -43,8 +43,8 @@ async function createSampleUsers() {
       {
         nombre: 'Roberto Silva Martinez',
         email: 'roberto.silva@ejemplo.com',
-        password: 'cliente123',
-        rol: 'cliente',
+        password: 'usuarios123',
+        rol: 'usuarios',
         estado: 'activo',
         telefono: '+52 81 4567 8901',
         direccion: 'Av. Constitución 321, Monterrey',
@@ -117,9 +117,9 @@ async function createSampleUsers() {
     
     console.log('\n🔑 Credenciales de acceso:');
     console.log('👤 Admin: admin@borderlesstechno.com / admin123');
-    console.log('👤 Cliente 1: juan.perez@ejemplo.com / cliente123');
-    console.log('👤 Cliente 2: maria.gonzalez@ejemplo.com / cliente123');
-    console.log('👤 Cliente 3: roberto.silva@ejemplo.com / cliente123');
+    console.log('👤 Cliente 1: juan.perez@ejemplo.com / usuarios123');
+    console.log('👤 Cliente 2: maria.gonzalez@ejemplo.com / usuarios123');
+    console.log('👤 Cliente 3: roberto.silva@ejemplo.com / usuarios123');
     console.log('👤 Empleado: ana.rodriguez@ejemplo.com / empleado123');
     
     process.exit(0);

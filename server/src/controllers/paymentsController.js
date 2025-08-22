@@ -7,17 +7,17 @@ const emailService = require('../services/emailService.js');
 const notificationService = require('../services/notificationService.js');
 const { Pago, User } = require('../models');
 
-// Helper function para obtener el nombre del cliente
-const getClienteName = async (clienteId) => {
+// Helper function para obtener el nombre del usuarios
+const getClienteName = async (usuariosId) => {
   try {
-    const [rows] = await pool.execute('SELECT nombre FROM usuarios WHERE id = ?', [clienteId]);
+    const [rows] = await pool.execute('SELECT nombre FROM usuarios WHERE id = ?', [usuariosId]);
     return rows.length > 0 ? rows[0].nombre : 'Cliente desconocido';
   } catch (error) {
     return 'Cliente desconocido';
   }
 };
 
-// Obtener todos los pagos (admin) o los pagos de un usuario (cliente)
+// Obtener todos los pagos (admin) o los pagos de un usuario (usuarios)
 exports.getPayments = async (req, res) => {
   try {
     const filters = {
@@ -30,8 +30,8 @@ exports.getPayments = async (req, res) => {
       limit: req.query.limit
     };
 
-    // Si es cliente, solo mostrar sus pagos
-    if (req.user.rol === 'cliente') {
+    // Si es usuarios, solo mostrar sus pagos
+    if (req.user.rol === 'usuarios') {
       filters.usuario_id = req.user.id;
     }
 
@@ -62,7 +62,7 @@ exports.getPaymentById = async (req, res) => {
     }
 
     // Verificar permisos: solo admins o el dueño del pago
-    if (req.user.rol === 'cliente' && payment.usuario_id !== req.user.id) {
+    if (req.user.rol === 'usuarios' && payment.usuario_id !== req.user.id) {
       return res.status(403).json({
         success: false,
         message: 'No tienes permisos para ver este pago'
@@ -94,10 +94,10 @@ exports.createPayment = async (req, res) => {
     const newPayment = await paymentService.createPayment(usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
     
     // Registrar actividad de nuevo pago
-    const clienteName = await getClienteName(usuario_id);
+    const usuariosName = await getClienteName(usuario_id);
     await logActivity(
       'new_payment',
-      `${clienteName} realizó un pago de $${monto.toLocaleString('es-MX')}${order_id ? ` para order #${order_id}` : ''}`,
+      `${usuariosName} realizó un pago de $${monto.toLocaleString('es-MX')}${order_id ? ` para order #${order_id}` : ''}`,
       'normal',
       usuario_id,
       newPayment.id,
@@ -130,7 +130,7 @@ exports.createPayment = async (req, res) => {
         });
       }
     } catch (emailError) {
-      console.log('⚠️ Error obteniendo datos de cliente para email:', emailError);
+      console.log('⚠️ Error obteniendo datos de usuarios para email:', emailError);
     }
 
     // Crear notificación de nuevo pago
@@ -140,7 +140,7 @@ exports.createPayment = async (req, res) => {
         metodo_pago,
         concepto,
         order_id
-      }, clienteName);
+      }, usuariosName);
     } catch (notificationError) {
       console.log('⚠️ Error creando notificación de pago:', notificationError);
     }
@@ -197,7 +197,7 @@ exports.deletePayment = async (req, res) => {
   }
 };
 
-// Crear un nuevo pago por un cliente
+// Crear un nuevo pago por un usuarios
 exports.createClientPayment = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

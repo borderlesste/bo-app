@@ -425,7 +425,7 @@ const convertQuotationToorder = async (req, res) => {
         const numeroorder = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
         const [orderResult] = await connection.execute(`
-          INSERT INTO orders 
+          INSERT INTO pedidos 
           (numero_order, usuario_id, cotizacion_id, estado, subtotal, total, 
            descripcion, created_at, updated_at) 
           VALUES (?, ?, ?, 'nuevo', ?, ?, ?, NOW(), NOW())
@@ -446,7 +446,7 @@ const convertQuotationToorder = async (req, res) => {
         for (const item of quotationItems) {
           await connection.execute(`
             INSERT INTO order_items 
-            (order_id, servicio_id, descripcion, cantidad, precio_unitario, descuento, orden) 
+            (pedido_id, servicio_id, descripcion, cantidad, precio_unitario, descuento, orden) 
             VALUES (?, ?, ?, ?, ?, ?, ?)
           `, [
             orderResult.insertId,
@@ -470,7 +470,7 @@ const convertQuotationToorder = async (req, res) => {
         res.json({
           success: true,
           message: 'Cotización convertida a order exitosamente',
-          data: { order_id: orderResult.insertId, numero_order: numeroorder }
+          data: { pedido_id: orderResult.insertId, numero_order: numeroorder }
         });
 
       } else if (convert_to === 'project') {

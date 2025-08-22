@@ -1,12 +1,12 @@
 const { pool } = require('../config/db.js');
 
 const messagesController = {
-  // Obtener conversaciones del cliente (agrupadas por asunto para simular conversaciones)
+  // Obtener conversaciones del usuarios (agrupadas por asunto para simular conversaciones)
   getClientConversations: async (req, res) => {
     try {
       const usuarioId = req.user.id;
       
-      // Buscar mensajes donde el cliente es remitente o destinatario
+      // Buscar mensajes donde el usuarios es remitente o destinatario
       // Agrupamos por asunto para simular conversaciones
       const [conversations] = await pool.execute(`
         SELECT 
@@ -44,7 +44,7 @@ const messagesController = {
         data: formattedConversations
       });
     } catch (error) {
-      console.error('Error al obtener conversaciones del cliente:', error);
+      console.error('Error al obtener conversaciones del usuarios:', error);
       
       // Si la tabla no existe, devolver array vacío
       if (error.message.includes("doesn't exist")) {
@@ -56,7 +56,7 @@ const messagesController = {
       
       res.status(500).json({
         success: false,
-        message: 'Error al obtener conversaciones del cliente',
+        message: 'Error al obtener conversaciones del usuarios',
         error: error.message
       });
     }
@@ -99,7 +99,7 @@ const messagesController = {
         order BY m.created_at ASC
       `, [asunto, usuarioId, usuarioId]);
 
-      // Marcar mensajes como leídos para el cliente
+      // Marcar mensajes como leídos para el usuarios
       await pool.execute(`
         UPDATE mensajes 
         SET estado = 'leido' 
@@ -130,7 +130,7 @@ const messagesController = {
     }
   },
 
-  // Crear nueva conversación (cliente iniciando conversación con admin)
+  // Crear nueva conversación (usuarios iniciando conversación con admin)
   startClientConversation: async (req, res) => {
     const connection = await pool.getConnection();
     
@@ -171,7 +171,7 @@ const messagesController = {
       `, [
         adminId, 
         'mensaje', 
-        'Nuevo mensaje de cliente', 
+        'Nuevo mensaje de usuarios', 
         `${req.user.nombre || 'Cliente'} ha iniciado una nueva conversación: ${asunto}`,
         'mensaje',
         messageResult.insertId,
@@ -258,7 +258,7 @@ const messagesController = {
       `, [
         adminId,
         'mensaje',
-        'Nuevo mensaje de cliente',
+        'Nuevo mensaje de usuarios',
         `${req.user.nombre || 'Cliente'} respondió en: ${asunto}`,
         'mensaje',
         messageResult.insertId,
@@ -322,13 +322,13 @@ const messagesController = {
           (SELECT u.nombre FROM mensajes m3 
            JOIN usuarios u ON m3.remitente_id = u.id
            WHERE m3.asunto = m.asunto 
-           AND u.rol = 'cliente'
-           order BY m3.created_at ASC LIMIT 1) as cliente_nombre,
+           AND u.rol = 'usuarios'
+           order BY m3.created_at ASC LIMIT 1) as usuarios_nombre,
           (SELECT u.email FROM mensajes m4 
            JOIN usuarios u ON m4.remitente_id = u.id
            WHERE m4.asunto = m.asunto 
-           AND u.rol = 'cliente'
-           order BY m4.created_at ASC LIMIT 1) as cliente_email
+           AND u.rol = 'usuarios'
+           order BY m4.created_at ASC LIMIT 1) as usuarios_email
         FROM mensajes m
         WHERE EXISTS (
           SELECT 1 FROM mensajes m_check 
@@ -344,8 +344,8 @@ const messagesController = {
       const formattedConversations = conversations.map(conv => ({
         id: conv.conversation_id,
         asunto: conv.asunto,
-        cliente_nombre: conv.cliente_nombre,
-        cliente_email: conv.cliente_email,
+        usuarios_nombre: conv.usuarios_nombre,
+        usuarios_email: conv.usuarios_email,
         ultimo_mensaje: conv.ultimo_mensaje,
         ultima_actividad: conv.ultima_actividad,
         mensajes_no_leidos: conv.mensajes_no_leidos || 0
@@ -376,15 +376,15 @@ const messagesController = {
       const adminId = req.user.id;
       const { contenido } = req.body;
 
-      // Obtener información de la conversación inicial y cliente
+      // Obtener información de la conversación inicial y usuarios
       const [conversationInfo] = await connection.execute(`
         SELECT 
           m.asunto,
           u.id as usuario_id,
-          u.nombre as cliente_nombre
+          u.nombre as usuarios_nombre
         FROM mensajes m
         JOIN usuarios u ON (m.remitente_id = u.id OR m.destinatario_id = u.id)
-        WHERE m.id = ? AND u.rol = 'cliente'
+        WHERE m.id = ? AND u.rol = 'usuarios'
         LIMIT 1
       `, [conversationId]);
 
@@ -396,7 +396,7 @@ const messagesController = {
         });
       }
 
-      const { asunto, usuario_id, cliente_nombre } = conversationInfo[0];
+      const { asunto, usuario_id, usuarios_nombre } = conversationInfo[0];
 
       // Insertar respuesta del admin
       const [messageResult] = await connection.execute(`
@@ -412,7 +412,7 @@ const messagesController = {
         WHERE asunto = ? AND remitente_id = ? AND destinatario_id = ?
       `, [asunto, usuario_id, adminId]);
 
-      // Crear notificación para el cliente
+      // Crear notificación para el usuarios
       await connection.execute(`
         INSERT INTO notificaciones (
           usuario_id, tipo, titulo, mensaje, entidad_tipo, entidad_id, leida
@@ -435,7 +435,7 @@ const messagesController = {
         data: {
           id: messageResult.insertId,
           contenido: contenido,
-          destinatario: cliente_nombre
+          destinatario: usuarios_nombre
         }
       });
     } catch (error) {

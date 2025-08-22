@@ -29,7 +29,7 @@ const userService = {
     
     const [result] = await db.execute(
       'INSERT INTO usuarios (nombre, email, password, telefono, direccion, empresa, rfc, rol, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [nombre, email, hashedPassword, telefono, direccion, empresa || null, rfc || null, rol || 'cliente', estado || 'activo']
+      [nombre, email, hashedPassword, telefono, direccion, empresa || null, rfc || null, rol || 'usuarios', estado || 'activo']
     );
     
     const [rows] = await db.execute('SELECT id, nombre, email, telefono, direccion, empresa, rfc, rol, estado, fecha_registro, updated_at FROM usuarios WHERE id = ?', [result.insertId]);
@@ -61,7 +61,7 @@ const userService = {
         rol = ?, 
         estado = ?
     `;
-    const params = [nombre, email, telefono, direccion, empresa || null, rfc || null, rol || 'cliente', estado || 'activo'];
+    const params = [nombre, email, telefono, direccion, empresa || null, rfc || null, rol || 'usuarios', estado || 'activo'];
 
     if (password) {
       query += ', password = ?';

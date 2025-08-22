@@ -30,7 +30,7 @@ const getAllClients = async (req, res) => {
         COUNT(DISTINCT CASE WHEN p.estado = 'completado' THEN p.id END) as proyectos_completados
       FROM usuarios u
       LEFT JOIN proyectos p ON p.usuario_id = u.id
-      WHERE u.rol = 'cliente'
+      WHERE u.rol = 'usuarios'
     `;
 
     const params = [];
@@ -67,7 +67,7 @@ const getAllClients = async (req, res) => {
     const [clients] = await pool.execute(query, params);
 
     // Get total count for pagination
-    let countQuery = 'SELECT COUNT(*) as total FROM usuarios WHERE rol = "cliente"';
+    let countQuery = 'SELECT COUNT(*) as total FROM usuarios WHERE rol = "usuarios"';
     const countParams = [];
 
     if (search) {
@@ -119,7 +119,7 @@ const getClientById = async (req, res) => {
     // Get client basic info
     const [clients] = await pool.execute(
       `SELECT id, nombre, email, telefono, direccion, empresa, rfc, estado, created_at, updated_at 
-       FROM usuarios WHERE id = ? AND rol = 'cliente'`,
+       FROM usuarios WHERE id = ? AND rol = 'usuarios'`,
       [id]
     );
 
@@ -190,7 +190,7 @@ const createClient = async (req, res) => {
       direccion,
       empresa,
       rfc,
-      password = 'cliente123' // Default password for new clients
+      password = 'usuarios123' // Default password for new clients
     } = req.body;
 
     // Check if client already exists
@@ -213,7 +213,7 @@ const createClient = async (req, res) => {
     // Create client
     const [result] = await pool.execute(
       `INSERT INTO usuarios (nombre, email, password, telefono, direccion, empresa, rfc, rol, estado) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'cliente', 'activo')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'usuarios', 'activo')`,
       [nombre, email, hashedPassword, telefono, direccion, empresa, rfc]
     );
 
@@ -222,16 +222,16 @@ const createClient = async (req, res) => {
     // Log activity
     await pool.execute(
       'INSERT INTO actividades (usuario_id, tipo, descripcion, entidad_tipo, entidad_id) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'crear_cliente', `Nuevo cliente creado: ${nombre}`, 'cliente', usuarioId]
+      [req.user.id, 'crear_usuarios', `Nuevo usuarios creado: ${nombre}`, 'usuarios', usuarioId]
     );
 
     // Notify admins
     await notifyAdmins(
-      'nuevo_cliente',
-      'Nuevo cliente registrado',
-      `Se ha registrado un nuevo cliente: ${nombre} (${empresa})`,
+      'nuevo_usuarios',
+      'Nuevo usuarios registrado',
+      `Se ha registrado un nuevo usuarios: ${nombre} (${empresa})`,
       'normal',
-      'cliente',
+      'usuarios',
       usuarioId,
       `/admin/clients/${usuarioId}`
     );
@@ -281,7 +281,7 @@ const updateClient = async (req, res) => {
 
     // Check if client exists
     const [existingClient] = await pool.execute(
-      'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "cliente"',
+      'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "usuarios"',
       [id]
     );
 
@@ -318,7 +318,7 @@ const updateClient = async (req, res) => {
     // Log activity
     await pool.execute(
       'INSERT INTO actividades (usuario_id, tipo, descripcion, entidad_tipo, entidad_id) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'actualizar_cliente', `Cliente actualizado: ${nombre}`, 'cliente', id]
+      [req.user.id, 'actualizar_usuarios', `Cliente actualizado: ${nombre}`, 'usuarios', id]
     );
 
     // Notify client if status changed to active
@@ -352,7 +352,7 @@ const deleteClient = async (req, res) => {
 
     // Check if client exists and get info
     const [existingClient] = await pool.execute(
-      'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "cliente"',
+      'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "usuarios"',
       [id]
     );
 
@@ -372,7 +372,7 @@ const deleteClient = async (req, res) => {
     if (activeProjects[0].count > 0) {
       return res.status(400).json({
         success: false,
-        message: 'No se puede eliminar un cliente con proyectos activos'
+        message: 'No se puede eliminar un usuarios con proyectos activos'
       });
     }
 
@@ -385,7 +385,7 @@ const deleteClient = async (req, res) => {
     // Log activity
     await pool.execute(
       'INSERT INTO actividades (usuario_id, tipo, descripcion, entidad_tipo, entidad_id) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'desactivar_cliente', `Cliente desactivado: ${existingClient[0].nombre}`, 'cliente', id]
+      [req.user.id, 'desactivar_usuarios', `Cliente desactivado: ${existingClient[0].nombre}`, 'usuarios', id]
     );
 
     res.json({
@@ -406,24 +406,24 @@ const getClientStats = async (req, res) => {
   try {
     // Total clients
     const [totalClients] = await pool.execute(
-      'SELECT COUNT(*) as total FROM usuarios WHERE rol = "cliente"'
+      'SELECT COUNT(*) as total FROM usuarios WHERE rol = "usuarios"'
     );
 
     // Active clients
     const [activeClients] = await pool.execute(
-      'SELECT COUNT(*) as total FROM usuarios WHERE rol = "cliente" AND estado = "activo"'
+      'SELECT COUNT(*) as total FROM usuarios WHERE rol = "usuarios" AND estado = "activo"'
     );
 
     // New clients this month
     const [newThisMonth] = await pool.execute(
       `SELECT COUNT(*) as total FROM usuarios 
-       WHERE rol = "cliente" AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+       WHERE rol = "usuarios" AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
     );
 
     // Clients by status
     const [statusBreakdown] = await pool.execute(
       `SELECT estado, COUNT(*) as count 
-       FROM usuarios WHERE rol = "cliente" 
+       FROM usuarios WHERE rol = "usuarios" 
        GROUP BY estado`
     );
 
@@ -434,7 +434,7 @@ const getClientStats = async (req, res) => {
         COUNT(p.id) as total_proyectos
        FROM usuarios u
        LEFT JOIN proyectos p ON p.usuario_id = u.id
-       WHERE u.rol = "cliente" AND u.estado = "activo"
+       WHERE u.rol = "usuarios" AND u.estado = "activo"
        GROUP BY u.id
        order BY total_proyectos DESC
        LIMIT 10`
@@ -470,7 +470,7 @@ const sendMessageToClient = async (req, res) => {
 
     // Verify client exists
     const [client] = await pool.execute(
-      'SELECT id, nombre FROM usuarios WHERE id = ? AND rol = "cliente"',
+      'SELECT id, nombre FROM usuarios WHERE id = ? AND rol = "usuarios"',
       [id]
     );
 
@@ -495,7 +495,7 @@ const sendMessageToClient = async (req, res) => {
     // Log activity
     await pool.execute(
       'INSERT INTO actividades (usuario_id, tipo, descripcion, entidad_tipo, entidad_id) VALUES (?, ?, ?, ?, ?)',
-      [req.user.id, 'mensaje_cliente', `Mensaje enviado a cliente: ${client[0].nombre}`, 'cliente', id]
+      [req.user.id, 'mensaje_usuarios', `Mensaje enviado a usuarios: ${client[0].nombre}`, 'usuarios', id]
     );
 
     res.json({

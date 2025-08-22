@@ -8,7 +8,7 @@ if (process.env.STRIPE_SECRET_KEY) {
 
 // PayPal SDK Configuration
 let paypalClient = null;
-let ordersController = null;
+let pedidosController = null;
 let PaymentsController = null;
 
 if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
@@ -22,7 +22,7 @@ if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
     
     // Create PayPal client
     paypalClient = new checkoutSDK.core.PayPalHttpClient(environment);
-    ordersController = checkoutSDK.orders;
+    pedidosController = checkoutSDK.pedidos;
     PaymentsController = checkoutSDK.payments;
     
     console.log('✅ PayPal SDK initialized successfully');
@@ -39,12 +39,12 @@ class PaymentGatewayService {
   constructor() {
     this.stripe = stripe;
     this.paypalClient = paypalClient;
-    this.ordersController = ordersController;
+    this.pedidosController = pedidosController;
     
     console.log('💳 Payment Gateway Service initialized for development');
     console.log('📝 Stripe:', this.stripe ? 'Configured' : 'Not configured');
     console.log('📝 PayPal:', this.paypalClient ? 'Configured' : 'Not configured');
-    console.log('📝 PayPal ordersController:', this.ordersController ? 'Available' : 'Not available');
+    console.log('📝 PayPal pedidosController:', this.pedidosController ? 'Available' : 'Not available');
     
     // Test PayPal client configuration
     if (this.paypalClient) {
@@ -178,7 +178,7 @@ class PaymentGatewayService {
       const paypalorder = await this.createPayPalorder(total, orderData.currency || 'USD', {
         ...orderData,
         reference_id: numeroorder,
-        order_id: orderId
+        pedido_id: orderId
       });
       
       if (!paypalorder.success) {
@@ -188,8 +188,8 @@ class PaymentGatewayService {
       
       // 5. Actualizar pedido con PayPal order ID
       await connection.execute(
-        'UPDATE pedidos SET paypal_order_id = ? WHERE id = ?',
-        [paypalorder.data.order_id, pedidoId]
+        'UPDATE pedidos SET paypal_pedido_id = ? WHERE id = ?',
+        [paypalorder.data.pedido_id, pedidoId]
       );
       
       await connection.commit();
@@ -199,7 +199,7 @@ class PaymentGatewayService {
         data: {
           pedido_id: pedidoId,
           numero_pedido: numeroorder,
-          paypal_order_id: paypalorder.data.order_id,
+          paypal_pedido_id: paypalorder.data.pedido_id,
           approve_url: paypalorder.data.approve_url,
           total,
           currency: orderData.currency || 'USD'
@@ -222,12 +222,12 @@ class PaymentGatewayService {
   // Crear orden de PayPal (método interno)
   async createPayPalorder(amount, currency = 'USD', orderData = {}) {
     // Para desarrollo sin credenciales válidas, simular orden
-    if (!paypalClient || !ordersController || process.env.NODE_ENV === 'development') {
+    if (!paypalClient || !pedidosController || process.env.NODE_ENV === 'development') {
       console.log('🔧 Development mode: Simulating PayPal order creation');
       return {
         success: true,
         data: {
-          order_id: 'DEMO_order_' + Date.now(),
+          pedido_id: 'DEMO_order_' + Date.now(),
           approve_url: `https://www.sandbox.paypal.com/checkoutnow?token=DEMO_TOKEN_${Date.now()}`,
           amount,
           currency,
@@ -248,7 +248,7 @@ class PaymentGatewayService {
             },
             description: `Borderless Techno - ${orderData.descripcion || 'Servicio de desarrollo'}`,
             reference_id: orderData.reference_id || 'DEFAULT',
-            invoice_id: orderData.order_id ? `INV-${orderData.order_id}` : undefined
+            invoice_id: orderData.pedido_id ? `INV-${orderData.pedido_id}` : undefined
           }],
           application_context: {
             return_url: process.env.PAYPAL_RETURN_URL || 'http://localhost:4001/payment/success',
@@ -264,7 +264,7 @@ class PaymentGatewayService {
       
       console.log('🔄 Creating PayPal order:', JSON.stringify(request.body, null, 2));
       
-      const orderRequest = new ordersController.ordersCreateRequest();
+      const orderRequest = new pedidosController.pedidosCreateRequest();
       orderRequest.requestBody(request.body);
       const response = await paypalClient.execute(orderRequest);
       
@@ -276,7 +276,7 @@ class PaymentGatewayService {
         return {
           success: true,
           data: {
-            order_id: response.body.id,
+            pedido_id: response.body.id,
             approve_url: approveLink?.href,
             amount,
             currency,
@@ -305,7 +305,7 @@ class PaymentGatewayService {
       
       // 1. Buscar el pedido en MySQL
       const [pedidos] = await connection.execute(
-        'SELECT * FROM pedidos WHERE paypal_order_id = ?',
+        'SELECT * FROM pedidos WHERE paypal_pedido_id = ?',
         [paypalorderId]
       );
 
@@ -333,7 +333,7 @@ class PaymentGatewayService {
       const [pagoResult] = await connection.execute(
         `INSERT INTO pagos 
          (numero_pago, usuario_id, tipo, estado, monto, moneda, metodo_pago, 
-          referencia, paypal_order_id, paypal_capture_id, paypal_payer_email, 
+          referencia, paypal_pedido_id, paypal_capture_id, paypal_payer_email, 
           payment_gateway, fecha_pago, fecha_aplicacion, concepto, created_at, updated_at) 
          VALUES (?, ?, 'total', 'aplicado', ?, ?, 'paypal', ?, ?, ?, ?, 'paypal', NOW(), NOW(), ?, NOW(), NOW())`,
         [
@@ -373,7 +373,7 @@ class PaymentGatewayService {
           pedido_id: pedido.id,
           numero_pedido: pedido.numero_pedido,
           pago_id: pagoResult.insertId,
-          paypal_order_id: paypalorderId,
+          paypal_pedido_id: paypalorderId,
           paypal_capture_id: capture.capture_id,
           amount: capture.amount,
           currency: capture.currency,
@@ -417,7 +417,7 @@ class PaymentGatewayService {
       };
     }
 
-    if (!paypalClient || !ordersController) {
+    if (!paypalClient || !pedidosController) {
       return {
         success: false,
         message: 'PayPal no está configurado correctamente'
@@ -427,7 +427,7 @@ class PaymentGatewayService {
     try {
       console.log('🔄 Capturing PayPal order:', orderId);
       
-      const request = new ordersController.ordersCaptureRequest(orderId);
+      const request = new pedidosController.pedidosCaptureRequest(orderId);
       request.requestBody({});
       
       const response = await paypalClient.execute(request);
@@ -540,7 +540,7 @@ class PaymentGatewayService {
           }
         };
       } else if (paymentMethod === 'paypal') {
-        // Para PayPal, necesitaríamos el capture_id en lugar del order_id
+        // Para PayPal, necesitaríamos el capture_id en lugar del pedido_id
         // Esta es una implementación simplificada
         refundResult = {
           success: false,
@@ -577,7 +577,7 @@ class PaymentGatewayService {
           payment_method: paymentIntent.payment_method
         };
       } else if (paymentMethod === 'paypal') {
-        const response = await this.paypalClient.orders.ordersGet({ id: paymentId });
+        const response = await this.paypalClient.pedidos.pedidosGet({ id: paymentId });
         const orderData = response.body;
         
         paymentInfo = {
@@ -704,7 +704,7 @@ class PaymentGatewayService {
   async handlePaymentCaptureCompleted(resource, connection) {
     try {
       const captureId = resource.id;
-      const orderId = resource.supplementary_data?.related_ids?.order_id;
+      const orderId = resource.supplementary_data?.related_ids?.pedido_id;
       const amount = parseFloat(resource.amount.value);
       const currency = resource.amount.currency_code;
       const payerEmail = resource.payee?.email_address;
@@ -715,7 +715,7 @@ class PaymentGatewayService {
       
       // Buscar pedido y verificar estado
       const [pedidos] = await connection.execute(
-        'SELECT * FROM pedidos WHERE paypal_order_id = ?',
+        'SELECT * FROM pedidos WHERE paypal_pedido_id = ?',
         [orderId]
       );
 
@@ -723,7 +723,7 @@ class PaymentGatewayService {
         return { success: false, error: 'pedido no encontrado' };
       }
       
-      const order = orders[0];
+      const order = pedidos[0];
       
       // Si ya está confirmado, no hacer nada (reconciliación)
       if (pedido.estado === 'confirmado' && pedido.paypal_capture_id) {
@@ -734,7 +734,7 @@ class PaymentGatewayService {
       await connection.execute(
         `UPDATE pedidos
          SET estado = 'confirmado', paypal_capture_id = ?, saldo_pendiente = 0
-         WHERE paypal_order_id = ?`,
+         WHERE paypal_pedido_id = ?`,
         [captureId, orderId]
       );
       
@@ -749,7 +749,7 @@ class PaymentGatewayService {
         await connection.execute(
           `INSERT INTO pagos 
            (numero_pago, usuario_id, tipo, estado, monto, moneda, metodo_pago, 
-            referencia, paypal_order_id, paypal_capture_id, paypal_payer_email, 
+            referencia, paypal_pedido_id, paypal_capture_id, paypal_payer_email, 
             payment_gateway, fecha_pago, fecha_aplicacion, concepto) 
            VALUES (?, ?, 'total', 'aplicado', ?, ?, 'paypal', ?, ?, ?, ?, 'paypal', NOW(), NOW(), ?)`,
           [
@@ -776,11 +776,11 @@ class PaymentGatewayService {
   // Manejar captura de pago fallida
   async handlePaymentCaptureFailed(resource, connection) {
     try {
-      const orderId = resource.supplementary_data?.related_ids?.order_id;
+      const orderId = resource.supplementary_data?.related_ids?.pedido_id;
       
       if (orderId) {
         await connection.execute(
-          'UPDATE orders SET estado = ? WHERE paypal_order_id = ?',
+          'UPDATE pedidos SET estado = ? WHERE paypal_pedido_id = ?',
           ['cancelado', orderId]
         );
       }
@@ -798,7 +798,7 @@ class PaymentGatewayService {
       
       await connection.execute(
         `UPDATE webhooks_paypal 
-         SET order_id = ? 
+         SET pedido_id = ? 
          WHERE resource_id = ?`,
         [orderId, orderId]
       );

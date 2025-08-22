@@ -15,20 +15,20 @@ async function testPaymentorderCompletion() {
 
     // Step 1: Get an existing order to test with
     console.log('📋 1. BUSCANDO order PARA PROBAR...');
-    const [existingorders] = await pool.execute(`
+    const [existingpedidos] = await pool.execute(`
       SELECT id, numero_order, usuario_id, estado, presupuesto_estimado, total
-      FROM orders 
+      FROM pedidos 
       WHERE estado != 'completado' AND presupuesto_estimado > 0
       order BY created_at DESC 
       LIMIT 1
     `);
 
-    if (existingorders.length === 0) {
-      console.log('❌ No hay orders disponibles para probar. Creando uno nuevo...');
+    if (existingpedidos.length === 0) {
+      console.log('❌ No hay pedidos disponibles para probar. Creando uno nuevo...');
       
       // Create a test order
       const [testorderResult] = await pool.execute(`
-        INSERT INTO orders (
+        INSERT INTO pedidos (
           numero_order, usuario_id, estado, prioridad, 
           descripcion, servicio, presupuesto_estimado, 
           created_at, updated_at
@@ -43,11 +43,11 @@ async function testPaymentorderCompletion() {
         1500.00
       ]);
       
-      const [neworder] = await pool.execute('SELECT * FROM orders WHERE id = ?', [testorderResult.insertId]);
+      const [neworder] = await pool.execute('SELECT * FROM pedidos WHERE id = ?', [testorderResult.insertId]);
       var testorder = neworder[0];
       console.log(`✅ order de prueba creado: #${testorder.numero_order}`);
     } else {
-      var testorder = existingorders[0];
+      var testorder = existingpedidos[0];
       console.log(`✅ Usando order existente: #${testorder.numero_order}`);
     }
 
@@ -93,7 +93,7 @@ async function testPaymentorderCompletion() {
     console.log('🔍 3. VERIFICANDO ACTUALIZACIÓN AUTOMÁTICA DEL order...');
     
     const [updatedorderResult] = await pool.execute(
-      'SELECT estado, fecha_entrega_real, updated_at FROM orders WHERE id = ?',
+      'SELECT estado, fecha_entrega_real, updated_at FROM pedidos WHERE id = ?',
       [testorder.id]
     );
 
@@ -132,7 +132,7 @@ async function testPaymentorderCompletion() {
         p.estado as order_estado,
         SUM(pg2.monto) as total_pagado
       FROM pagos pg
-      JOIN orders p ON pg.order_id = p.id
+      JOIN pedidos p ON pg.order_id = p.id
       LEFT JOIN pagos pg2 ON pg2.order_id = p.id AND pg2.estado IN ('aplicado', 'completado', 'pagado')
       WHERE pg.id = ?
       GROUP BY pg.id
@@ -157,7 +157,7 @@ async function testPaymentorderCompletion() {
     
     // Create another test order
     const [partialorderResult] = await pool.execute(`
-      INSERT INTO orders (
+      INSERT INTO pedidos (
         numero_order, usuario_id, estado, prioridad, 
         descripcion, servicio, presupuesto_estimado, 
         created_at, updated_at
@@ -188,7 +188,7 @@ async function testPaymentorderCompletion() {
 
     // Check order status (should NOT be completed)
     const [partialorderCheck] = await pool.execute(
-      'SELECT estado FROM orders WHERE id = ?',
+      'SELECT estado FROM pedidos WHERE id = ?',
       [partialorderId]
     );
 
@@ -205,9 +205,9 @@ async function testPaymentorderCompletion() {
     console.log('🏁 RESUMEN DE PRUEBAS:');
     console.log('='.repeat(40));
     console.log('✅ Funcionalidad implementada correctamente:');
-    console.log('   • Pagos se vinculan automáticamente con orders');
+    console.log('   • Pagos se vinculan automáticamente con pedidos');
     console.log('   • Pagos completos cambian estado a "completado"');
-    console.log('   • Pagos parciales NO completan orders');
+    console.log('   • Pagos parciales NO completan pedidos');
     console.log('   • Se registra fecha de entrega real');
     console.log('   • Transacciones son atómicas y seguras');
     console.log('');

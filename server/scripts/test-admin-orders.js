@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Script para verificar que los datos de orders lleguen correctamente al administrador
+ * Script para verificar que los datos de pedidos lleguen correctamente al administrador
  * Simula lo que debería mostrar el dashboard del admin
  */
 
 const mysql = require('mysql2/promise');
 
-async function testAdminordersData() {
+async function testAdminpedidosData() {
   const connection = await mysql.createConnection({
     host: '216.246.47.82',
     port: 3306,
@@ -34,7 +34,7 @@ async function testAdminordersData() {
                WHEN p.total > 0 THEN 'final' 
                ELSE 'sin_definir'
              END as tipo_presupuesto
-      FROM orders p
+      FROM pedidos p
       JOIN usuarios c ON p.usuario_id = c.id
       order BY p.created_at DESC
       LIMIT 5
@@ -80,4 +80,4 @@ async function testAdminordersData() {
 }
 
 // Ejecutar el test
-testAdminordersData();
+testAdminpedidosData();

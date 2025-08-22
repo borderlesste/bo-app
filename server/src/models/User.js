@@ -12,7 +12,7 @@ class User {
     }
 
     static async create(userData) {
-        const { nombre, email, password, rol = 'cliente', telefono, direccion, empresa, rfc } = userData;
+        const { nombre, email, password, rol = 'usuarios', telefono, direccion, empresa, rfc } = userData;
         const [result] = await pool.execute(
             `INSERT INTO usuarios (nombre, email, password, rol, telefono, direccion, empresa, rfc) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -88,7 +88,7 @@ class User {
     }
 
     static async getClientSummary(id) {
-        const [rows] = await pool.execute('SELECT * FROM v_resumen_cliente WHERE id = ?', [id]);
+        const [rows] = await pool.execute('SELECT * FROM v_resumen_usuarios WHERE id = ?', [id]);
         return rows;
     }
 }

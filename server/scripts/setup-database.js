@@ -115,18 +115,18 @@ async function insertSampleData(connection) {
       return;
     }
 
-    // Insertar cliente admin
+    // Insertar usuarios admin
     await connection.execute(`
       INSERT INTO usuarios (nombre, email, direccion, telefono, password, rol) VALUES 
       ('Administrador', 'admin@borderlesstechno.com', 'Oficina Principal', '+52 55 1234 5678', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin')
     `);
 
-    // Insertar clientes de prueba
+    // Insertar usuarioss de prueba
     await connection.execute(`
       INSERT INTO usuarios (nombre, email, direccion, telefono, password, rol) VALUES 
-      ('Juan Pérez', 'juan@example.com', 'Calle Principal 123, CDMX', '+52 55 1111 2222', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'cliente'),
-      ('María González', 'maria@example.com', 'Av. Reforma 456, CDMX', '+52 55 3333 4444', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'cliente'),
-      ('Carlos Ruiz', 'carlos@example.com', 'Zona Rosa 789, CDMX', '+52 55 5555 6666', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'cliente')
+      ('Juan Pérez', 'juan@example.com', 'Calle Principal 123, CDMX', '+52 55 1111 2222', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'usuarios'),
+      ('María González', 'maria@example.com', 'Av. Reforma 456, CDMX', '+52 55 3333 4444', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'usuarios'),
+      ('Carlos Ruiz', 'carlos@example.com', 'Zona Rosa 789, CDMX', '+52 55 5555 6666', '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'usuarios')
     `);
 
     // Insertar cotizaciones de prueba
@@ -137,9 +137,9 @@ async function insertSampleData(connection) {
       ('Elena Castro', 'elena@example.com', '+52 55 1122 3344', 'Backend & APIs', 'Necesito APIs para conectar mi sistema de inventario', 'Pendiente')
     `);
 
-    // Insertar orders de prueba
+    // Insertar pedidos de prueba
     await connection.execute(`
-      INSERT INTO orders (usuario_id, servicio, descripcion, estado, prioridad, total, fecha_entrega_estimada) VALUES 
+      INSERT INTO pedidos (usuario_id, servicio, descripcion, estado, prioridad, total, fecha_entrega_estimada) VALUES 
       (2, 'Desarrollo Web', 'Sitio web corporativo con panel de administración', 'En progreso', 'Alta', 25000.00, '2024-02-15'),
       (3, 'Apps Móviles', 'Aplicación móvil para delivery', 'Pendiente', 'Media', 45000.00, '2024-03-01'),
       (4, 'Backend & APIs', 'Sistema de APIs RESTful', 'Completado', 'Baja', 18000.00, '2024-01-25')
@@ -158,7 +158,7 @@ async function insertSampleData(connection) {
       INSERT INTO notificaciones (usuario_id, tipo, mensaje, leida) VALUES 
       (2, 'pago_recibido', 'Se ha recibido tu pago de $12,500.00 MXN', false),
       (3, 'proyecto_iniciado', 'Tu proyecto "App Móvil para Delivery" ha iniciado desarrollo', false),
-      (1, 'nuevo_cliente', 'Nuevo cliente registrado: Elena Castro', true)
+      (1, 'nuevo_usuarios', 'Nuevo usuarios registrado: Elena Castro', true)
     `);
 
     console.log('✅ Datos de prueba insertados correctamente');

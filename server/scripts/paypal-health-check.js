@@ -63,9 +63,9 @@ class PayPalHealthCheck {
     try {
       const connection = await mysql.createConnection(this.dbConfig);
       
-      // Check orders table PayPal fields
-      const [ordersColumns] = await connection.execute(`
-        SHOW COLUMNS FROM orders WHERE Field IN ('paypal_order_id', 'paypal_capture_id', 'payment_method')
+      // Check pedidos table PayPal fields
+      const [pedidosColumns] = await connection.execute(`
+        SHOW COLUMNS FROM pedidos WHERE Field IN ('paypal_order_id', 'paypal_capture_id', 'payment_method')
       `);
       
       // Check pagos table PayPal fields
@@ -80,12 +80,12 @@ class PayPalHealthCheck {
       
       await connection.end();
       
-      const ordersPass = ordersColumns.length === 3;
+      const pedidosPass = pedidosColumns.length === 3;
       const pagosPass = pagosColumns.length === 4;
       const webhooksPass = webhooksExists.length > 0;
       
-      this.addCheck('orders PayPal Fields', ordersPass ? 'PASS' : 'FAIL', 
-        `Found ${ordersColumns.length}/3 required fields`);
+      this.addCheck('pedidos PayPal Fields', pedidosPass ? 'PASS' : 'FAIL', 
+        `Found ${pedidosColumns.length}/3 required fields`);
       this.addCheck('Pagos PayPal Fields', pagosPass ? 'PASS' : 'FAIL', 
         `Found ${pagosColumns.length}/4 required fields`);
       this.addCheck('Webhooks PayPal Table', webhooksPass ? 'PASS' : 'FAIL', 
@@ -179,10 +179,10 @@ class PayPalHealthCheck {
     try {
       const connection = await mysql.createConnection(this.dbConfig);
       
-      // Check recent PayPal orders
-      const [recentorders] = await connection.execute(`
+      // Check recent PayPal pedidos
+      const [recentpedidos] = await connection.execute(`
         SELECT COUNT(*) as count 
-        FROM orders 
+        FROM pedidos 
         WHERE payment_method = 'paypal' 
         AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
       `);
@@ -204,8 +204,8 @@ class PayPalHealthCheck {
       
       await connection.end();
       
-      this.addCheck('Recent PayPal orders (24h)', 'INFO', 
-        `${recentorders[0].count} orders created`);
+      this.addCheck('Recent PayPal pedidos (24h)', 'INFO', 
+        `${recentpedidos[0].count} pedidos created`);
       this.addCheck('Recent Webhooks (24h)', 'INFO', 
         `${recentWebhooks[0].count} webhooks received`);
       
@@ -224,29 +224,29 @@ class PayPalHealthCheck {
     try {
       const connection = await mysql.createConnection(this.dbConfig);
       
-      // Check orders without PayPal order ID
-      const [ordersWithoutPayPal] = await connection.execute(`
+      // Check pedidos without PayPal order ID
+      const [pedidosWithoutPayPal] = await connection.execute(`
         SELECT COUNT(*) as count 
-        FROM orders 
+        FROM pedidos 
         WHERE payment_method = 'paypal' 
         AND paypal_order_id IS NULL 
         AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
       `);
       
-      // Check payments without matching orders
+      // Check payments without matching pedidos
       const [orphanedPayments] = await connection.execute(`
         SELECT COUNT(*) as count 
         FROM pagos p
-        LEFT JOIN orders pe ON p.paypal_order_id = pe.paypal_order_id
+        LEFT JOIN pedidos pe ON p.paypal_order_id = pe.paypal_order_id
         WHERE p.payment_gateway = 'paypal' 
         AND pe.id IS NULL
         AND p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
       `);
       
-      // Check pending orders older than 2 hours
-      const [stalePendingorders] = await connection.execute(`
+      // Check pending pedidos older than 2 hours
+      const [stalePendingpedidos] = await connection.execute(`
         SELECT COUNT(*) as count 
-        FROM orders 
+        FROM pedidos 
         WHERE payment_method = 'paypal' 
         AND estado = 'nuevo' 
         AND created_at < DATE_SUB(NOW(), INTERVAL 2 HOUR)
@@ -254,16 +254,16 @@ class PayPalHealthCheck {
       
       await connection.end();
       
-      const ordersIssue = ordersWithoutPayPal[0].count;
+      const pedidosIssue = pedidosWithoutPayPal[0].count;
       const paymentsIssue = orphanedPayments[0].count;
-      const staleIssue = stalePendingorders[0].count;
+      const staleIssue = stalePendingpedidos[0].count;
       
-      this.addCheck('orders Missing PayPal ID', ordersIssue > 0 ? 'WARN' : 'PASS', 
-        `${ordersIssue} orders found`);
+      this.addCheck('pedidos Missing PayPal ID', pedidosIssue > 0 ? 'WARN' : 'PASS', 
+        `${pedidosIssue} pedidos found`);
       this.addCheck('Orphaned Payments', paymentsIssue > 0 ? 'WARN' : 'PASS', 
         `${paymentsIssue} payments found`);
-      this.addCheck('Stale Pending orders', staleIssue > 5 ? 'WARN' : 'PASS', 
-        `${staleIssue} orders older than 2h`);
+      this.addCheck('Stale Pending pedidos', staleIssue > 5 ? 'WARN' : 'PASS', 
+        `${staleIssue} pedidos older than 2h`);
         
     } catch (error) {
       this.addCheck('Data Consistency', 'FAIL', error.message);
