@@ -1,5 +1,5 @@
 const { validationResult } = require('express-validator');
-const { pedidoservice } = require('../services/pedidoservice.js');
+const { pedidoservice } = require('../services/pedidoService.js');
 const notificationService = require('../services/notificationService.js');
 
 // Obtener todos los pedidos (admin) o los pedidos de un usuario (cliente)
