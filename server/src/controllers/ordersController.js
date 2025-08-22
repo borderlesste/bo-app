@@ -44,7 +44,7 @@ exports.getpedidosSummaryForAdmin = async (req, res) => {
 };
 
 // Obtener un order por ID
-exports.getorderById = async (req, res) => {
+exports.getpedidoById = async (req, res) => {
   const { id } = req.params;
   try {
     const order = await pedidoservice.getorderById(id);
@@ -56,7 +56,7 @@ exports.getorderById = async (req, res) => {
 };
 
 // Crear un nuevo order
-exports.createorder = async (req, res) => {
+exports.createpedido = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -82,7 +82,7 @@ exports.createorder = async (req, res) => {
 };
 
 // Actualizar un order
-exports.updateorder = async (req, res) => {
+exports.updatepedido = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -133,7 +133,7 @@ exports.updateorder = async (req, res) => {
 };
 
 // Cancelar un order (cliente)
-exports.cancelorderClient = async (req, res) => {
+exports.cancelpedidoUsuario = async (req, res) => {
   const { id } = req.params;
   try {
     const canceledorder = await pedidoservice.cancelorderClient(id, req.user.id);
@@ -145,7 +145,7 @@ exports.cancelorderClient = async (req, res) => {
 };
 
 // Reanudar un order (cliente)
-exports.resumeorderClient = async (req, res) => {
+exports.resumepedidoUsuario = async (req, res) => {
   const { id } = req.params;
   try {
     const resumedorder = await pedidoservice.resumeorderClient(id, req.user.id);
@@ -157,7 +157,7 @@ exports.resumeorderClient = async (req, res) => {
 };
 
 // Eliminar un order
-exports.deleteorder = async (req, res) => {
+exports.deletepedido = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pedidoservice.deleteorder(id);

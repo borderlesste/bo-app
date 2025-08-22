@@ -23,9 +23,9 @@ router.post('/', [
     isAuthenticated,
     body('servicio', 'El servicio es obligatorio').not().isEmpty(),
     body('descripcion', 'La descripción es obligatoria').not().isEmpty()
-], createorder);
-router.put('/:id/cancel', isAuthenticated, cancelorderClient);
-router.put('/:id/resume', isAuthenticated, resumeorderClient);
+], createpedido);
+router.put('/:id/cancel', isAuthenticated, cancelpedidoUsuario);
+router.put('/:id/resume', isAuthenticated, resumepedidoUsuario);
 
 
 // --- Rutas solo para administradores ---
@@ -35,7 +35,7 @@ router.put('/:id/status', [
     isAuthenticated,
     isAdmin,
     body('estado', 'El estado es obligatorio').not().isEmpty()
-], updateorder);
+], updatepedido);
 
 router.put('/:id', [
     isAuthenticated,
@@ -45,7 +45,7 @@ router.put('/:id', [
     body('prioridad').optional().isIn(['baja', 'normal', 'alta', 'urgente']).withMessage('Prioridad inválida'),
     body('total').optional().isNumeric().withMessage('El total debe ser un número'),
     body('fecha_entrega_estimada').optional().isISO8601().toDate().withMessage('Fecha de entrega inválida')
-], updateorder);
-router.delete('/:id', isAuthenticated, isAdmin, deleteorder);
+], updatepedido);
+router.delete('/:id', isAuthenticated, isAdmin, deletepedido);
 
 module.exports = router;
