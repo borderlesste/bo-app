@@ -183,6 +183,92 @@ const invoicesController = {
     }
   },
 
+  // Search users for invoice creation
+  searchUsers: async (req, res) => {
+    try {
+      const { search = '', page = 1, limit = 10 } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      if (!search || search.length < 2) {
+        return res.json({
+          success: true,
+          data: {
+            users: [],
+            pagination: {
+              current_page: parseInt(page),
+              total_pages: 0,
+              total_items: 0,
+              per_page: parseInt(limit)
+            }
+          }
+        });
+      }
+
+      const searchQuery = `
+        SELECT 
+          id, nombre, email, telefono, empresa, rfc
+        FROM usuarios 
+        WHERE rol = 'cliente' 
+        AND estado = 'activo'
+        AND (
+          nombre LIKE ? OR 
+          email LIKE ? OR 
+          telefono LIKE ? OR 
+          empresa LIKE ?
+        )
+        ORDER BY nombre ASC
+        LIMIT ? OFFSET ?
+      `;
+
+      const searchTerm = `%${search}%`;
+      const [users] = await pool.execute(searchQuery, [
+        searchTerm, searchTerm, searchTerm, searchTerm,
+        parseInt(limit), offset
+      ]);
+
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM usuarios 
+        WHERE rol = 'cliente' 
+        AND estado = 'activo'
+        AND (
+          nombre LIKE ? OR 
+          email LIKE ? OR 
+          telefono LIKE ? OR 
+          empresa LIKE ?
+        )
+      `;
+
+      const [countResult] = await pool.execute(countQuery, [
+        searchTerm, searchTerm, searchTerm, searchTerm
+      ]);
+
+      const total = countResult[0].total;
+      const totalPages = Math.ceil(total / parseInt(limit));
+
+      res.json({
+        success: true,
+        data: {
+          users,
+          pagination: {
+            current_page: parseInt(page),
+            total_pages: totalPages,
+            total_items: total,
+            per_page: parseInt(limit)
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error searching users:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al buscar usuarios',
+        error: error.message
+      });
+    }
+  },
+
   // Create new invoice
   createInvoice: async (req, res) => {
     const connection = await pool.getConnection();
@@ -191,18 +277,30 @@ const invoicesController = {
       await connection.beginTransaction();
 
       const {
-        cotizacion_id,
-        proyecto_id,
         usuario_id,
+        pedido_id,
         titulo,
         descripcion,
         items = [],
         moneda = 'MXN',
         dias_credito = 30,
         notas,
-        condiciones_pago,
-        metodo_pago = 'transferencia'
+        metodo_pago = 'transferencia',
+        forma_pago = '03'
       } = req.body;
+
+      // Validate user exists and is active
+      const [userCheck] = await connection.execute(
+        'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "cliente" AND estado = "activo"',
+        [usuario_id]
+      );
+
+      if (userCheck.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Usuario no encontrado o no es un cliente activo'
+        });
+      }
 
       // Generate invoice number
       const currentYear = new Date().getFullYear();
@@ -222,23 +320,24 @@ const invoicesController = {
 
       // Calculate totals
       let subtotal = 0;
-      let totalImpuestos = 0;
+      let totalDescuento = 0;
+      let totalIva = 0;
       let total = 0;
 
       const processedItems = items.map((item, index) => {
         const cantidad = parseFloat(item.cantidad) || 1;
         const precioUnitario = parseFloat(item.precio_unitario) || 0;
         const descuento = parseFloat(item.descuento) || 0;
-        const impuestoPorcentaje = parseFloat(item.impuesto_porcentaje) || 16;
 
         const itemSubtotal = cantidad * precioUnitario;
-        const descuentoMonto = (itemSubtotal * descuento) / 100;
+        const descuentoMonto = descuento;
         const subtotalConDescuento = itemSubtotal - descuentoMonto;
-        const impuestoMonto = (subtotalConDescuento * impuestoPorcentaje) / 100;
-        const itemTotal = subtotalConDescuento + impuestoMonto;
+        const ivaMonto = subtotalConDescuento * 0.16;
+        const itemTotal = subtotalConDescuento + ivaMonto;
 
         subtotal += itemSubtotal;
-        totalImpuestos += impuestoMonto;
+        totalDescuento += descuentoMonto;
+        totalIva += ivaMonto;
         total += itemTotal;
 
         return {
@@ -256,28 +355,17 @@ const invoicesController = {
       fechaVencimiento.setDate(fechaVencimiento.getDate() + parseInt(dias_credito));
 
       // Insert invoice
-      const insertParams = [
-        invoiceNumber || null, 
-        usuario_id || null, 
-        subtotal || 0, 
-        totalImpuestos || 0, 
-        total || 0, 
-        moneda || 'MXN', 
-        fechaEmision || new Date(), 
-        fechaVencimiento || new Date(), 
-        metodo_pago || null, 
-        notas || null, 
-        req.user?.id || 1
-      ];
-
-      console.log('Invoice insert parameters:', insertParams);
-
       const [invoiceResult] = await connection.execute(`
         INSERT INTO facturas (
-          numero_factura, usuario_id, subtotal, iva, total, moneda, 
-          fecha_emision, fecha_vencimiento, metodo_pago, notas, created_by
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, insertParams);
+          numero_factura, usuario_id, pedido_id, subtotal, descuento, iva, total, 
+          moneda, fecha_emision, fecha_vencimiento, metodo_pago, forma_pago, 
+          notas, saldo_pendiente, created_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        invoiceNumber, usuario_id, pedido_id || null, subtotal, totalDescuento, 
+        totalIva, total, moneda, fechaEmision, fechaVencimiento, metodo_pago, 
+        forma_pago, notas, total, req.user?.id || 1
+      ]);
 
       const invoiceId = invoiceResult.insertId;
 
@@ -293,33 +381,31 @@ const invoicesController = {
         ]);
       }
 
-      // Update quotation if linked
-      if (cotizacion_id) {
+      // Update order if linked
+      if (pedido_id) {
         await connection.execute(
-          'UPDATE cotizaciones SET factura_id = ? WHERE id = ?',
-          [invoiceId, cotizacion_id]
+          'UPDATE pedidos SET factura_id = ? WHERE id = ?',
+          [invoiceId, pedido_id]
         );
       }
 
-      // Update project if linked
-      if (proyecto_id) {
-        await connection.execute(
-          'UPDATE proyectos SET factura_id = ? WHERE id = ?',
-          [invoiceId, proyecto_id]
-        );
-      }
-
-      // Create activity log
-      await connection.execute(`
-        INSERT INTO actividades (usuario_id, tipo, descripcion, entidad_tipo, entidad_id)
-        VALUES (?, 'factura_creada', ?, 'factura', ?)
-      `, [req.user?.id || 1, `Nueva factura creada: ${invoiceNumber}`, invoiceId]);
-
-      // Create notification
+      // Create notification for client
       await connection.execute(`
         INSERT INTO notificaciones (usuario_id, tipo, titulo, mensaje, entidad_tipo, entidad_id)
         VALUES (?, 'info', 'Nueva Factura', ?, 'factura', ?)
       `, [usuario_id, `Se ha generado la factura ${invoiceNumber}`, invoiceId]);
+
+      // Create notification for admins
+      const [admins] = await connection.execute(
+        'SELECT id FROM usuarios WHERE rol = "admin" AND estado = "activo"'
+      );
+
+      for (const admin of admins) {
+        await connection.execute(`
+          INSERT INTO notificaciones (usuario_id, tipo, titulo, mensaje, entidad_tipo, entidad_id)
+          VALUES (?, 'info', 'Factura Creada', ?, 'factura', ?)
+        `, [admin.id, `Nueva factura ${invoiceNumber} creada para ${userCheck[0].nombre}`, invoiceId]);
+      }
 
       await connection.commit();
 

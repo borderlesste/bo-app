@@ -29,6 +29,9 @@ router.get('/', isAdmin, invoicesController.getAllInvoices);
 // GET /api/invoices/stats - Get invoice statistics
 router.get('/stats', isAdmin, invoicesController.getInvoiceStats);
 
+// GET /api/invoices/search-users - Search users for invoice creation
+router.get('/search-users', isAdmin, invoicesController.searchUsers);
+
 // GET /api/invoices/:id - Get single invoice by ID
 router.get('/:id', isAdmin, invoicesController.getInvoiceById);
 

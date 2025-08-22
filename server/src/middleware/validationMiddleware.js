@@ -316,18 +316,6 @@ const validateInvoice = (invoiceData) => {
     errors.usuario_id = 'ID de usuario requerido y debe ser un número válido';
   }
   
-  if (!invoiceData.titulo || invoiceData.titulo.trim().length < 3) {
-    errors.titulo = 'El título debe tener al menos 3 caracteres';
-  }
-  
-  if (invoiceData.titulo && invoiceData.titulo.length > 255) {
-    errors.titulo = 'El título no puede exceder los 255 caracteres';
-  }
-  
-  if (invoiceData.descripcion && invoiceData.descripcion.length > 1000) {
-    errors.descripcion = 'La descripción no puede exceder los 1000 caracteres';
-  }
-  
   if (invoiceData.moneda && !['MXN', 'USD', 'EUR'].includes(invoiceData.moneda)) {
     errors.moneda = 'La moneda debe ser MXN, USD o EUR';
   }
@@ -336,8 +324,12 @@ const validateInvoice = (invoiceData) => {
     errors.dias_credito = 'Los días de crédito deben estar entre 0 y 365';
   }
   
-  if (invoiceData.metodo_pago && !['transferencia', 'efectivo', 'cheque', 'tarjeta_credito', 'tarjeta_debito'].includes(invoiceData.metodo_pago)) {
+  if (invoiceData.metodo_pago && !['transferencia', 'efectivo', 'cheque', 'tarjeta_credito', 'tarjeta_debito', 'paypal'].includes(invoiceData.metodo_pago)) {
     errors.metodo_pago = 'Método de pago inválido';
+  }
+  
+  if (invoiceData.forma_pago && !['01', '02', '03', '04', '05', '06', '08', '12', '13', '14', '15', '17', '23', '24', '25', '26', '27', '28', '29', '30', '99'].includes(invoiceData.forma_pago)) {
+    errors.forma_pago = 'Forma de pago SAT inválida';
   }
   
   if (invoiceData.items && Array.isArray(invoiceData.items)) {
@@ -358,22 +350,16 @@ const validateInvoice = (invoiceData) => {
         errors[`item_${index}_precio`] = `Item ${index + 1}: El precio unitario debe ser mayor a 0`;
       }
       
-      if (item.descuento && (item.descuento < 0 || item.descuento > 100)) {
-        errors[`item_${index}_descuento`] = `Item ${index + 1}: El descuento debe estar entre 0 y 100%`;
-      }
-      
-      if (item.impuesto_porcentaje && (item.impuesto_porcentaje < 0 || item.impuesto_porcentaje > 100)) {
-        errors[`item_${index}_impuesto`] = `Item ${index + 1}: El impuesto debe estar entre 0 y 100%`;
+      if (item.descuento && item.descuento < 0) {
+        errors[`item_${index}_descuento`] = `Item ${index + 1}: El descuento no puede ser negativo`;
       }
     });
+  } else {
+    errors.items = 'La factura debe tener al menos un item';
   }
   
   if (invoiceData.notas && invoiceData.notas.length > 1000) {
     errors.notas = 'Las notas no pueden exceder los 1000 caracteres';
-  }
-  
-  if (invoiceData.condiciones_pago && invoiceData.condiciones_pago.length > 500) {
-    errors.condiciones_pago = 'Las condiciones de pago no pueden exceder los 500 caracteres';
   }
   
   return {
