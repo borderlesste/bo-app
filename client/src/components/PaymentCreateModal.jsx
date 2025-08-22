@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { X, CheckCircle, User, DollarSign, Calendar, FileText, CreditCard, Building } from 'lucide-react';
 
-const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) => {
+const PaymentCreateModal = ({ isOpen, onClose, onSave, usuarios, pedidos, user }) => {
   const [formData, setFormData] = useState({
     concepto: '',
     monto: '',
@@ -148,7 +148,7 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <User className="w-4 h-4 inline mr-2" />
-                  Cliente *
+                  Usuario *
                 </label>
                 <select
                   name="usuario_id"
@@ -157,15 +157,15 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) 
                   required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                 >
-                  <option value="">Seleccionar cliente...</option>
-                  {clients && clients.length > 0 ? (
-                    clients.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.nombre} ({client.email})
+                  <option value="">Seleccionar usuario...</option>
+                  {usuarios && usuarios.length > 0 ? (
+                    usuarios.map(usuario => (
+                      <option key={usuario.id} value={usuario.id}>
+                        {usuario.nombre} ({usuario.email})
                       </option>
                     ))
                   ) : (
-                    <option value="" disabled>No hay clientes para mostrar</option>
+                    <option value="" disabled>No hay usuarios para mostrar</option>
                   )}
                 </select>
               </div>
@@ -236,7 +236,7 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, clients, orders, user }) 
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Seleccionar pedido</option>
-                {orders && orders.map(pedido => (
+                {pedidos && pedidos.map(pedido => (
                   <option key={pedido.id} value={pedido.id}>
                     Pedido #{pedido.id} - {pedido.titulo || 'Sin título'}
                   </option>
@@ -299,8 +299,8 @@ PaymentCreateModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  clients: PropTypes.array,
-  orders: PropTypes.array,
+  usuarios: PropTypes.array,
+  pedidos: PropTypes.array,
   user: PropTypes.object
 };
 

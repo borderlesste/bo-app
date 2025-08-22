@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { X, DollarSign, User, Package, CreditCard, CheckSquare, Hash } from 'lucide-react';
 
-const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => {
+const PaymentModal = ({ isOpen, onClose, onSave, payment, usuarios }) => {
   const [formData, setFormData] = useState({});
   const [error, setError] = useState(null);
 
@@ -66,7 +66,7 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
         <form onSubmit={handleSubmit}>
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
-              {payment ? 'Editar Pago' : 'Crear Nuevo Pago'}
+              {payment ? 'Editar Pago' : 'order'}
             </h2>
             <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <X className="w-6 h-6" />
@@ -85,9 +85,9 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
               <div className="relative">
                 <User className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
                 <select name="usuario_id" value={formData.usuario_id} onChange={handleChange} required className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg appearance-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-slate-700 dark:text-white">
-                  <option value="">Seleccionar Cliente</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>{client.nombre}</option>
+                  <option value="">Seleccionar Usuario</option>
+                  {usuarios.map(usuario => (
+                    <option key={usuario.id} value={usuario.id}>{usuario.nombre}</option>
                   ))}
                 </select>
               </div>
@@ -200,6 +200,5 @@ PaymentModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   payment: PropTypes.object,
-  clients: PropTypes.array.isRequired,
-  orders: PropTypes.array.isRequired,
+  usuarios: PropTypes.array.isRequired,
 };

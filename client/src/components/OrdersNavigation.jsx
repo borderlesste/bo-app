@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FileText, Package, History, ChevronRight } from 'lucide-react';
 
-const ordersNavigation = () => {
+const OrdersNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -98,4 +98,4 @@ const ordersNavigation = () => {
   );
 };
 
-export default ordersNavigation;
+export default OrdersNavigation;

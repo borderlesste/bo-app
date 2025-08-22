@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { X, CheckCircle, User, FileText, DollarSign, Calendar, Mail, Phone } from 'lucide-react';
 import { Button } from '../components';
 
-const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
+const CreateOrderModal = ({ isOpen, onClose, onSave, usuarios = [] }) => {
   const [formData, setFormData] = useState({
     usuario_id: '',
     descripcion: '',
@@ -30,7 +30,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
     
     try {
       if (!formData.usuario_id) {
-        throw new Error('Debe seleccionar un cliente');
+        throw new Error('Debe seleccionar un usuario');
       }
       if (!formData.descripcion.trim()) {
         throw new Error('La descripción es obligatoria');
@@ -57,7 +57,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
     }
   };
 
-  const selectedClient = clients.find(c => c.id === parseInt(formData.usuario_id));
+  const selectedUser = usuarios.find(u => u.id === parseInt(formData.usuario_id));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -65,7 +65,7 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-              📦 Crear Nuevo order
+              📦 Crear Nuevo pedido
             </h2>
             <button
               onClick={onClose}
@@ -84,11 +84,11 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Cliente Selection */}
+            {/* User Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <User className="w-4 h-4 inline mr-2" />
-                Cliente
+                Usuario
               </label>
               <select
                 name="usuario_id"
@@ -97,31 +97,31 @@ const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
                 required
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
               >
-                <option value="">Seleccionar cliente...</option>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.nombre} ({client.email})
+                <option value="">Seleccionar usuario...</option>
+                {usuarios.map(usuario => (
+                  <option key={usuario.id} value={usuario.id}>
+                    {usuario.nombre} ({usuario.email})
                   </option>
                 ))}
               </select>
-              
-              {/* Client Info Display */}
-              {selectedClient && (
+
+              {/* User Info Display */}
+              {selectedUser && (
                 <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <div className="text-sm text-gray-600 dark:text-gray-300">
                     <div className="flex items-center gap-2 mb-1">
                       <Mail className="w-4 h-4" />
-                      <span>{selectedClient.email}</span>
+                      <span>{selectedUser.email}</span>
                     </div>
-                    {selectedClient.telefono && (
+                    {selectedUser.telefono && (
                       <div className="flex items-center gap-2 mb-1">
                         <Phone className="w-4 h-4" />
-                        <span>{selectedClient.telefono}</span>
+                        <span>{selectedUser.telefono}</span>
                       </div>
                     )}
-                    {selectedClient.empresa && (
+                    {selectedUser.empresa && (
                       <div className="text-xs text-gray-500">
-                        {selectedClient.empresa}
+                        {selectedUser.empresa}
                       </div>
                     )}
                   </div>
@@ -261,7 +261,7 @@ CreateOrderModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
-  clients: PropTypes.array
+  usuarios: PropTypes.array
 };
 
 export default CreateOrderModal;
