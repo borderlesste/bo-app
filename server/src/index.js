@@ -32,6 +32,7 @@ const messagesRoutes = require('./routes/messages.js');
 const servicesRoutes = require('./routes/services.js');
 const publicRoutes = require('./routes/public.js');
 const healthRoutes = require('./routes/health.js');
+const emailCampaignsRoutes = require('./routes/emailCampaigns.js');
 
 // UNIFIED ROUTES (replaces duplicates)
 const quotationsUnifiedRoutes = require('./routes/quotationsUnified.js');
@@ -198,6 +199,7 @@ app.use('/api/security', securityRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/email-campaigns', emailCampaignsRoutes);
 
 // LEGACY ROUTES (deprecated - show migration notices)
 app.use('/api/config', (req, res, next) => {

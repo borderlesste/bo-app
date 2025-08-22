@@ -440,12 +440,41 @@ const invoicesController = {
       const { id } = req.params;
       const { estado, notas } = req.body;
 
-      // Validate status
+      // Enhanced validation with detailed logging
       const validStatuses = ['borrador', 'emitida', 'timbrada', 'pagada', 'parcialmente_pagada', 'vencida', 'cancelada'];
-      if (!validStatuses.includes(estado)) {
+      
+      console.log(`Invoice ${id} status update attempt:`, { estado, notas, validStatuses });
+      
+      if (!estado) {
+        console.log(`Missing estado field for invoice ${id}`);
         return res.status(400).json({
           success: false,
-          message: 'Estado de factura inválido'
+          message: 'El campo estado es requerido',
+          received: req.body,
+          expected: { estado: 'string', notas: 'string (optional)' }
+        });
+      }
+
+      if (!validStatuses.includes(estado)) {
+        console.log(`Invalid estado '${estado}' for invoice ${id}. Valid options:`, validStatuses);
+        return res.status(400).json({
+          success: false,
+          message: `Estado de factura inválido. Estados válidos: ${validStatuses.join(', ')}`,
+          received: estado,
+          valid_statuses: validStatuses
+        });
+      }
+
+      // Check if invoice exists
+      const [existingInvoice] = await pool.execute(
+        'SELECT id, estado as current_estado FROM facturas WHERE id = ?',
+        [id]
+      );
+
+      if (existingInvoice.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Factura no encontrada'
         });
       }
 
