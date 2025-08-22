@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { X, CheckCircle, User, FileText, DollarSign, Calendar, Mail, Phone } from 'lucide-react';
 import { Button } from '../components';
 
-const CreateorderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
+const CreateOrderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
   const [formData, setFormData] = useState({
     usuario_id: '',
     descripcion: '',
@@ -257,11 +257,11 @@ const CreateorderModal = ({ isOpen, onClose, onSave, clients = [] }) => {
   );
 };
 
-CreateorderModal.propTypes = {
+CreateOrderModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   clients: PropTypes.array
 };
 
-export default CreateorderModal;
+export default CreateOrderModal;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getPayments, createAdminPayment, updateAdminPayment, deletePayment, getUsers, getorders } from '../api/axios';
+import { getPayments, createAdminPayment, updateAdminPayment, deletePayment, getUsers, getOrders } from '../api/axios';
 import PaymentCreateModal from '../components/PaymentCreateModal';
 import PaymentEditModal from '../components/PaymentEditModal';
 import { 
@@ -52,7 +52,7 @@ const FinancePaymentsPage = ({ showNavigation = true }) => {
       const [paymentsRes, usersRes, ordersRes] = await Promise.all([
         getPayments(),
         getUsers(),
-        getorders()
+        getOrders()
       ]);
 
       if (paymentsRes.data.success) {

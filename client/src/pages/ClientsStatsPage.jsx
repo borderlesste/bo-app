@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
-import { getUsers, getorders, getPayments } from '../api/axios';
+import { getUsers, getOrders, getPayments } from '../api/axios';
 import { 
   Users, 
   TrendingUp, 
@@ -34,7 +34,7 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
       setLoading(true);
       const [usersRes, ordersRes, paymentsRes] = await Promise.all([
         getUsers(),
-        getorders(),
+        getOrders(),
         getPayments()
       ]);
 

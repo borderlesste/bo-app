@@ -33,9 +33,9 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  createorder,
-  updateorder,
-  deleteorder,
+  createOrder,
+  updateOrder,
+  deleteOrder,
   createAdminPayment,
   updateAdminPayment,
   deletePayment,
@@ -47,11 +47,11 @@ import {
   getFinancialSummary
 } from '../api/axios';
 import UserModal from '../components/UserModal';
-import orderModal from '../components/orderModal';
+import OrderModal from '../components/OrderModal';
 import PaymentModal from '../components/PaymentModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import QuotesPage from './QuotesPage';
-import ordersPage from './ordersPage';
+import OrdersPage from './OrdersPage';
 import HistoryPage from './HistoryPage';
 import ClientsViewPage from './ClientsViewPage';
 import ClientsNewPage from './ClientsNewPage';
@@ -295,9 +295,9 @@ const AdminDashboard = () => {
   const handleSaveorder = async (orderData) => {
     try {
       if (selectedorder) {
-        await updateorder(selectedorder.id, orderData);
+        await updateOrder(selectedorder.id, orderData);
       } else {
-        await createorder(orderData);
+        await createOrder(orderData);
       }
       await fetchAllData();
     } catch (error) {
@@ -305,10 +305,10 @@ const AdminDashboard = () => {
       throw error;
     }
   };
-  const handleDeleteorder = async (orderId) => {
+  const handleDeleteOrder = async (orderId) => {
     if (window.confirm("¿Estás seguro de que quieres eliminar este order?")) {
       try {
-        await deleteorder(orderId);
+        await deleteOrder(orderId);
         await fetchAllData();
       } catch (error) {
         console.error("Error al eliminar el order:", error);
@@ -1011,7 +1011,7 @@ const AdminDashboard = () => {
                           <button onClick={() => handleOpenorderModal(order)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
                             <Edit3 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDeleteorder(order.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                          <button onClick={() => handleDeleteOrder(order.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -1183,7 +1183,7 @@ const AdminDashboard = () => {
           {/* orders Tab */}
           {activeTab === "orders" && (
             <div>
-              <ordersPage showNavigation={false} />
+              <OrdersPage showNavigation={false} />
             </div>
           )}
 
@@ -1288,7 +1288,7 @@ const AdminDashboard = () => {
 
         {/* Modals */}
         <UserModal isOpen={isUserModalOpen} onClose={handleCloseUserModal} onSave={handleSaveUser} user={selectedUser} />
-        <orderModal isOpen={isorderModalOpen} onClose={handleCloseorderModal} onSave={handleSaveorder} order={selectedorder} clients={clientes} />
+        <OrderModal isOpen={isorderModalOpen} onClose={handleCloseorderModal} onSave={handleSaveorder} order={selectedorder} clients={clientes} />
         <PaymentModal isOpen={isPaymentModalOpen} onClose={handleClosePaymentModal} onSave={handleSavePayment} payment={selectedPayment} clients={clientes} orders={orders} />
         <ChangePasswordModal isOpen={isChangePasswordModalOpen} onClose={handleCloseChangePasswordModal} />
       </div>

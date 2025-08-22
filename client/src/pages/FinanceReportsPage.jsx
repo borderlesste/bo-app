@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getPayments, getorders, getUsers, getQuotes } from '../api/axios';
+import { getPayments, getOrders, getUsers, getQuotes } from '../api/axios';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -42,7 +42,7 @@ const FinanceReportsPage = ({ showNavigation = true }) => {
       setLoading(true);
       const [paymentsRes, ordersRes, usersRes, quotesRes] = await Promise.all([
         getPayments(),
-        getorders(),
+        getOrders(),
         getUsers(),
         getQuotes()
       ]);

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getQuotes, getorders, getPayments } from '../api/axios';
-import ordersNavigation from '../components/ordersNavigation';
+import { getQuotes, getOrders, getPayments } from '../api/axios';
+import OrdersNavigation from '../components/OrdersNavigation';
 import { 
   Search, 
   Filter, 
@@ -68,7 +68,7 @@ const HistoryPage = ({ showNavigation = true }) => {
       setLoading(true);
       const [quotesRes, ordersRes, paymentsRes] = await Promise.all([
         getQuotes(),
-        getorders(),
+        getOrders(),
         getPayments()
       ]);
 
@@ -307,7 +307,7 @@ const HistoryPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <ordersNavigation />}
+        {showNavigation && <OrdersNavigation />}
         
         {/* Header */}
         <div className="mb-8">

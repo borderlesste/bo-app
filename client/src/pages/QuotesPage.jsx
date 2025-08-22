@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Skeleton } from '../components';
-import { getQuotes, updateQuote, deleteQuote, convertQuoteToorder, createQuote } from '../api/axios';
+import { getQuotes, updateQuote, deleteQuote, convertQuoteToOrder, createQuote } from '../api/axios';
 import OrdersNavigation from '../components/OrdersNavigation';
 import CreateQuoteModal from '../components/CreateQuoteModal';
 import EditQuoteModal from '../components/EditQuoteModal';
@@ -111,7 +111,7 @@ const QuotesPage = ({ showNavigation = true }) => {
 
   const handleConvertToorder = async (id) => {
     try {
-      const response = await convertQuoteToorder(id);
+      const response = await convertQuoteToOrder(id);
       if (response.data.success) {
         setQuotes(quotes.map(quote => 
           quote.id === id ? { ...quote, estado: 'aceptada' } : quote

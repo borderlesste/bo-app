@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Skeleton } from '../components';
-import { getorders, updateorder, updateorderstatus, deleteorder, createorder, getClients } from '../api/axios';
-import ordersNavigation from '../components/ordersNavigation';
-import CreateorderModal from '../components/CreateorderModal';
+import { getOrders, updateOrder, updateOrderStatus, deleteOrder, createOrder, getClients } from '../api/axios';
+import OrdersNavigation from '../components/OrdersNavigation';
+import CreateOrderModal from '../components/CreateOrderModal';
 import PropTypes from 'prop-types';
 import { 
   Search, 
@@ -54,7 +54,7 @@ const ordersPage = ({ showNavigation = true }) => {
   const fetchorders = async () => {
     try {
       setLoading(true);
-      const response = await getorders();
+      const response = await getOrders();
       if (response.data.success) {
         setorders(response.data.data);
       }
@@ -76,9 +76,9 @@ const ordersPage = ({ showNavigation = true }) => {
     }
   };
 
-  const handleCreateorder = async (orderData) => {
+  const handleCreateOrder = async (orderData) => {
     try {
-      const response = await createorder(orderData);
+      const response = await createOrder(orderData);
       if (response.data.success) {
         await fetchorders(); // Refresh the orders list
         return response.data;
@@ -91,7 +91,7 @@ const ordersPage = ({ showNavigation = true }) => {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      const response = await updateorderstatus(id, newStatus);
+      const response = await updateOrderStatus(id, newStatus);
       if (response.data.success) {
         setorders(orders.map(order => 
           order.id === id ? { ...order, estado: newStatus } : order
@@ -104,7 +104,7 @@ const ordersPage = ({ showNavigation = true }) => {
 
   const handleUpdatePriority = async (id, newPriority) => {
     try {
-      const response = await updateorder(id, { prioridad: newPriority });
+      const response = await updateOrder(id, { prioridad: newPriority });
       if (response.data.success) {
         setorders(orders.map(order => 
           order.id === id ? { ...order, prioridad: newPriority } : order
@@ -141,7 +141,7 @@ const ordersPage = ({ showNavigation = true }) => {
 
   const handleSaveEdit = async () => {
     try {
-      const response = await updateorder(selectedorder.id, editForm);
+      const response = await updateOrder(selectedorder.id, editForm);
       if (response.data.success) {
         setorders(orders.map(order => 
           order.id === selectedorder.id ? { ...order, ...editForm } : order
@@ -158,7 +158,7 @@ const ordersPage = ({ showNavigation = true }) => {
   const handleDelete = async (id) => {
     if (confirm('¿Estás seguro de que quieres eliminar este order?')) {
       try {
-        const response = await deleteorder(id);
+        const response = await deleteOrder(id);
         if (response.data.success) {
           setorders(orders.filter(order => order.id !== id));
         }
@@ -277,7 +277,7 @@ const ordersPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <ordersNavigation />}
+        {showNavigation && <OrdersNavigation />}
         
         {/* Header */}
         <div className="mb-8">
@@ -936,10 +936,10 @@ const ordersPage = ({ showNavigation = true }) => {
         )}
 
         {/* Create order Modal */}
-        <CreateorderModal
+        <CreateOrderModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onSave={handleCreateorder}
+          onSave={handleCreateOrder}
           clients={clients}
         />
       </div>

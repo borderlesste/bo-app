@@ -18,11 +18,11 @@ export { default as ClientSidebar } from './ClientSidebar';
 export { default as ClientPanel } from './ClientPanel';
 export { default as RequestForm } from './RequestForm';
 export { default as ProtectedRoute } from './ProtectedRoute';
-export { default as ordersNavigation } from './ordersNavigation';
+export { default as OrdersNavigation } from './OrdersNavigation';
 
 // Pages
 export { default as QuotesPage } from '../pages/QuotesPage.jsx';
-export { default as ordersPage } from '../pages/ordersPage.jsx';
+export { default as OrdersPage } from '../pages/OrdersPage.jsx';
 export { default as HistoryPage } from '../pages/HistoryPage.jsx';
 export { default as PaymentsPage } from '../pages/PaymentsPage.jsx';
 export { default as NotificationsPage } from '../pages/NotificationsPage.jsx';
@@ -31,6 +31,6 @@ export { default as AdminDashboard } from '../pages/AdminDashboard.jsx';
 // Modal Components
 export { default as ChangePasswordModal } from './ChangePasswordModal';
 export { default as ClientPaymentModal } from './ClientPaymentModal';
-export { default as orderModal } from './orderModal';
+export { default as OrderModal } from './OrderModal';
 export { default as PaymentModal } from './PaymentModal';
 export { default as UserModal } from './UserModal';

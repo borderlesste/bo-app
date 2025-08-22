@@ -13,7 +13,7 @@ import {
   Eye,
   Download
 } from "lucide-react";
-import { createClientPayment, updateClientPayment, getorders, getPayments } from '../api/axios';
+import { createClientPayment, updateClientPayment, getOrders, getPayments } from '../api/axios';
 import ClientPaymentModal from './ClientPaymentModal';
 import logger from '../utils/logger';
 
@@ -83,7 +83,7 @@ function ClientPanel() {
       }
 
       // Refetch orders to update their status
-      const ordersRes = await getorders();
+      const ordersRes = await getOrders();
       const fetchedorders = ordersRes.data;
       const paymentsRes = await getPayments(); // Refetch payments as well
       const fetchedPayments = paymentsRes.data;
@@ -109,7 +109,7 @@ function ClientPanel() {
     const fetchData = async () => {
       try {
         const [ordersRes, paymentsRes] = await Promise.all([
-          getorders(),
+          getOrders(),
           getPayments(),
         ]);
         
