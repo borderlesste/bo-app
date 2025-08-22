@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Skeleton } from '../components';
 import { getQuotes, updateQuote, deleteQuote, convertQuoteToorder, createQuote } from '../api/axios';
-import ordersNavigation from '../components/ordersNavigation';
+import OrdersNavigation from '../components/OrdersNavigation';
 import CreateQuoteModal from '../components/CreateQuoteModal';
 import EditQuoteModal from '../components/EditQuoteModal';
 import PropTypes from 'prop-types';
@@ -207,7 +207,7 @@ const QuotesPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <ordersNavigation />}
+        {showNavigation && <OrdersNavigation />}
         
         {/* Header */}
         <div className="mb-8">
