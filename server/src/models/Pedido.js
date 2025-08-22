@@ -191,4 +191,4 @@ class Pedido {
     }
 }
 
-module.exports = order;
+module.exports = Pedido;
