@@ -15,28 +15,34 @@ const paymentsRoutes = require('./routes/payments.js');
 const clientPaymentsRoutes = require('./routes/clientPayments.js');
 const paymentGatewayRoutes = require('./routes/paymentGateway.js');
 const paypalOrdersRoutes = require('./routes/paypalOrders.js');
-const configRoutes = require('./routes/config.js');
 const contactRoutes = require('./routes/contact.js');
 const usersRoutes = require('./routes/users.js');
-const quotesRoutes = require('./routes/quotes.js');
 const notificationsRoutes = require('./routes/notifications.js');
 const dashboardRoutes = require('./routes/dashboard.js');
 const clientDashboardRoutes = require('./routes/clientDashboard.js');
 const clientRoutes = require('./routes/client.js');
 const projectsRoutes = require('./routes/projects.js');
 const clientsRoutes = require('./routes/clients.js');
-const quotationsRoutes = require('./routes/quotations.js');
 const databaseUpdateRoutes = require('./routes/database-update.js');
 const statsRoutes = require('./routes/stats.js');
 const invoicesRoutes = require('./routes/invoices.js');
 const integrationsRoutes = require('./routes/integrations.js');
 const securityRoutes = require('./routes/security.js');
-const configurationRoutes = require('./routes/configuration.js');
 const messagesRoutes = require('./routes/messages.js');
 const servicesRoutes = require('./routes/services.js');
-const configurationAdvancedRoutes = require('./routes/configurationAdvanced.js');
 const publicRoutes = require('./routes/public.js');
 const healthRoutes = require('./routes/health.js');
+
+// UNIFIED ROUTES (replaces duplicates)
+const quotationsUnifiedRoutes = require('./routes/quotationsUnified.js');
+const configurationUnifiedRoutes = require('./routes/configurationUnified.js');
+
+// LEGACY ROUTES (for backward compatibility - will show deprecation warnings)
+const configRoutes = require('./routes/config.js');
+const quotesRoutes = require('./routes/quotes.js');
+const quotationsRoutes = require('./routes/quotations.js');
+const configurationRoutes = require('./routes/configuration.js');
+const configurationAdvancedRoutes = require('./routes/configurationAdvanced.js');
 
 dotenv.config();
 const app = express();
@@ -163,34 +169,55 @@ app.use(session({
   }
 }));
 
-// Rutas API
+// UNIFIED ROUTES (Primary endpoints)
+app.use('/api/quotations-unified', quotationsUnifiedRoutes);
+app.use('/api/configuration-unified', configurationUnifiedRoutes);
+
+// CORE API ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/client-payments', clientPaymentsRoutes);
 app.use('/api/payment-gateway', paymentGatewayRoutes);
 app.use('/api/paypal', paypalOrdersRoutes);
-app.use('/api/config', configRoutes);
 app.use('/api/contacto', contactRoutes);
 app.use('/api/users', usersRoutes);
-app.use('/api/quotes', quotesRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/admin', dashboardRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/client/dashboard', clientDashboardRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/clients', clientsRoutes);
-app.use('/api/quotations', quotationsRoutes);
 app.use('/api/db-update', databaseUpdateRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/invoices', invoicesRoutes);
 app.use('/api/integrations', integrationsRoutes);
 app.use('/api/security', securityRoutes);
-app.use('/api/configuration', configurationRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/services', servicesRoutes);
-app.use('/api/config-advanced', configurationAdvancedRoutes);
 app.use('/api/public', publicRoutes);
+
+// LEGACY ROUTES (deprecated - show migration notices)
+app.use('/api/config', (req, res, next) => {
+  console.warn(`[DEPRECATION] /api/config accessed from ${req.ip}. Use /api/configuration-unified instead`);
+  configRoutes(req, res, next);
+});
+app.use('/api/quotes', (req, res, next) => {
+  console.warn(`[DEPRECATION] /api/quotes accessed from ${req.ip}. Use /api/quotations-unified instead`);
+  quotesRoutes(req, res, next);
+});
+app.use('/api/quotations', (req, res, next) => {
+  console.warn(`[DEPRECATION] /api/quotations accessed from ${req.ip}. Use /api/quotations-unified instead`);
+  quotationsRoutes(req, res, next);
+});
+app.use('/api/configuration', (req, res, next) => {
+  console.warn(`[DEPRECATION] /api/configuration accessed from ${req.ip}. Use /api/configuration-unified instead`);
+  configurationRoutes(req, res, next);
+});
+app.use('/api/config-advanced', (req, res, next) => {
+  console.warn(`[DEPRECATION] /api/config-advanced accessed from ${req.ip}. Use /api/configuration-unified instead`);
+  configurationAdvancedRoutes(req, res, next);
+});
 
 // Health check routes
 app.use('/api/health-check', healthRoutes);
