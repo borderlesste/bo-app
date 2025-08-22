@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { getClientProfile, updateClientProfile, changeClientPassword } from '../api/axios';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -492,25 +491,6 @@ const PasswordChangeModal = ({
       </div>
     </div>
   );
-};
-
-// PropTypes para PasswordChangeModal
-PasswordChangeModal.propTypes = {
-  passwordForm: PropTypes.shape({
-    currentPassword: PropTypes.string.isRequired,
-    newPassword: PropTypes.string.isRequired,
-    confirmPassword: PropTypes.string.isRequired
-  }).isRequired,
-  setPasswordForm: PropTypes.func.isRequired,
-  showPasswords: PropTypes.shape({
-    current: PropTypes.bool.isRequired,
-    new: PropTypes.bool.isRequired,
-    confirm: PropTypes.bool.isRequired
-  }).isRequired,
-  togglePasswordVisibility: PropTypes.func.isRequired,
-  handlePasswordChange: PropTypes.func.isRequired,
-  passwordLoading: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired
 };
 
 export default ProfileSection;

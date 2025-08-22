@@ -78,7 +78,7 @@ function Home() {
       const response = await api.post('/api/public/quotes', quoteData);
       const result = response.data;
       
-      if (result.success) {
+      if (response.ok && result.success) {
         setShowSuccess(true);
         setFormData({
           nombre: '',

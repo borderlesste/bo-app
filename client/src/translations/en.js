@@ -341,9 +341,7 @@ export default {
     title: 'Our Portfolio',
     subtitle: 'Discover the projects we have developed with passion and dedication for our clients.',
     projects: 'Projects',
-    viewProject: 'View Project',
-    noProjectsAvailable: 'No projects available',
-    projectsWillShowHere: 'Projects will be shown here when available.'
+    viewProject: 'View Project'
   },
   
   // About page
@@ -485,7 +483,7 @@ export default {
 
   // Register page
   register: {
-    title: 'Join BorderLESS COMPANY',
+    title: 'Join BORDERLESS COMPANY',
     subtitle: 'Discover a world of borderless opportunities. Connect with professionals from around the world.',
     createAccount: 'Create Account',
     joinCommunity: 'Join our community',
@@ -778,7 +776,7 @@ export default {
       cybersecurity: 'Cybersecurity',
       automation: 'Automation'
     },
-    copyright: '© 2025 BorderLESS TECHNO COMPANY. All rights reserved.',
+    copyright: '© 2025 BORDERLESS TECHNO COMPANY. All rights reserved.',
     followUsOn: 'Follow us on',
     visit: 'Visit'
   }

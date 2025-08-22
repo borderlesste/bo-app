@@ -6,7 +6,7 @@ import App from './App';
 import './index.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import LanguageProvider from './context/LanguageContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

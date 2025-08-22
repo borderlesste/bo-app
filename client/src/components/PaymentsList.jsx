@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
 import { getClientPayments } from '../api/axios';
 import { paymentsAPI } from '../api/services';
 import logger from '../utils/logger';
@@ -58,7 +57,7 @@ const PaymentsList = () => {
   // Cargar pagos
   useEffect(() => {
     fetchPayments();
-  }, [fetchPayments]);
+  }, [currentPage, filter]);
 
   // Buscar pagos con debounce
   useEffect(() => {
@@ -71,9 +70,9 @@ const PaymentsList = () => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, currentPage, fetchPayments]);
+  }, [searchTerm]);
 
-  const fetchPayments = useCallback(async () => {
+  const fetchPayments = async () => {
     try {
       setLoading(true);
       
@@ -103,7 +102,7 @@ const PaymentsList = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, filter, searchTerm, showError]);
+  };
 
   // Filtrar pagos (ahora manejado por el backend)
   const filteredPayments = payments;
@@ -398,66 +397,6 @@ const PaymentsList = () => {
             )}
           </TableBody>
         </Table>
-        
-        {/* Paginación */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between p-4 border-t">
-            <div className="flex items-center text-sm text-gray-500">
-              <span>Página {currentPage} de {totalPages}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                Anterior
-              </Button>
-              
-              {/* Números de página */}
-              <div className="flex space-x-1">
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const pageNum = i + 1;
-                  const isActive = pageNum === currentPage;
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={isActive ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={isActive ? "bg-blue-600 text-white" : ""}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-                {totalPages > 5 && (
-                  <>
-                    {totalPages > 6 && <span className="text-gray-400">...</span>}
-                    <Button
-                      variant={currentPage === totalPages ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(totalPages)}
-                      className={currentPage === totalPages ? "bg-blue-600 text-white" : ""}
-                    >
-                      {totalPages}
-                    </Button>
-                  </>
-                )}
-              </div>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                Siguiente
-              </Button>
-            </div>
-          </div>
-        )}
       </Card>
     </div>
   );
@@ -571,20 +510,6 @@ const PaymentDetailModal = ({ payment, onClose }) => {
       </div>
     </div>
   );
-};
-
-// PropTypes para PaymentDetailModal
-PaymentDetailModal.propTypes = {
-  payment: PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    concept: PropTypes.string,
-    amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    status: PropTypes.string,
-    method: PropTypes.string,
-    date: PropTypes.string,
-    projectName: PropTypes.string
-  }).isRequired,
-  onClose: PropTypes.func.isRequired
 };
 
 export default PaymentsList;

@@ -27,9 +27,6 @@ import MessageClientModal from '../components/clients/MessageClientModal';
 import ClientDetailModal from '../components/clients/ClientDetailModal';
 
 const ClientsAdminPage = () => {
-  // Explicitly use React to avoid ESLint warning
-  React.useLayoutEffect = React.useLayoutEffect || (() => {}); // Compatibility check
-  
   const [clients, setClients] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,13 +41,6 @@ const ClientsAdminPage = () => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedusuarioId, setSelectedusuarioId] = useState(null);
   const [actionMenuOpen, setActionMenuOpen] = useState(null);
-  
-  // Advanced filters states
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [showBulkEmailModal, setShowBulkEmailModal] = useState(false);
-  const [dateFilters, setDateFilters] = useState({ from: '', to: '' });
-  const [clientTypeFilter, setClientTypeFilter] = useState('');
-  
   const { addToast } = useToast();
 
   const loadClients = useCallback(async () => {
@@ -62,7 +52,7 @@ const ClientsAdminPage = () => {
         search: searchQuery || undefined,
         estado: statusFilter === 'all' ? undefined : statusFilter,
         sortBy: 'created_at',
-        sortorder: 'DESC'
+        sortOrder: 'DESC'
       };
 
       const response = await getClients(params);
@@ -151,77 +141,6 @@ const ClientsAdminPage = () => {
       month: 'short',
       day: 'numeric'
     });
-  };
-
-  // Advanced filters functions
-  const handleExportClients = async () => {
-    try {
-      const params = {
-        search: searchQuery || undefined,
-        estado: statusFilter === 'all' ? undefined : statusFilter,
-        dateFrom: dateFilters.from || undefined,
-        dateTo: dateFilters.to || undefined,
-        clientType: clientTypeFilter || undefined,
-        export: 'csv'
-      };
-
-      const response = await getClients(params);
-      
-      if (response.data.success) {
-        // Convert data to CSV
-        const csvData = convertToCSV(response.data.data.clients);
-        downloadCSV(csvData, 'clientes_export.csv');
-        addToast('Datos exportados exitosamente', 'success');
-      }
-    } catch (error) {
-      console.error('Error exporting clients:', error);
-      addToast('Error al exportar datos', 'error');
-    }
-  };
-
-  const convertToCSV = (data) => {
-    const headers = ['ID', 'Nombre', 'Email', 'Empresa', 'Teléfono', 'Estado', 'Fecha Registro'];
-    const rows = data.map(client => [
-      client.id,
-      client.nombre_completo,
-      client.email,
-      client.empresa || '',
-      client.telefono || '',
-      client.estado,
-      formatDate(client.created_at)
-    ]);
-    
-    return [headers, ...rows].map(row => 
-      row.map(field => `"${field}"`).join(',')
-    ).join('\n');
-  };
-
-  const downloadCSV = (csvData, filename) => {
-    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', filename);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const applyAdvancedFilters = () => {
-    // Update the main filter states and reload clients
-    setCurrentPage(1);
-    loadClients();
-    addToast('Filtros aplicados', 'success');
-  };
-
-  const clearAdvancedFilters = () => {
-    setDateFilters({ from: '', to: '' });
-    setClientTypeFilter('');
-    setSearchQuery('');
-    setStatusFilter('all');
-    setCurrentPage(1);
-    addToast('Filtros limpiados', 'success');
   };
 
   if (loading && !clients.length) {
@@ -379,104 +298,7 @@ const ClientsAdminPage = () => {
               Inactivos
             </button>
           </div>
-
-          {/* Advanced Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                showAdvancedFilters
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
-              }`}
-              title="Filtros Avanzados"
-            >
-              <Filter className="w-4 h-4" />
-              Filtros
-            </button>
-            
-            <button
-              onClick={handleExportClients}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
-              title="Exportar Clientes"
-            >
-              <Download className="w-4 h-4" />
-              Exportar
-            </button>
-            
-            <button
-              onClick={() => setShowBulkEmailModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
-              title="Envío Masivo de Emails"
-            >
-              <Mail className="w-4 h-4" />
-              Email Masivo
-            </button>
-          </div>
         </div>
-
-        {/* Advanced Filters Panel */}
-        {showAdvancedFilters && (
-          <div className="mt-4 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Fecha de Registro
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={dateFilters.from}
-                    onChange={(e) => setDateFilters(prev => ({ ...prev, from: e.target.value }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-600 dark:text-white text-sm"
-                  />
-                  <input
-                    type="date"
-                    value={dateFilters.to}
-                    onChange={(e) => setDateFilters(prev => ({ ...prev, to: e.target.value }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-600 dark:text-white text-sm"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tipo de Cliente
-                </label>
-                <select
-                  value={clientTypeFilter}
-                  onChange={(e) => setClientTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-600 dark:text-white"
-                >
-                  <option value="">Todos los tipos</option>
-                  <option value="empresa">Empresa</option>
-                  <option value="individual">Individual</option>
-                  <option value="startup">Startup</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Acciones
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={applyAdvancedFilters}
-                    className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Aplicar
-                  </button>
-                  <button
-                    onClick={clearAdvancedFilters}
-                    className="flex-1 px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Limpiar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Clients Table */}
@@ -728,78 +550,6 @@ const ClientsAdminPage = () => {
         }}
         usuarioId={selectedusuarioId}
       />
-
-      {/* Bulk Email Modal */}
-      {showBulkEmailModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-slate-800">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  Envío Masivo de Emails
-                </h3>
-                <button
-                  onClick={() => setShowBulkEmailModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Destinatarios
-                  </label>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Se enviará a {clients.filter(c => statusFilter === 'all' || c.estado === statusFilter).length} cliente(s)
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Asunto
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Asunto del email"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Mensaje
-                  </label>
-                  <textarea
-                    rows="4"
-                    placeholder="Contenido del mensaje"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-white"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={() => setShowBulkEmailModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    addToast('Emails enviados exitosamente', 'success');
-                    setShowBulkEmailModal(false);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700"
-                >
-                  Enviar Emails
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,8 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import logger from '../utils/logger';
 import { SUPPORTED_LANGUAGES } from '../constants/languages';
-import LanguageContext from './languageContext';
 
 // Import all translations statically
 import esTranslations from '../translations/es.js';
@@ -19,8 +18,17 @@ const translationsMap = {
   pt: ptTranslations
 };
 
-// Language Provider Component
-const LanguageProvider = ({ children }) => {
+export const LanguageContext = createContext();
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+export const LanguageProvider = ({ children }) => {
   const [currentLanguage, setCurrentLanguage] = useState('es');
   const [translations, setTranslations] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -127,5 +135,3 @@ const LanguageProvider = ({ children }) => {
 LanguageProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
-
-export default LanguageProvider;

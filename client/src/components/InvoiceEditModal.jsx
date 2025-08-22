@@ -13,12 +13,6 @@ const InvoiceEditModal = ({ isOpen, onClose, onSave, invoice }) => {
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showClientInfo, setShowClientInfo] = useState(false);
-  const [emailNotification, setEmailNotification] = useState({
-    show: false,
-    sending: false,
-    message: ''
-  });
 
   useEffect(() => {
     if (invoice) {
@@ -32,46 +26,6 @@ const InvoiceEditModal = ({ isOpen, onClose, onSave, invoice }) => {
       });
     }
   }, [invoice]);
-
-  // Toggle client information panel
-  const toggleClientInfo = () => {
-    setShowClientInfo(!showClientInfo);
-  };
-
-  // Send email notification to client
-  const sendEmailNotification = async () => {
-    if (!invoice.cliente_email) {
-      setEmailNotification({
-        show: true,
-        sending: false,
-        message: 'No hay email del cliente configurado'
-      });
-      return;
-    }
-
-    setEmailNotification(prev => ({ ...prev, sending: true }));
-    
-    try {
-      // Simulate email sending
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setEmailNotification({
-        show: true,
-        sending: false,
-        message: `Factura enviada exitosamente a ${invoice.cliente_email}`
-      });
-      
-      // Hide message after 3 seconds
-      setTimeout(() => {
-        setEmailNotification(prev => ({ ...prev, show: false }));
-      }, 3000);
-    } catch (error) {
-      setEmailNotification({
-        show: true,
-        sending: false,
-        message: 'Error al enviar email de notificación'
-      });
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -122,89 +76,14 @@ const InvoiceEditModal = ({ isOpen, onClose, onSave, invoice }) => {
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               ✏️ Editar Factura
             </h2>
-            <div className="flex items-center gap-2">
-              {/* Client Info Button */}
-              <button
-                type="button"
-                onClick={toggleClientInfo}
-                className="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                title="Información del cliente"
-              >
-                <User className="w-5 h-5" />
-              </button>
-              
-              {/* Email Notification Button */}
-              <button
-                type="button"
-                onClick={sendEmailNotification}
-                disabled={emailNotification.sending}
-                className="p-2 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50"
-                title="Enviar por email"
-              >
-                <Mail className="w-5 h-5" />
-              </button>
-              
-              <button
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                disabled={loading}
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              disabled={loading}
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
-
-          {/* Client Information Panel */}
-          {showClientInfo && invoice && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-              <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Información del Cliente
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Cliente:</span>
-                  <p className="text-gray-600 dark:text-gray-400">{invoice.cliente_nombre || 'No especificado'}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
-                  <p className="text-gray-600 dark:text-gray-400">{invoice.cliente_email || 'No especificado'}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Empresa:</span>
-                  <p className="text-gray-600 dark:text-gray-400">{invoice.cliente_empresa || 'No especificado'}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Factura #:</span>
-                  <p className="text-gray-600 dark:text-gray-400">{invoice.numero_factura || invoice.id}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Email Notification Status */}
-          {emailNotification.show && (
-            <div className={`border-l-4 p-4 rounded-md mb-6 ${
-              emailNotification.message.includes('exitosamente') 
-                ? 'bg-green-100 border-green-500 text-green-700' 
-                : 'bg-yellow-100 border-yellow-500 text-yellow-700'
-            }`}>
-              <div className="flex items-center">
-                <Mail className="w-5 h-5 mr-2" />
-                <p className="font-medium">{emailNotification.message}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Email Sending Status */}
-          {emailNotification.sending && (
-            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md mb-6">
-              <div className="flex items-center">
-                <Mail className="w-5 h-5 mr-2 animate-pulse" />
-                <p className="font-medium">Enviando notificación por email...</p>
-              </div>
-            </div>
-          )}
 
           {error && (
             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { useClientData } from '../../contexts/ClientDataContext';
 import { 
   FolderOpen,
@@ -72,13 +71,13 @@ const ClientProjects = () => {
 
   // Función para descargar información del proyecto
   const downloadProjectInfo = (project, format = 'txt') => {
-    const fileName = `proyecto-${project.numero_order || project.id}-info`;
+    const fileName = `proyecto-${project.numero_pedido || project.id}-info`;
     let content, mimeType, extension;
 
     switch (format) {
       case 'csv':
         content = `Campo,Valor
-Número de Proyecto,"${project.numero_order || 'N/A'}"
+Número de Proyecto,"${project.numero_pedido || 'N/A'}"
 Nombre,"${project.name || 'Sin nombre'}"
 Descripción,"${project.description || 'Sin descripción'}"
 Servicio,"${project.servicio || 'No especificado'}"
@@ -99,9 +98,9 @@ Generado el,"${new Date().toLocaleString('es-ES')}"`;
         extension = 'csv';
         break;
 
-      case 'json': {
+      case 'json':
         const jsonData = {
-          numero_order: project.numero_order || 'N/A',
+          numero_pedido: project.numero_pedido || 'N/A',
           nombre: project.name || 'Sin nombre',
           descripcion: project.description || 'Sin descripción',
           servicio: project.servicio || 'No especificado',
@@ -130,14 +129,13 @@ Generado el,"${new Date().toLocaleString('es-ES')}"`;
         mimeType = 'application/json;charset=utf-8';
         extension = 'json';
         break;
-      }
 
       default: // txt
         content = `
 INFORMACIÓN DEL PROYECTO
 ========================
 
-Número de Proyecto: ${project.numero_order || 'N/A'}
+Número de Proyecto: ${project.numero_pedido || 'N/A'}
 Nombre: ${project.name || 'Sin nombre'}
 Descripción: ${project.description || 'Sin descripción'}
 Servicio: ${project.servicio || 'No especificado'}
@@ -271,7 +269,7 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
       
       if (confirmed) {
         // En un entorno real, aquí se redirigirá a PayPal, Stripe, etc.
-        alert(`Redirigiendo a la plataforma de pagos...\n\nMonto: ${formatCurrency(amount)}\nProyecto: ${project.name}\nNúmero de order: ${project.numero_order || project.id}`);
+        alert(`Redirigiendo a la plataforma de pagos...\n\nMonto: ${formatCurrency(amount)}\nProyecto: ${project.name}\nNúmero de pedido: ${project.numero_pedido || project.id}`);
         
         // Ejemplo de redirección a PayPal:
         // window.location.href = `/api/payments/paypal/create?orderId=${project.id}&amount=${amount}`;
@@ -283,7 +281,7 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
   };
 
   const isPaymentEnabled = (project) => {
-    // El pago está habilitado solo si el order está confirmado por el admin
+    // El pago está habilitado solo si el pedido está confirmado por el admin
     return project.status === 'confirmado';
   };
 
@@ -336,7 +334,6 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
   };
 
   const ProjectCard = ({ project }) => {
-    const [showTeamMembers, setShowTeamMembers] = useState(false);
     const StatusIcon = getStatusIcon(project.status || project.estado);
     
     return (
@@ -381,42 +378,6 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
                   <DollarSign className="w-4 h-4 mr-2" />
                   <span>{formatCurrency(project.value || project.presupuesto_estimado || project.total || project.presupuesto)}</span>
                 </div>
-              </div>
-
-              {/* Team Members Section */}
-              <div className="mt-4 pt-3 border-t border-gray-100">
-                <button
-                  onClick={() => setShowTeamMembers(!showTeamMembers)}
-                  className="flex items-center text-sm text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  <span>Equipo de Proyecto</span>
-                  <svg 
-                    className={`w-4 h-4 ml-1 transition-transform ${showTeamMembers ? 'rotate-180' : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                {showTeamMembers && (
-                  <div className="mt-2 pl-6 space-y-1">
-                    <div className="text-xs text-gray-500">
-                      <div>• Project Manager: Admin Team</div>
-                      <div>• Developer: Desarrollo Team</div>
-                      <div>• Cliente: {project.cliente_nombre || 'Cliente'}</div>
-                      {project.team_members && project.team_members.length > 0 ? (
-                        project.team_members.map((member, index) => (
-                          <div key={index}>• {member.role}: {member.name}</div>
-                        ))
-                      ) : (
-                        <div className="text-gray-400 italic">Equipo estándar asignado</div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
             
@@ -472,31 +433,6 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
         </div>
       </div>
     );
-  };
-
-  // PropTypes para ProjectCard
-  ProjectCard.propTypes = {
-    project: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      name: PropTypes.string,
-      titulo: PropTypes.string,
-      description: PropTypes.string,
-      descripcion: PropTypes.string,
-      status: PropTypes.string,
-      estado: PropTypes.string,
-      date: PropTypes.string,
-      fecha_inicio: PropTypes.string,
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      presupuesto_estimado: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      presupuesto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      cliente_nombre: PropTypes.string,
-      team_members: PropTypes.arrayOf(PropTypes.shape({
-        name: PropTypes.string,
-        role: PropTypes.string
-      })),
-      tecnologias: PropTypes.string
-    }).isRequired
   };
 
   const ProjectModal = ({ project, onClose }) => {
@@ -670,29 +606,6 @@ Documento generado el ${new Date().toLocaleString('es-ES')}
         </div>
       </div>
     );
-  };
-
-  // PropTypes para ProjectModal
-  ProjectModal.propTypes = {
-    project: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      name: PropTypes.string,
-      titulo: PropTypes.string,
-      description: PropTypes.string,
-      descripcion: PropTypes.string,
-      status: PropTypes.string,
-      estado: PropTypes.string,
-      date: PropTypes.string,
-      fecha_inicio: PropTypes.string,
-      deliveryDate: PropTypes.string,
-      fecha_fin: PropTypes.string,
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      presupuesto_estimado: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      presupuesto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      tecnologias: PropTypes.string
-    }).isRequired,
-    onClose: PropTypes.func.isRequired
   };
 
   return (

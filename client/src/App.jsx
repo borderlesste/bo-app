@@ -4,7 +4,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ToastProvider } from './hooks/useToast';
-import LanguageProvider from './context/LanguageContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ClientDataProvider } from './contexts/ClientDataContext';
 
@@ -41,7 +41,7 @@ const ClientRequestForm = lazy(() => import('./pages/client/ClientRequestForm'))
 
 // Legacy client pages (to be removed)
 const QuotesPage = lazy(() => import('./pages/QuotesPage'));
-const ordersPage = lazy(() => import('./pages/ordersPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
@@ -151,10 +151,10 @@ function App() {
             }
           />
           <Route
-            path="/orders"
+            path="/pedidos"
             element={
               <ProtectedRoute adminOnly={true}>
-                <ordersPage />
+                <OrdersPage />
               </ProtectedRoute>
             }
           />

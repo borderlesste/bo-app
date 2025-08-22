@@ -171,10 +171,10 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   return (
     <div 
       ref={dropdownRef}
-      className="absolute top-full right-0 mt-2 w-[420px] max-w-[90vw] bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50"
+      className="absolute top-full right-0 mt-2 w-96 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50"
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-3">
           <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
@@ -191,14 +191,14 @@ const NotificationCenter = ({ isOpen, onClose }) => {
           <button
             onClick={handleMarkAllAsRead}
             disabled={unreadCount === 0}
-            className="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-blue-50 transition-colors"
+            className="p-2 text-gray-500 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Marcar todas como leídas"
           >
             <CheckCheck className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
           >
             <X className="w-4 h-4" />
           </button>
@@ -246,22 +246,22 @@ const NotificationCenter = ({ isOpen, onClose }) => {
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-5 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border-l-4 ${getPriorityColor(notification.prioridad)} ${
+                className={`p-4 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors border-l-4 ${getPriorityColor(notification.prioridad)} ${
                   !notification.leida ? 'bg-blue-50 dark:bg-blue-900/10' : ''
                 }`}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3">
                   {/* Icon */}
                   <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.tipo)}
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0 pr-2">
-                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1 leading-tight">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-1">
                       {notification.titulo}
                     </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 leading-relaxed">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
                       {notification.mensaje}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -274,7 +274,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                     {!notification.leida && (
                       <button
                         onClick={() => handleMarkAsRead(notification.id)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded-md hover:bg-blue-50"
+                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
                         title="Marcar como leída"
                       >
                         <Check className="w-4 h-4" />
@@ -282,7 +282,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                     )}
                     <button
                       onClick={() => handleDelete(notification.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded-md hover:bg-red-50"
+                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
                       title="Eliminar"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -296,8 +296,8 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <button className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors py-2 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700">
+      <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+        <button className="w-full flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
           <Settings className="w-4 h-4" />
           Configurar notificaciones
         </button>

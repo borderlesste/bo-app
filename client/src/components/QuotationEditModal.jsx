@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { 
-  X, 
-  FileText, 
-  DollarSign, 
-  Calendar, 
-  User,
-  CheckCircle,
-  Filter,
-  Mail,
-  Phone,
-  Building
-} from 'lucide-react';
+import { X, CheckCircle, User, Mail, Phone, FileText, Building, Calendar, DollarSign, Filter } from 'lucide-react';
 
 const QuotationEditModal = ({ isOpen, onClose, onSave, quotation, clients: propClients }) => {
   const [formData, setFormData] = useState({
@@ -26,9 +15,6 @@ const QuotationEditModal = ({ isOpen, onClose, onSave, quotation, clients: propC
   const [clients, setClients] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [showClientInfo, setShowClientInfo] = useState(false);
-  const [emailSending, setEmailSending] = useState(false);
 
   useEffect(() => {
     if (quotation) {
@@ -41,14 +27,8 @@ const QuotationEditModal = ({ isOpen, onClose, onSave, quotation, clients: propC
         comentarios: quotation.comentarios || '',
         estado: quotation.estado || 'borrador'
       });
-      
-      // Establecer cliente seleccionado si hay usuario_id
-      if (quotation.usuario_id && clients.length > 0) {
-        const client = clients.find(c => c.id === parseInt(quotation.usuario_id));
-        setSelectedClient(client || null);
-      }
     }
-  }, [quotation, clients]);
+  }, [quotation]);
 
   useEffect(() => {
     if (propClients) {
@@ -60,41 +40,10 @@ const QuotationEditModal = ({ isOpen, onClose, onSave, quotation, clients: propC
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Actualizar cliente seleccionado cuando cambie usuario_id
-    if (name === 'usuario_id') {
-      const client = clients.find(c => c.id === parseInt(value));
-      setSelectedClient(client || null);
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Función para enviar cotización por email
-  const handleSendEmail = async () => {
-    if (!selectedClient || !selectedClient.email) {
-      setError('Selecciona un cliente con email válido');
-      return;
-    }
-
-    setEmailSending(true);
-    try {
-      // Simular envío de email (aquí se integraría con API real)
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      alert(`Cotización enviada por email a: ${selectedClient.email}`);
-    } catch (err) {
-      setError('Error al enviar el email');
-    } finally {
-      setEmailSending(false);
-    }
-  };
-
-  // Función para mostrar/ocultar información del cliente
-  const toggleClientInfo = () => {
-    setShowClientInfo(!showClientInfo);
-  };  const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -143,103 +92,19 @@ const QuotationEditModal = ({ isOpen, onClose, onSave, quotation, clients: propC
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
               ✏️ Editar Cotización
             </h2>
-            <div className="flex items-center gap-2">
-              {/* Botón para enviar por email */}
-              {selectedClient && selectedClient.email && (
-                <button
-                  type="button"
-                  onClick={handleSendEmail}
-                  disabled={emailSending || loading}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white px-3 py-2 rounded-lg transition-colors text-sm"
-                  title="Enviar cotización por email"
-                >
-                  <Mail className="w-4 h-4" />
-                  {emailSending ? 'Enviando...' : 'Enviar Email'}
-                </button>
-              )}
-              
-              {/* Botón para mostrar información del cliente */}
-              {selectedClient && (
-                <button
-                  type="button"
-                  onClick={toggleClientInfo}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
-                  title="Ver información del cliente"
-                >
-                  <Building className="w-4 h-4" />
-                  Info Cliente
-                </button>
-              )}
-              
-              <button
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                disabled={loading}
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              disabled={loading}
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
           {error && (
             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md mb-6">
               <p className="font-bold">Error</p>
               <p>{error}</p>
-            </div>
-          )}
-
-          {/* Información del cliente seleccionado */}
-          {showClientInfo && selectedClient && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                  <Building className="w-5 h-5" />
-                  Información del Cliente
-                </h3>
-                <button
-                  onClick={toggleClientInfo}
-                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-600 dark:text-gray-400 font-medium">Nombre:</p>
-                  <p className="text-gray-800 dark:text-gray-200">{selectedClient.nombre || 'No especificado'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
-                    <Mail className="w-3 h-3" />
-                    Email:
-                  </p>
-                  <p className="text-gray-800 dark:text-gray-200">{selectedClient.email || 'No especificado'}</p>
-                </div>
-                {selectedClient.telefono && (
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      Teléfono:
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-200">{selectedClient.telefono}</p>
-                  </div>
-                )}
-                {selectedClient.empresa && (
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 font-medium flex items-center gap-1">
-                      <Building className="w-3 h-3" />
-                      Empresa:
-                    </p>
-                    <p className="text-gray-800 dark:text-gray-200">{selectedClient.empresa}</p>
-                  </div>
-                )}
-                {selectedClient.direccion && (
-                  <div className="md:col-span-2">
-                    <p className="text-gray-600 dark:text-gray-400 font-medium">Dirección:</p>
-                    <p className="text-gray-800 dark:text-gray-200">{selectedClient.direccion}</p>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 

@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
 import { getClientQuotes, updateClientQuoteStatus } from '../../api/axios';
 import { 
   FileText,
@@ -28,7 +27,11 @@ const ClientQuotations = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
 
-  const loadQuotations = useCallback(async () => {
+  useEffect(() => {
+    loadQuotations();
+  }, [filters]);
+
+  const loadQuotations = async () => {
     try {
       setLoading(true);
       const params = {};
@@ -44,11 +47,7 @@ const ClientQuotations = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters.estado, filters.search]);
-
-  useEffect(() => {
-    loadQuotations();
-  }, [loadQuotations]);
+  };
 
   const handleQuotationAction = async (quotationId, action) => {
     try {
@@ -214,25 +213,6 @@ const ClientQuotations = () => {
         </div>
       </div>
     );
-  };
-
-  // PropTypes for QuotationCard
-  QuotationCard.propTypes = {
-    quotation: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      numero_cotizacion: PropTypes.string.isRequired,
-      descripcion: PropTypes.string.isRequired,
-      estado: PropTypes.string.isRequired,
-      fecha_creacion: PropTypes.string.isRequired,
-      fecha_expiracion: PropTypes.string.isRequired,
-      total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      subtotal: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      impuestos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      porcentaje_impuesto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      descuento: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      notas: PropTypes.string,
-      items: PropTypes.string
-    }).isRequired
   };
 
   const QuotationModal = ({ quotation, onClose }) => {
@@ -408,26 +388,6 @@ const ClientQuotations = () => {
         </div>
       </div>
     );
-  };
-
-  // PropTypes for QuotationModal
-  QuotationModal.propTypes = {
-    quotation: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      numero_cotizacion: PropTypes.string.isRequired,
-      descripcion: PropTypes.string.isRequired,
-      estado: PropTypes.string.isRequired,
-      fecha_creacion: PropTypes.string.isRequired,
-      fecha_expiracion: PropTypes.string.isRequired,
-      total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      subtotal: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      impuestos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      porcentaje_impuesto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      descuento: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      notas: PropTypes.string,
-      items: PropTypes.string
-    }),
-    onClose: PropTypes.func.isRequired
   };
 
   return (

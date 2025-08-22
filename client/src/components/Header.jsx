@@ -1,7 +1,7 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../hooks/useLanguage';
+import { useLanguage } from '../context/LanguageContext';
 import useClickOutside from '../hooks/useClickOutside';
 import Button from './Button';
 import NotificationCenter from './NotificationCenter';
@@ -12,6 +12,7 @@ import PropTypes from 'prop-types';
 
 const Header = memo(function Header({ companyName = "Borderless Techno Company" }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { t, currentLanguage, supportedLanguages, changeLanguage } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -25,6 +26,14 @@ const Header = memo(function Header({ companyName = "Borderless Techno Company" 
   const langMenuRef = useClickOutside(() => {
     setLangMenuOpen(false);
   });
+
+  const handleNotificationClick = () => {
+    if (user && user.rol === 'admin') {
+      navigate('/notificaciones-comm');
+    } else {
+      setNotificationOpen(!notificationOpen);
+    }
+  };
 
   // Handle escape key to close menus
   useEffect(() => {
@@ -168,7 +177,7 @@ const Header = memo(function Header({ companyName = "Borderless Techno Company" 
             {user && (
               <div className="relative">
                 <button
-                  onClick={() => setNotificationOpen(!notificationOpen)}
+                  onClick={handleNotificationClick}
                   className="relative p-2 rounded-lg bg-white/30 dark:bg-slate-800/60 hover:bg-white/50 dark:hover:bg-slate-800/80 transition-colors duration-200 backdrop-blur-sm"
                   aria-label="Notificaciones"
                   aria-expanded={notificationOpen}

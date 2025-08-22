@@ -10,7 +10,6 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
     if (payment) {
       setFormData({
         usuario_id: payment.usuario_id || '',
-        order_id: payment.order_id || '',
         tipo: payment.tipo || 'total',
         estado: payment.estado || 'pendiente',
         monto: payment.monto || '',
@@ -27,7 +26,6 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
     } else {
       setFormData({
         usuario_id: '',
-        order_id: '',
         tipo: 'total',
         estado: 'pendiente',
         monto: '',
@@ -49,36 +47,6 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  // Filtrar órdenes por cliente seleccionado
-  const getClientorders = () => {
-    if (!formData.usuario_id || !orders) return [];
-    return orders.filter(order => order.usuario_id === parseInt(formData.usuario_id));
-  };
-
-  // Manejar selección de orden
-  const handleorderChange = (e) => {
-    const orderId = e.target.value;
-    const selectedorder = orders.find(order => order.id === parseInt(orderId));
-    
-    if (selectedorder) {
-      setFormData(prev => ({
-        ...prev,
-        order_id: orderId,
-        concepto: `Pago por Orden #${selectedorder.id} - ${selectedorder.concepto || selectedorder.descripcion || 'Sin descripción'}`,
-        monto: selectedorder.total || selectedorder.monto_total || prev.monto,
-        moneda: selectedorder.moneda || prev.moneda
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, order_id: orderId }));
-    }
-  };
-
-  // Obtener información de la orden seleccionada
-  const getSelectedorderInfo = () => {
-    if (!formData.order_id || !orders) return null;
-    return orders.find(order => order.id === parseInt(formData.order_id));
   };
 
   const handleSubmit = async (e) => {
@@ -133,65 +101,6 @@ const PaymentModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => 
                 </select>
               </div>
             </div>
-
-            {/* Selección de orden */}
-            {formData.usuario_id && (
-              <div className="relative">
-                <Package className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
-                <select 
-                  name="order_id" 
-                  value={formData.order_id} 
-                  onChange={handleorderChange} 
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg appearance-none focus:ring-2 focus:ring-violet-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
-                >
-                  <option value="">Seleccionar Orden (Opcional)</option>
-                  {getClientorders().map(order => (
-                    <option key={order.id} value={order.id}>
-                      Orden #{order.id} - {order.concepto || order.descripcion || 'Sin descripción'} 
-                      {order.total || order.monto_total ? ` ($${order.total || order.monto_total})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Información de la orden seleccionada */}
-            {getSelectedorderInfo() && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
-                  <Package className="w-4 h-4" />
-                  Información de la Orden
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600 dark:text-gray-400">ID:</span>
-                    <span className="ml-2 text-gray-800 dark:text-gray-200">#{getSelectedorderInfo().id}</span>
-                  </div>
-                  {getSelectedorderInfo().estado && (
-                    <div>
-                      <span className="font-medium text-gray-600 dark:text-gray-400">Estado:</span>
-                      <span className="ml-2 text-gray-800 dark:text-gray-200">{getSelectedorderInfo().estado}</span>
-                    </div>
-                  )}
-                  {(getSelectedorderInfo().total || getSelectedorderInfo().monto_total) && (
-                    <div>
-                      <span className="font-medium text-gray-600 dark:text-gray-400">Total:</span>
-                      <span className="ml-2 text-gray-800 dark:text-gray-200">
-                        ${getSelectedorderInfo().total || getSelectedorderInfo().monto_total} {getSelectedorderInfo().moneda || 'MXN'}
-                      </span>
-                    </div>
-                  )}
-                  {getSelectedorderInfo().fecha_creacion && (
-                    <div>
-                      <span className="font-medium text-gray-600 dark:text-gray-400">Fecha:</span>
-                      <span className="ml-2 text-gray-800 dark:text-gray-200">
-                        {new Date(getSelectedorderInfo().fecha_creacion).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             <div className="relative">
               <CreditCard className="w-5 h-5 absolute left-3 top-3 text-gray-400" />

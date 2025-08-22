@@ -162,8 +162,7 @@ const ClientRequestForm = () => {
 
           {/* Tipo de Servicio */}
           <div>
-            <label htmlFor="servicio" className="flex items-center text-sm font-medium text-gray-700 mb-2">
-              <Package className="w-4 h-4 mr-2 text-blue-600" />
+            <label htmlFor="servicio" className="block text-sm font-medium text-gray-700 mb-2">
               Tipo de Servicio <span className="text-red-500">*</span>
             </label>
             <select
@@ -181,9 +180,6 @@ const ClientRequestForm = () => {
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-gray-500">
-              Elige el tipo de servicio que mejor se adapte a tu proyecto
-            </p>
           </div>
 
           {/* Descripción del Proyecto */}
@@ -293,10 +289,7 @@ const ClientRequestForm = () => {
                   <ul className="list-disc list-inside space-y-1">
                     <li>Revisaremos tu solicitud en 24-48 horas</li>
                     <li>Te contactaremos para aclarar detalles si es necesario</li>
-                    <li className="flex items-center">
-                      <Package className="w-3 h-3 mr-1 text-blue-600" />
-                      Recibirás una cotización detallada con el paquete de servicios
-                    </li>
+                    <li>Recibirás una cotización detallada</li>
                     <li>Podrás aprobar o solicitar modificaciones</li>
                   </ul>
                 </div>

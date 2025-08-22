@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import PropTypes from 'prop-types';
-import { getInvoices, downloadClientInvoice } from '../../api/axios';
+import { useState, useEffect } from 'react';
+import { getInvoices, getInvoice } from '../../api/axios';
 import { 
   CreditCard,
   Calendar,
@@ -28,7 +27,11 @@ const ClientInvoices = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const loadInvoices = useCallback(async () => {
+  useEffect(() => {
+    loadInvoices();
+  }, [filters]);
+
+  const loadInvoices = async () => {
     try {
       setLoading(true);
       const params = {};
@@ -47,11 +50,7 @@ const ClientInvoices = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters.estado, filters.search, filters.fechaDesde, filters.fechaHasta]);
-
-  useEffect(() => {
-    loadInvoices();
-  }, [loadInvoices]);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -221,30 +220,6 @@ const ClientInvoices = () => {
         </div>
       </div>
     );
-  };
-
-  // PropTypes for InvoiceCard
-  InvoiceCard.propTypes = {
-    invoice: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      numero_factura: PropTypes.string.isRequired,
-      estado: PropTypes.string.isRequired,
-      proyecto_titulo: PropTypes.string,
-      fecha_emision: PropTypes.string,
-      fecha_vencimiento: PropTypes.string,
-      total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      cliente_nombre: PropTypes.string,
-      cliente_empresa: PropTypes.string,
-      cliente_email: PropTypes.string,
-      subtotal: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      impuestos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      porcentaje_impuesto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      descuento: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      fecha_pago: PropTypes.string,
-      metodo_pago: PropTypes.string,
-      notas: PropTypes.string,
-      items: PropTypes.string
-    }).isRequired
   };
 
   const InvoiceModal = ({ invoice, onClose }) => {
@@ -449,31 +424,6 @@ const ClientInvoices = () => {
         </div>
       </div>
     );
-  };
-
-  // PropTypes for InvoiceModal
-  InvoiceModal.propTypes = {
-    invoice: PropTypes.shape({
-      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      numero_factura: PropTypes.string.isRequired,
-      estado: PropTypes.string.isRequired,
-      proyecto_titulo: PropTypes.string,
-      fecha_emision: PropTypes.string,
-      fecha_vencimiento: PropTypes.string,
-      total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      cliente_nombre: PropTypes.string,
-      cliente_empresa: PropTypes.string,
-      cliente_email: PropTypes.string,
-      subtotal: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      impuestos: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      porcentaje_impuesto: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      descuento: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      fecha_pago: PropTypes.string,
-      metodo_pago: PropTypes.string,
-      notas: PropTypes.string,
-      items: PropTypes.string
-    }),
-    onClose: PropTypes.func.isRequired
   };
 
   return (
