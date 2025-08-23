@@ -36,46 +36,13 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       input: './index.html', // Especificar explícitamente la ruta del index.html
       output: {
-        manualChunks: (id) => {
-          // Vendor chunk for React and core libraries
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'vendor-react';
-          }
-          
-          // Router chunk
-          if (id.includes('node_modules/react-router')) {
-            return 'vendor-router';
-          }
-          
-          // UI libraries chunk
-          if (id.includes('node_modules/@radix-ui') || id.includes('node_modules/lucide-react')) {
-            return 'vendor-ui';
-          }
-          
-          // Utility libraries chunk
-          if (id.includes('node_modules/axios') || id.includes('node_modules/clsx') || id.includes('node_modules/tailwind-merge')) {
-            return 'vendor-utils';
-          }
-          
-          // Admin pages chunk
-          if (id.includes('/pages/') && (id.includes('Admin') || id.includes('admin'))) {
-            return 'admin-pages';
-          }
-          
-          // Client pages chunk
-          if (id.includes('/pages/') && (id.includes('Client') || id.includes('client'))) {
-            return 'client-pages';
-          }
-          
-          // Public pages chunk
-          if (id.includes('/pages/') && !id.includes('Admin') && !id.includes('Client')) {
-            return 'public-pages';
-          }
-          
-          // Other vendor dependencies
-          if (id.includes('node_modules')) {
-            return 'vendor-misc';
-          }
+        manualChunks: {
+          // Keep React as a separate chunk to avoid issues
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-router': ['react-router-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-icons', '@radix-ui/react-label', '@radix-ui/react-select', '@radix-ui/react-separator', '@radix-ui/react-slot', 'lucide-react'],
+          'vendor-utils': ['axios', 'clsx', 'tailwind-merge', 'class-variance-authority'],
+          'vendor-charts': ['chart.js', 'react-chartjs-2']
         },
         // Optimize file names for caching
         chunkFileNames: 'assets/[name]-[hash].js',
