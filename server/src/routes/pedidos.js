@@ -6,6 +6,7 @@ const {
   getPedidosSummaryForAdmin,
   createPedido,
   updatePedido,
+  acceptPedido,
   deletePedido,
   cancelPedidoClient,
   resumePedidoClient,
@@ -32,6 +33,14 @@ router.put('/:id/resume', isAuthenticated, resumePedidoClient);
 
 // --- Rutas solo para administradores ---
 router.get('/admin/summary', isAuthenticated, isAdmin, getPedidosSummaryForAdmin);
+
+router.put('/:id/accept', [
+    isAuthenticated,
+    isAdmin,
+    body('total', 'El total es obligatorio').isNumeric(),
+    body('fecha_entrega_estimada', 'La fecha de entrega estimada es obligatoria').isISO8601().toDate(),
+    body('notas_internas').optional()
+], acceptPedido);
 
 router.put('/:id/status', [
     isAuthenticated,

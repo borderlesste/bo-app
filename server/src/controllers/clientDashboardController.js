@@ -956,6 +956,153 @@ const getClientConversations = async (req, res) => {
   }
 };
 
+// Obtener facturas del cliente
+const getClientInvoices = async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    const { estado, search, fecha_desde, fecha_hasta, limit = 50, offset = 0 } = req.query;
+    
+    // Construir query con filtros opcionales
+    let query = `
+      SELECT 
+        f.id,
+        f.numero_factura,
+        f.usuario_id,
+        f.pedido_id,
+        f.pago_id,
+        f.concepto,
+        f.subtotal,
+        f.iva,
+        f.total,
+        f.estado,
+        f.fecha_emision,
+        f.fecha_vencimiento,
+        f.metodo_pago,
+        f.moneda,
+        f.notas,
+        f.referencia_transferencia,
+        f.created_at,
+        f.updated_at,
+        ped.numero_pedido,
+        ped.descripcion as pedido_descripcion
+      FROM facturas f
+      LEFT JOIN pedidos ped ON f.pedido_id = ped.id
+      WHERE f.usuario_id = ?
+    `;
+    
+    const queryParams = [usuarioId];
+    
+    // Filtrar por estado si se proporciona
+    if (estado) {
+      query += ' AND f.estado = ?';
+      queryParams.push(estado);
+    }
+
+    // Filtrar por búsqueda si se proporciona
+    if (search) {
+      query += ' AND (f.numero_factura LIKE ? OR f.concepto LIKE ?)';
+      const searchTerm = `%${search}%`;
+      queryParams.push(searchTerm, searchTerm);
+    }
+
+    // Filtrar por fechas si se proporciona
+    if (fecha_desde) {
+      query += ' AND f.fecha_emision >= ?';
+      queryParams.push(fecha_desde);
+    }
+
+    if (fecha_hasta) {
+      query += ' AND f.fecha_emision <= ?';
+      queryParams.push(fecha_hasta);
+    }
+    
+    // Ordenar por fecha de emisión descendente
+    query += ' ORDER BY f.fecha_emision DESC';
+    
+    // Agregar límite y offset para paginación
+    query += ' LIMIT ? OFFSET ?';
+    queryParams.push(parseInt(limit), parseInt(offset));
+    
+    const [facturas] = await pool.execute(query, queryParams);
+    
+    // Obtener total de facturas para paginación
+    let countQuery = 'SELECT COUNT(*) as total FROM facturas WHERE usuario_id = ?';
+    const countParams = [usuarioId];
+    
+    if (estado) {
+      countQuery += ' AND estado = ?';
+      countParams.push(estado);
+    }
+
+    if (search) {
+      countQuery += ' AND (numero_factura LIKE ? OR concepto LIKE ?)';
+      const searchTerm = `%${search}%`;
+      countParams.push(searchTerm, searchTerm);
+    }
+
+    if (fecha_desde) {
+      countQuery += ' AND fecha_emision >= ?';
+      countParams.push(fecha_desde);
+    }
+
+    if (fecha_hasta) {
+      countQuery += ' AND fecha_emision <= ?';
+      countParams.push(fecha_hasta);
+    }
+    
+    const [countResult] = await pool.execute(countQuery, countParams);
+    const totalFacturas = countResult[0].total;
+    
+    // Formatear facturas
+    const formattedFacturas = facturas.map(factura => ({
+      id: factura.id,
+      numero_factura: factura.numero_factura,
+      usuario_id: factura.usuario_id,
+      pedido_id: factura.pedido_id,
+      pago_id: factura.pago_id,
+      concepto: factura.concepto,
+      subtotal: parseFloat(factura.subtotal) || 0,
+      iva: parseFloat(factura.iva) || 0,
+      total: parseFloat(factura.total) || 0,
+      estado: factura.estado,
+      fecha_emision: factura.fecha_emision,
+      fecha_vencimiento: factura.fecha_vencimiento,
+      metodo_pago: factura.metodo_pago,
+      moneda: factura.moneda,
+      notas: factura.notas,
+      referencia_transferencia: factura.referencia_transferencia,
+      created_at: factura.created_at,
+      updated_at: factura.updated_at,
+      // Información del pedido relacionado
+      numero_pedido: factura.numero_pedido,
+      pedido_descripcion: factura.pedido_descripcion,
+      // Información adicional calculada
+      dias_vencimiento: factura.fecha_vencimiento ? 
+        Math.ceil((new Date(factura.fecha_vencimiento) - new Date()) / (1000 * 60 * 60 * 24)) : null,
+      esta_vencida: factura.fecha_vencimiento ? 
+        new Date() > new Date(factura.fecha_vencimiento) && factura.estado !== 'pagada' : false
+    }));
+    
+    res.json({
+      success: true,
+      data: formattedFacturas,
+      pagination: {
+        total: totalFacturas,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        pages: Math.ceil(totalFacturas / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener facturas del cliente:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener facturas del cliente',
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   getClientStats,
   getClientProjects,
@@ -968,5 +1115,6 @@ module.exports = {
   changeClientPassword,
   getClientpedidos,
   updateClientpedidostatus,
-  getClientConversations
+  getClientConversations,
+  getClientInvoices
 };

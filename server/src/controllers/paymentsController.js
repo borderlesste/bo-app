@@ -205,7 +205,7 @@ exports.createClientPayment = async (req, res) => {
   }
 
   const usuario_id = req.user.id;
-  const { order_id, concepto, monto, metodo_pago, banco_origen, referencia_transferencia } = req.body;
+  const { pedido_id, concepto, monto, metodo_pago, banco_origen, referencia_transferencia } = req.body;
 
   let estado;
   if (metodo_pago === 'transferencia' || metodo_pago === 'Transferencia Bancaria') {
@@ -221,7 +221,7 @@ exports.createClientPayment = async (req, res) => {
   try {
     const newPayment = await paymentService.createPayment(
       usuario_id,
-      order_id,
+      pedido_id,
       concepto || 'Pago de servicios',
       monto,
       metodo_pago,
@@ -230,6 +230,17 @@ exports.createClientPayment = async (req, res) => {
       banco_origen || null,
       null // paypal_order_id - not used in this client payment flow
     );
+
+    // Si el pago fue exitoso (aplicado), generar factura automáticamente
+    if (estado === 'aplicado' && pedido_id) {
+      try {
+        const invoiceService = require('../services/invoiceService.js');
+        await invoiceService.generateInvoiceForPayment(newPayment.id, pedido_id, usuario_id);
+      } catch (invoiceError) {
+        console.error('Error generando factura automática:', invoiceError);
+        // No fallar el pago si hay error en la factura
+      }
+    }
     
     res.status(201).json({
       success: true,

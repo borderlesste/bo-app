@@ -132,6 +132,68 @@ exports.updatePedido = async (req, res) => {
   }
 };
 
+// Aceptar un pedido por admin
+exports.acceptPedido = async (req, res) => {
+  const { id } = req.params;
+  const { total, fecha_entrega_estimada, notas_internas } = req.body;
+
+  try {
+    // Verificar que es admin
+    if (req.user.rol !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Solo los administradores pueden aceptar pedidos'
+      });
+    }
+
+    // Obtener el pedido
+    const pedido = await pedidoService.getPedidoById(id);
+    
+    if (pedido.estado !== 'nuevo') {
+      return res.status(400).json({
+        success: false,
+        message: 'Solo se pueden aceptar pedidos en estado "nuevo"'
+      });
+    }
+
+    // Actualizar pedido con información del admin
+    const updateData = {
+      estado: 'confirmado',
+      total: total,
+      fecha_entrega_estimada: fecha_entrega_estimada
+    };
+
+    if (notas_internas) {
+      updateData.notas_internas = notas_internas;
+    }
+
+    const updatedPedido = await pedidoService.updatePedidoPartial(id, updateData);
+
+    // Enviar notificación al cliente
+    try {
+      await notificationService.notifypedidostatusChange(
+        { id, servicio: pedido.servicio },
+        'confirmado',
+        pedido.usuario_id
+      );
+    } catch (notificationError) {
+      console.log('⚠️ Error enviando notificación de aceptación:', notificationError);
+    }
+
+    res.json({
+      success: true,
+      message: 'Pedido aceptado exitosamente',
+      data: updatedPedido
+    });
+  } catch (err) {
+    console.error(`Error accepting pedido with id ${id}:`, err);
+    res.status(500).json({ 
+      success: false,
+      message: err.message 
+    });
+  }
+};
+
 // Cancelar un pedido (cliente)
 exports.cancelPedidoClient = async (req, res) => {
   const { id } = req.params;

@@ -22,7 +22,7 @@ const invoiceService = {
       params.push(userId);
     }
 
-    query += ' pedido BY f.fecha_emision DESC';
+    query += ' ORDER BY f.fecha_emision DESC';
 
     const [rows] = await pool.execute(query, params);
     return rows;
@@ -57,14 +57,14 @@ const invoiceService = {
     
     // Obtener el último número de factura del año actual
     const [rows] = await pool.execute(
-      'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? pedido BY numero_factura DESC LIMIT 1',
+      'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? ORDER BY numero_factura DESC LIMIT 1',
       [`${prefix}%`]
     );
 
-    let lastNumber = 0;
+    let nextNumber = 1;
     if (rows.length > 0) {
-      const lastNumber = rows[0].numero_factura.split('-')[2];
-      nextNumber = parseInt(lastNumber) + 1;
+      const lastNumStr = rows[0].numero_factura.split('-')[2];
+      nextNumber = parseInt(lastNumStr) + 1;
     }
     
     return `${prefix}${nextNumber.toString().padStart(3, '0')}`;
@@ -95,7 +95,7 @@ const invoiceService = {
 
     const [result] = await pool.execute(
       `INSERT INTO facturas (
-        numero_factura, usuario_id, cliente_nombre, cliente_email, pedido_id, pago_id,
+        numero_factura, usuario_id, usuario_nombre, usuario_email, pedido_id, pago_id,
         concepto, subtotal, iva, total, fecha_vencimiento, metodo_pago, 
         moneda, notas, referencia_transferencia
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -113,7 +113,7 @@ const invoiceService = {
   // Actualizar una factura
   async updateInvoice(id, invoiceData) {
     const {
-      usuario_id, order_id, pago_id, concepto, subtotal, iva, total,
+      usuario_id, pedido_id, pago_id, concepto, subtotal, iva, total,
       estado, fecha_vencimiento, metodo_pago, moneda, notas, referencia_transferencia
     } = invoiceData;
 
@@ -200,7 +200,7 @@ const invoiceService = {
     // Obtener datos del pago
     const [paymentRows] = await pool.execute(
       `SELECT 
-        p.id, p.usuario_id, p.order_id, p.concepto, p.monto, p.metodo_pago,
+        p.id, p.usuario_id, p.pedido_id, p.concepto, p.monto, p.metodo_pago,
         p.referencia_transferencia, c.nombre, c.email
        FROM pagos p
        JOIN usuarios c ON p.usuario_id = c.id
@@ -264,6 +264,72 @@ const invoiceService = {
       message: `${result.affectedRows} facturas marcadas como vencidas`,
       count: result.affectedRows 
     };
+  },
+
+  // Generar factura para un pago específico
+  async generateInvoiceForPayment(paymentId, pedidoId, userId) {
+    try {
+      // Obtener datos del pago y pedido
+      const [paymentRows] = await pool.execute(
+        `SELECT p.*, u.nombre, u.email, ped.descripcion as pedido_descripcion, ped.total as pedido_total
+         FROM pagos p 
+         JOIN usuarios u ON p.usuario_id = u.id
+         LEFT JOIN pedidos ped ON p.pedido_id = ped.id
+         WHERE p.id = ?`,
+        [paymentId]
+      );
+
+      if (paymentRows.length === 0) {
+        throw new Error('Pago no encontrado');
+      }
+
+      const payment = paymentRows[0];
+      
+      // Calcular valores de factura
+      const total = payment.monto;
+      const subtotal = total / 1.16; // Asumiendo 16% IVA
+      const iva = total - subtotal;
+      
+      // Fecha de vencimiento (ya pagada)
+      const fecha_vencimiento = new Date();
+      
+      const invoiceData = {
+        usuario_id: userId,
+        pedido_id: pedidoId,
+        pago_id: paymentId,
+        concepto: `Factura por ${payment.concepto}`,
+        subtotal: Math.round(subtotal * 100) / 100,
+        iva: Math.round(iva * 100) / 100,
+        total: total,
+        estado: 'pagada', // Ya está pagada
+        fecha_vencimiento: fecha_vencimiento.toISOString().slice(0, 19).replace('T', ' '),
+        metodo_pago: payment.metodo_pago,
+        moneda: 'MXN',
+        notas: `Factura generada automáticamente para el pago ID: ${paymentId}`
+      };
+
+      const invoice = await this.createInvoice(invoiceData);
+      
+      // Enviar factura por correo
+      try {
+        const emailService = require('./emailService.js');
+        await emailService.sendInvoiceNotification({
+          client_email: payment.email,
+          numero_factura: invoice.numero_factura,
+          total: invoice.total,
+          fecha_vencimiento: invoice.fecha_vencimiento,
+          concepto: invoice.concepto
+        });
+      } catch (emailError) {
+        console.error('Error enviando factura por correo:', emailError);
+        // No fallar la generación de factura si hay error de email
+      }
+
+      return invoice;
+    } catch (error) {
+      console.error('Error generando factura para pago:', error);
+      throw error;
+    }
   }
 };
 

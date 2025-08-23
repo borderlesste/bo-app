@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getClientStats, getClientProjects, getClientPayments, getClientActivity, getClientQuotes, updateClientQuoteStatus, getClientProfile, updateClientProfile, changeClientPassword, getClientpedidos, updateClientpedidostatus } = require('../controllers/clientDashboardController.js');
+const { getClientStats, getClientProjects, getClientPayments, getClientActivity, getClientQuotes, updateClientQuoteStatus, getClientProfile, updateClientProfile, changeClientPassword, getClientpedidos, updateClientpedidostatus, getClientInvoices } = require('../controllers/clientDashboardController.js');
 const { isAuthenticated } = require('../middleware/authMiddleware.js');
 
 // Middleware para verificar que el usuario sea cliente
@@ -66,5 +66,8 @@ router.get('/orders', getClientpedidos);
 
 // PUT /client/orders/:id/status - Actualizar estado de pedido
 router.put('/orders/:id/status', updateClientpedidostatus);
+
+// GET /client/invoices - Obtener facturas del cliente
+router.get('/invoices', getClientInvoices);
 
 module.exports = router;
