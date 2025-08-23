@@ -9,7 +9,7 @@ const router = express.Router();
 router.post('/',
   [
     isAuthenticated,
-    body('order_id', 'El ID del order es obligatorio').isInt(),
+    body('pedido_id', 'El ID del pedido es obligatorio').isInt(),
     body('monto', 'El monto debe ser un número').isFloat({ gt: 0 }),
     body('concepto', 'El concepto es obligatorio').not().isEmpty(),
     body('metodo_pago', 'El método de pago es obligatorio').isIn(['PayPal', 'Transferencia Bancaria', 'Tarjeta de Crédito']),

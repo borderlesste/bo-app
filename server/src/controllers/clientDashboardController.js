@@ -139,7 +139,7 @@ const getClientProjects = async (req, res) => {
     const [projects] = await pool.execute(`
       SELECT 
         id,
-        numero_pedido as numero_order,
+        numero_pedido,
         descripcion as name,
         descripcion,
         servicio,
@@ -163,7 +163,7 @@ const getClientProjects = async (req, res) => {
     // Formatear proyectos
     const formattedProjects = projects.map(project => ({
       id: project.id,
-      numero_order: project.numero_order,
+      numero_pedido: project.numero_pedido,
       name: project.name || 'Proyecto sin nombre',
       description: project.descripcion || '',
       servicio: project.servicio,
@@ -181,10 +181,14 @@ const getClientProjects = async (req, res) => {
       progress: 0 // Calcular basado en estado si es necesario
     }));
 
-    res.json(formattedProjects);
+    res.json({
+      success: true,
+      data: formattedProjects
+    });
   } catch (error) {
     console.error('Error al obtener proyectos del cliente:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Error al obtener proyectos del cliente',
       error: error.message 
     });
@@ -214,8 +218,8 @@ const getClientPayments = async (req, res) => {
         p.notas,
         p.created_at,
         p.updated_at,
-        ped.numero_pedido as numero_order,
-        ped.descripcion as order_descripcion
+        ped.numero_pedido,
+        ped.descripcion as pedido_descripcion
       FROM pagos p
       LEFT JOIN pedidos ped ON p.pedido_id = ped.id
       WHERE p.usuario_id = ?
@@ -241,15 +245,19 @@ const getClientPayments = async (req, res) => {
       notas: payment.notas,
       created_at: payment.created_at,
       updated_at: payment.updated_at,
-      // order info
-      numero_order: payment.numero_order,
-      order_descripcion: payment.order_descripcion
+      // pedido info
+      numero_pedido: payment.numero_pedido,
+      pedido_descripcion: payment.pedido_descripcion
     }));
 
-    res.json(formattedPayments);
+    res.json({
+      success: true,
+      data: formattedPayments
+    });
   } catch (error) {
     console.error('Error al obtener pagos del cliente:', error);
     res.status(500).json({ 
+      success: false,
       message: 'Error al obtener pagos del cliente',
       error: error.message 
     });

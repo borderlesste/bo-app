@@ -89,15 +89,15 @@ exports.createPayment = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id } = req.body;
+  const { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id } = req.body;
   try {
-    const newPayment = await paymentService.createPayment(usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id);
+    const newPayment = await paymentService.createPayment(usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id);
     
     // Registrar actividad de nuevo pago
     const usuariosName = await getClienteName(usuario_id);
     await logActivity(
       'new_payment',
-      `${usuariosName} realizó un pago de $${monto.toLocaleString('es-MX')}${order_id ? ` para order #${order_id}` : ''}`,
+      `${usuariosName} realizó un pago de $${monto.toLocaleString('es-MX')}${pedido_id ? ` para pedido #${pedido_id}` : ''}`,
       'normal',
       usuario_id,
       newPayment.id,
@@ -139,7 +139,7 @@ exports.createPayment = async (req, res) => {
         monto,
         metodo_pago,
         concepto,
-        order_id
+        pedido_id
       }, usuariosName);
     } catch (notificationError) {
       console.log('⚠️ Error creando notificación de pago:', notificationError);
@@ -167,9 +167,9 @@ exports.updatePayment = async (req, res) => {
   }
 
   const { id } = req.params;
-  const { usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
+  const { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
   try {
-    const updatedPayment = await paymentService.updatePayment(id, usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
+    const updatedPayment = await paymentService.updatePayment(id, usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
     
     res.json({
       success: true,
@@ -281,7 +281,7 @@ exports.updateClientPayment = async (req, res) => {
     const updatedPayment = await paymentService.updatePayment(
       paymentId,
       usuario_id,
-      existingPayment.order_id,
+      existingPayment.pedido_id,
       existingPayment.concepto,
       existingPayment.monto,
       metodo_pago,

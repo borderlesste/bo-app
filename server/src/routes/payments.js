@@ -26,7 +26,7 @@ router.post('/', [
     isAuthenticated,
     isAdmin,
     body('usuario_id', 'El ID del cliente es obligatorio').isInt(),
-    body('order_id', 'El ID del order es obligatorio').isInt(),
+    body('pedido_id', 'El ID del pedido es obligatorio').isInt(),
     body('monto', 'El monto debe ser un número').isFloat({ gt: 0 }),
     body('metodo_pago', 'El método de pago es obligatorio').not().isEmpty(),
     body('referencia_transferencia').optional().isString()
@@ -35,7 +35,7 @@ router.put('/:id', [
     isAuthenticated,
     isAdmin,
     body('usuario_id', 'El ID del cliente es obligatorio').isInt(),
-    body('order_id', 'El ID del order es obligatorio').isInt(),
+    body('pedido_id', 'El ID del pedido es obligatorio').isInt(),
     body('monto', 'El monto debe ser un número').isFloat({ gt: 0 }),
     body('metodo_pago', 'El método de pago es obligatorio').not().isEmpty(),
     body('estado', 'El estado es obligatorio').not().isEmpty(),

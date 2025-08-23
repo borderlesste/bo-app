@@ -25,8 +25,8 @@ const paymentService = {
   async getPaymentById(id) {
     const [rows] = await pool.execute(
       `SELECT 
-        p.id, p.usuario_id, c.nombre as clientName, 
-        p.concepto as concept, p.monto as amount, p.metodo_pago as method, p.estado as status, p.fecha_pago as paymentDate, p.referencia as transactionId
+        p.id, p.usuario_id, p.pedido_id, c.nombre as clientName, 
+        p.concepto, p.monto, p.metodo_pago, p.estado, p.fecha_pago, p.referencia
        FROM pagos p
        JOIN usuarios c ON p.usuario_id = c.id
        WHERE p.id = ?`,
