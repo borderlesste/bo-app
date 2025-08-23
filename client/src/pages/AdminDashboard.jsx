@@ -170,16 +170,16 @@ const AdminDashboard = () => {
           setFinancialSummary(financialRes.data.data);
         }
 
-        if (usersRes.data) {
-          setUsuarios(usersRes.data);
+        if (usersRes.data && usersRes.data.data) {
+          setUsuarios(usersRes.data.data);
         }
 
-        if (pedidosRes.data) {
-          setPedidos(pedidosRes.data);
+        if (pedidosRes.data && pedidosRes.data.data) {
+          setPedidos(pedidosRes.data.data);
         }
 
-        if (pagosRes.data) {
-          setPagos(pagosRes.data);
+        if (pagosRes.data && pagosRes.data.data) {
+          setPagos(pagosRes.data.data);
         }
         
       } catch (error) {
@@ -212,16 +212,16 @@ const AdminDashboard = () => {
         getPayments()
       ]);
       
-      if (usersResponse.data) {
-        setUsuarios(usersResponse.data);
+      if (usersResponse.data && usersResponse.data.data) {
+        setUsuarios(usersResponse.data.data);
       }
       
-      if (pedidosResponse.data) {
-        setPedidos(pedidosResponse.data);
+      if (pedidosResponse.data && pedidosResponse.data.data) {
+        setPedidos(pedidosResponse.data.data);
       }
       
-      if (pagosResponse.data) {
-        setPagos(pagosResponse.data);
+      if (pagosResponse.data && pagosResponse.data.data) {
+        setPagos(pagosResponse.data.data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
