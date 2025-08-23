@@ -214,7 +214,7 @@ export const ClientDataProvider = ({ children }) => {
     try {
       const params = limit ? { limit } : {};
       const response = await api.get('/api/client/dashboard/projects', { params });
-      const projectsData = response.data || [];
+      const projectsData = (response.data && response.data.data) ? response.data.data : [];
       
       // Normalizar datos
       const normalizedProjects = projectsData.map(project => ({
