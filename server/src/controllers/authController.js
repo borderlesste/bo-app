@@ -337,10 +337,16 @@ exports.getUsers = async (req, res) => {
     };
     
     const users = await User.findAll(filters);
-    res.json(users);
+    res.json({
+      success: true,
+      data: users
+    });
   } catch (err) {
     console.error('Error getting users:', err);
-    res.status(500).json({ message: 'Error al obtener usuarios.' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener usuarios.' 
+    });
   }
 };
 

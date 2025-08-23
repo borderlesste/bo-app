@@ -13,16 +13,16 @@ import {
   Eye,
   Download
 } from "lucide-react";
-import { createClientPayment, updateClientPayment, getOrders, getPayments } from '../api/axios';
+import { createClientPayment, updateClientPayment, getPedidos, getPayments } from '../api/axios';
 import ClientPaymentModal from './ClientPaymentModal';
 import logger from '../utils/logger';
 
 function ClientPanel() {
-  const [orders, setorders] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
   const [pagos, setPagos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState("pedidos");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -38,16 +38,16 @@ function ClientPanel() {
     setSelectedPayment(null);
   };
 
-  const handlePayForCompletedorder = (order) => {
-    const paymentFororder = {
-      id: `temp-payment-${order.id}`, // Temporary ID
-      order_id: order.id,
-      concepto: `Pago por: ${order.descripcion}`,
-      monto: order.valor,
+  const handlePayForCompletedPedido = (pedido) => {
+    const paymentForPedido = {
+      id: `temp-payment-${pedido.id}`, // Temporary ID
+      order_id: pedido.id,
+      concepto: `Pago por: ${pedido.descripcion}`,
+      monto: pedido.valor,
       estado: 'pendiente',
       fecha_pago: new Date().toISOString(),
     };
-    handleOpenPaymentModal(paymentFororder);
+    handleOpenPaymentModal(paymentForPedido);
   };
 
   const handleProcessPayment = async (paymentData) => {
@@ -62,9 +62,9 @@ function ClientPanel() {
       let updatedPayment;
 
       if (String(payload.id).startsWith('temp-')) {
-        // New payment for a completed order
+        // New payment for a completed pedido
         const { data } = await createClientPayment({
-          order_id: payload.order_id,
+          pedido_id: payload.pedido_id,
           monto: payload.monto,
           concepto: payload.concepto,
           metodo: payload.metodo,
@@ -82,20 +82,20 @@ function ClientPanel() {
         setPagos(pagos.map(p => p.id === payload.id ? updatedPayment : p));
       }
 
-      // Refetch orders to update their status
-      const ordersRes = await getOrders();
-      const fetchedorders = ordersRes.data;
+      // Refetch pedidos to update their status
+      const pedidosRes = await getPedidos();
+      const fetchedPedidos = pedidosRes.data;
       const paymentsRes = await getPayments(); // Refetch payments as well
       const fetchedPayments = paymentsRes.data;
 
-      const ordersWithPayments = fetchedorders.map(order => {
+      const pedidosWithPayments = fetchedPedidos.map(pedido => {
         const associatedPayment = fetchedPayments.find(payment => 
-          payment.order_id === order.id && payment.estado.toLowerCase() === 'pendiente'
+          payment.pedido_id === pedido.id && payment.estado.toLowerCase() === 'pendiente'
         );
-        return { ...order, pendingPayment: associatedPayment };
+        return { ...pedido, pendingPayment: associatedPayment };
       });
 
-      setorders(ordersWithPayments);
+      setPedidos(pedidosWithPayments);
       setPagos(fetchedPayments);
       
       handleClosePaymentModal();
@@ -108,23 +108,23 @@ function ClientPanel() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersRes, paymentsRes] = await Promise.all([
-          getOrders(),
+        const [pedidosRes, paymentsRes] = await Promise.all([
+          getPedidos(),
           getPayments(),
         ]);
-        
-        const fetchedorders = ordersRes.data.data || ordersRes.data || [];
+
+        const fetchedPedidos = pedidosRes.data.data || pedidosRes.data || [];
         const fetchedPayments = paymentsRes.data.data || paymentsRes.data || [];
 
-        // Map payments to orders
-        const ordersWithPayments = fetchedorders.map(order => {
+        // Map payments to pedidos
+        const pedidosWithPayments = fetchedPedidos.map(pedido => {
           const associatedPayment = fetchedPayments.find(payment => 
-            payment.order_id === order.id && payment.estado.toLowerCase() === 'pendiente'
+            payment.pedido_id === pedido.id && payment.estado.toLowerCase() === 'pendiente'
           );
-          return { ...order, pendingPayment: associatedPayment };
+          return { ...pedido, pendingPayment: associatedPayment };
         });
 
-        setorders(ordersWithPayments);
+        setPedidos(pedidosWithPayments);
         setPagos(fetchedPayments);
       } catch (err) {
         setError("Error al cargar los datos");
@@ -181,15 +181,16 @@ function ClientPanel() {
     }
   };
 
-  const isorderPaid = (orderId) => {
-    return pagos.some(p => p.order_id === orderId && p.estado.toLowerCase() === 'pagado');
+  const isPedidoPaid = (pedidoId) => {
+    return pagos.some(p => p.pedido_id === pedidoId && p.estado.toLowerCase() === 'pagado');
   }
 
-  const filteredorders = orders.filter(p => {
+  const filteredPedidos = pedidos.filter(p => {
     const matchesSearch = p.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === "todos" || p.estado.toLowerCase() === filterStatus.toLowerCase();
     return matchesSearch && matchesFilter;
   });
+
 
   const filteredPagos = pagos.filter(p => {
     const matchesSearch = p.concepto.toLowerCase().includes(searchTerm.toLowerCase());
@@ -228,7 +229,7 @@ function ClientPanel() {
             Panel del Cliente
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Gestiona tus orders y pagos desde un solo lugar
+            Gestiona tus pedidos y pagos desde un solo lugar
           </p>
         </div>
 
@@ -237,8 +238,8 @@ function ClientPanel() {
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total orders</p>
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{orders.length}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Pedidos</p>
+                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{pedidos.length}</p>
               </div>
               <Package className="w-8 h-8 text-indigo-500" />
             </div>
@@ -249,7 +250,7 @@ function ClientPanel() {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Completados</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {orders.filter(p => p.estado.toLowerCase() === 'completado').length}
+                  {pedidos.filter(p => p.estado.toLowerCase() === 'completado').length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
@@ -271,9 +272,9 @@ function ClientPanel() {
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-red-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">orders Pendientes</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Pedidos Pendientes</p>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                  {orders.filter(p => p.estado.toLowerCase() === 'pendiente' || p.estado.toLowerCase() === 'en_proceso').length}
+                  {pedidos.filter(p => p.estado.toLowerCase() === 'pendiente' || p.estado.toLowerCase() === 'en_proceso').length}
                 </p>
               </div>
               <AlertCircle className="w-8 h-8 text-red-500" />
@@ -284,15 +285,15 @@ function ClientPanel() {
         {/* Navigation Tabs */}
         <div className="flex space-x-1 mb-8 bg-gray-100 dark:bg-slate-700 rounded-lg p-1">
           <button
-            onClick={() => setActiveTab("orders")}
+            onClick={() => setActiveTab("pedidos")}
             className={`flex items-center px-4 py-2 rounded-md font-medium transition-all ${
-              activeTab === "orders"
+              activeTab === "pedidos"
                 ? "bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow"
                 : "text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400"
             }`}
           >
             <Package className="w-4 h-4 mr-2" />
-            orders
+            Pedidos
           </button>
           <button
             onClick={() => setActiveTab("pagos")}
@@ -338,12 +339,12 @@ function ClientPanel() {
 
         {/* Content */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
-          {activeTab === "orders" ? (
+          {activeTab === "pedidos" ? (
             <div>
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white flex items-center">
                   <Package className="w-5 h-5 mr-2" />
-                  orders ({filteredorders.length})
+                  Pedidos ({filteredPedidos.length})
                 </h2>
               </div>
               <div className="overflow-x-auto">
@@ -371,34 +372,34 @@ function ClientPanel() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredorders.map((order) => (
-                      <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                    {filteredPedidos.map((pedido) => (
+                      <tr key={pedido.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {order.descripcion}
+                            {pedido.descripcion}
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {getStatusIcon(order.estado)}
-                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.estado)}`}>
-                              {order.estado}
+                            {getStatusIcon(pedido.estado)}
+                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(pedido.estado)}`}>
+                              {pedido.estado}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className={`w-2 h-2 rounded-full mr-2 ${getPriorityColor(order.prioridad)}`}></div>
-                            <span className="text-sm text-gray-600 dark:text-gray-300">{order.prioridad}</span>
+                            <div className={`w-2 h-2 rounded-full mr-2 ${getPriorityColor(pedido.prioridad)}`}></div>
+                            <span className="text-sm text-gray-600 dark:text-gray-300">{pedido.prioridad}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">${order.valor?.toLocaleString()}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">${pedido.valor?.toLocaleString()}</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {order.fecha_entrega_estimada ? new Date(order.fecha_entrega_estimada).toLocaleDateString() : 'N/A'}
+                            {pedido.fecha_entrega_estimada ? new Date(pedido.fecha_entrega_estimada).toLocaleDateString() : 'N/A'}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -409,17 +410,17 @@ function ClientPanel() {
                             <button className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300">
                               <Download className="w-4 h-4" />
                             </button>
-                            {order.pendingPayment && (
+                            {pedido.pendingPayment && (
                               <button
-                                onClick={() => handleOpenPaymentModal(order.pendingPayment)}
+                                onClick={() => handleOpenPaymentModal(pedido.pendingPayment)}
                                 className="px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
                               >
                                 Pagar
                               </button>
                             )}
-                            {order.estado.toLowerCase() === 'completado' && order.valor && !order.pendingPayment && !isorderPaid(order.id) && (
+                            {pedido.estado.toLowerCase() === 'completado' && pedido.valor && !pedido.pendingPayment && !isPedidoPaid(pedido.id) && (
                               <button
-                                onClick={() => handlePayForCompletedorder(order)}
+                                onClick={() => handlePayForCompletedPedido(pedido)}
                                 className="px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
                               >
                                 Pagar ahora

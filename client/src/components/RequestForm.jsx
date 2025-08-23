@@ -35,7 +35,7 @@ function RequestForm({ onSubmit }) {
     setError("");
     setEnviado(false);
     try {
-      const response = await api.post('/api/orders', form);
+      const response = await api.post('/api/pedidos', form);
       setEnviado(true);
       setForm(initialState);
       if (onSubmit) onSubmit(response.data);

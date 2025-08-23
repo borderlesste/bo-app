@@ -3,7 +3,7 @@ import { DashboardLayout } from '../components';
 import ClientStatsPanel from '../components/dashboard/ClientStatsPanel';
 import NotificationsPage from './NotificationsPage';
 import QuotesList from '../components/QuotesList';
-import ordersList from '../components/ordersList';
+import PedidosList from '../components/PedidosList';
 import ProfileSection from '../components/ProfileSection';
 import PaymentsList from '../components/PaymentsList';
 
@@ -59,10 +59,10 @@ const ClientDashboard = () => {
         return (
           <div>
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mis orders</h2>
-              <p className="text-gray-600 dark:text-gray-300">Gestiona y revisa tus orders</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Mis Pedidos</h2>
+              <p className="text-gray-600 dark:text-gray-300">Gestiona y revisa tus pedidos</p>
             </div>
-            <ordersList />
+            <PedidosList />
           </div>
         );
 

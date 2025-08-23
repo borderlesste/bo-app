@@ -139,7 +139,7 @@ const getClientProjects = async (req, res) => {
     const [projects] = await pool.execute(`
       SELECT 
         id,
-        numero_order,
+        numero_pedido as numero_order,
         descripcion as name,
         descripcion,
         servicio,
@@ -214,7 +214,7 @@ const getClientPayments = async (req, res) => {
         p.notas,
         p.created_at,
         p.updated_at,
-        ped.numero_order,
+        ped.numero_pedido as numero_order,
         ped.descripcion as order_descripcion
       FROM pagos p
       LEFT JOIN pedidos ped ON p.pedido_id = ped.id

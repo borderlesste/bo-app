@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FileText, Package, History, ChevronRight } from 'lucide-react';
 
-const OrdersNavigation = () => {
+const PedidosNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -14,11 +14,11 @@ const OrdersNavigation = () => {
       description: 'Gestionar solicitudes de cotización'
     },
     {
-      id: 'orders',
-      label: 'orders',
-      path: '/orders',
+      id: 'pedidos',
+      label: 'Pedidos',
+      path: '/pedidos',
       icon: Package,
-      description: 'Administrar proyectos y órdenes'
+      description: 'Administrar proyectos y pedidos'
     },
     {
       id: 'history',
@@ -36,7 +36,7 @@ const OrdersNavigation = () => {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-            📊 Sección: orders y Cotizaciones
+            📊 Sección: Pedidos y Cotizaciones
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-sm">
             Navega entre los diferentes módulos de gestión de proyectos
@@ -98,4 +98,4 @@ const OrdersNavigation = () => {
   );
 };
 
-export default OrdersNavigation;
+export default PedidosNavigation;

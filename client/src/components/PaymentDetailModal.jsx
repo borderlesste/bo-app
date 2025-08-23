@@ -201,27 +201,27 @@ const PaymentDetailModal = ({ isOpen, onClose, payment, onApprove, onReject }) =
 
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white border-b pb-2">
-                Información de Cliente
+                Información de Usuario
               </h3>
               
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <User className="w-5 h-5 text-gray-600 mt-1" />
                   <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Cliente</p>
-                    <p className="text-gray-800 dark:text-white">{payment.cliente_nombre || payment.clienteNombre || 'No especificado'}</p>
-                    {(payment.cliente_email || payment.clienteEmail) && (
-                      <p className="text-sm text-gray-500">{payment.cliente_email || payment.clienteEmail}</p>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Usuario</p>
+                    <p className="text-gray-800 dark:text-white">{payment.cliente_nombre || payment.usuarioNombre || 'No especificado'}</p>
+                    {(payment.cliente_email || payment.usuarioEmail) && (
+                      <p className="text-sm text-gray-500">{payment.cliente_email || payment.usuarioEmail}</p>
                     )}
                   </div>
                 </div>
 
-                {payment.orderTitulo && (
+                {payment.pedidoTitulo && (
                   <div className="flex items-start gap-3">
                     <FileText className="w-5 h-5 text-gray-600 mt-1" />
                     <div>
-                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Proyecto</p>
-                      <p className="text-gray-800 dark:text-white">{payment.orderTitulo}</p>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Pedido</p>
+                      <p className="text-gray-800 dark:text-white">{payment.pedidoTitulo}</p>
                     </div>
                   </div>
                 )}

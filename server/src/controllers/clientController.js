@@ -94,8 +94,8 @@ const getClientProjects = async (req, res) => {
     }
 
     if (search) {
-      query += ' AND (p.numero_order LIKE ? OR p.descripcion LIKE ?)';
-      countQuery += ' AND (numero_order LIKE ? OR descripcion LIKE ?)';
+      query += ' AND (p.numero_pedido LIKE ? OR p.descripcion LIKE ?)';
+      countQuery += ' AND (numero_pedido LIKE ? OR descripcion LIKE ?)';
       const searchParam = `%${search}%`;
       params.push(searchParam, searchParam);
       countParams.push(searchParam, searchParam);
@@ -261,7 +261,7 @@ const getClientInvoices = async (req, res) => {
     let query = `
       SELECT 
         f.*,
-        ped.numero_order,
+        ped.numero_pedido as numero_order,
         ped.descripcion as order_descripcion,
         u.nombre as cliente_nombre,
         u.empresa as cliente_empresa,

@@ -2,7 +2,17 @@ const { pool } = require('../config/db');
 
 class Pago {
     static async findById(id) {
-        const [result] = await pool.execute('SELECT * FROM pagos WHERE id = ?', [id]);
+        const [result] = await pool.execute(`
+            SELECT p.*, u.nombre as cliente_nombre, u.email as cliente_email, u.empresa as cliente_empresa,
+                   creator.nombre as created_by_name, verifier.nombre as verified_by_name,
+                   ped.numero_pedido, ped.descripcion as pedido_descripcion, ped.estado as pedido_estado
+            FROM pagos p
+            LEFT JOIN usuarios u ON p.usuario_id = u.id
+            LEFT JOIN usuarios creator ON p.created_by = creator.id
+            LEFT JOIN usuarios verifier ON p.verified_by = verifier.id
+            LEFT JOIN pedidos ped ON p.pedido_id = ped.id
+            WHERE p.id = ?
+        `, [id]);
         return result[0] || null;
     }
 
@@ -11,18 +21,20 @@ class Pago {
             numero_pago, usuario_id, tipo = 'total', monto, moneda = 'MXN',
             tipo_cambio = 1.0000, metodo_pago, referencia, banco_origen,
             cuenta_destino, fecha_pago, concepto, comprobante_path,
-            notas, created_by
+            notas, created_by, paypal_order_id, pedido_id, estado = 'pendiente'
         } = pagoData;
 
         const [result] = await pool.execute(`
             INSERT INTO pagos (
                 numero_pago, usuario_id, tipo, monto, moneda, tipo_cambio,
                 metodo_pago, referencia, banco_origen, cuenta_destino,
-                fecha_pago, concepto, comprobante_path, notas, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                fecha_pago, concepto, comprobante_path, notas, created_by,
+                paypal_order_id, pedido_id, estado
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [numero_pago, usuario_id, tipo, monto, moneda, tipo_cambio,
              metodo_pago, referencia, banco_origen, cuenta_destino,
-             fecha_pago, concepto, comprobante_path, notas, created_by]
+             fecha_pago, concepto, comprobante_path, notas, created_by,
+             paypal_order_id, pedido_id, estado]
         );
         return result.insertId;
     }
@@ -53,11 +65,13 @@ class Pago {
     static async findAll(filters = {}) {
         let sql = `
             SELECT p.*, u.nombre as cliente_nombre, u.email as cliente_email, u.empresa as cliente_empresa,
-                   creator.nombre as created_by_name, verifier.nombre as verified_by_name
+                   creator.nombre as created_by_name, verifier.nombre as verified_by_name,
+                   ped.numero_pedido, ped.descripcion as pedido_descripcion, ped.estado as pedido_estado
             FROM pagos p
             LEFT JOIN usuarios u ON p.usuario_id = u.id
             LEFT JOIN usuarios creator ON p.created_by = creator.id
             LEFT JOIN usuarios verifier ON p.verified_by = verifier.id
+            LEFT JOIN pedidos ped ON p.pedido_id = ped.id
             WHERE 1=1
         `;
         const values = [];

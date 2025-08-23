@@ -38,7 +38,7 @@ class EstadisticasMensuales {
                 ticket_promedio = VALUES(ticket_promedio)`,
             [anio, mes, total_ingresos, total_egresos, nuevos_usuarios,
              usuarios_activos, cotizaciones_enviadas, cotizaciones_aceptadas,
-             orders_nuevos, orders_completados, facturas_emitidas,
+             pedidos_nuevos, orders_completados, facturas_emitidas,
              facturas_pagadas, proyectos_iniciados, proyectos_completados, ticket_promedio]
         );
         return result.insertId || true;

@@ -28,7 +28,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const Profile = lazy(() => import('./pages/Profile'));
 
-// Lazy load client pages  
+// Lazy load usuario pages
 const ClientLayout = lazy(() => import('./components/layout/ClientLayout'));
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'));
 const ClientProjects = lazy(() => import('./pages/client/ClientProjects'));
@@ -41,7 +41,7 @@ const ClientRequestForm = lazy(() => import('./pages/client/ClientRequestForm'))
 
 // Legacy client pages (to be removed)
 const QuotesPage = lazy(() => import('./pages/QuotesPage'));
-const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const PedidosPage = lazy(() => import('./pages/PedidosPage')); // Archivo renombrado de OrdersPage.jsx a PedidosPage.jsx
 const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
@@ -154,7 +154,7 @@ function App() {
             path="/pedidos"
             element={
               <ProtectedRoute adminOnly={true}>
-                <OrdersPage />
+                <PedidosPage />
               </ProtectedRoute>
             }
           />

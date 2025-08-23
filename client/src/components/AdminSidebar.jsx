@@ -10,8 +10,8 @@ const AdminSidebar = ({ isOpen, onToggle, onOptionSelect, activeOption }) => {
   // Auto-expandir la sección correspondiente basada en la ruta actual
   useEffect(() => {
     const path = location.pathname;
-    if (['/cotizaciones', '/orders', '/historial'].includes(path)) {
-      setActiveSection('orders');
+    if (['/cotizaciones', '/pedidos', '/historial'].includes(path)) {
+      setActiveSection('pedidos');
     } else if (path === '/admin/dashboard') {
       setActiveSection('clients'); // Expandir "Gestión de Clientes" por defecto en AdminDashboard
     }
@@ -32,23 +32,23 @@ const AdminSidebar = ({ isOpen, onToggle, onOptionSelect, activeOption }) => {
       ]
     },
     {
-      id: 'orders',
-      title: 'orders & Cotizaciones',
+      id: 'pedidos',
+      title: 'Pedidos & Cotizaciones',
       icon: '📦',
       links: [
         { id: 'cotizaciones', label: 'Cotizaciones', icon: '📝' },
-        { id: 'orders', label: 'orders', icon: '📦' },
+        { id: 'pedidos', label: 'Pedidos', icon: '📦' },
         { id: 'historial', label: 'Historial', icon: '📚' },
       ]
     },
     {
-      id: 'clients',
-      title: 'Clientes',
+      id: 'usuarios',
+      title: 'Usuarios',
       icon: '👥',
       links: [
-        { id: 'ver-clientes', label: 'Listar Clientes', icon: '👥' },
-        { id: 'nuevo-cliente', label: 'Nuevo Cliente', icon: '➕' },
-        { id: 'estadisticas-clientes', label: 'Estadísticas', icon: '📈' },
+        { id: 'ver-usuarios', label: 'Listar Usuarios', icon: '👥' },
+        { id: 'nuevo-usuario', label: 'Nuevo Usuario', icon: '➕' },
+        { id: 'estadisticas-usuarios', label: 'Estadísticas', icon: '📈' },
       ]
     },
     {

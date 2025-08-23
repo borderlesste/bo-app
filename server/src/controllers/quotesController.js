@@ -289,7 +289,7 @@ const convertQuoteToorder = async (req, res) => {
     
     // Create order from quote
     const [orderResult] = await pool.execute(
-      `INSERT INTO pedidos (numero_order, usuario_id, cotizacion_id, descripcion, estado, prioridad, created_by) 
+      `INSERT INTO pedidos (numero_pedido, usuario_id, cotizacion_id, descripcion, estado, prioridad, created_by) 
        VALUES (?, ?, ?, ?, 'nuevo', 'normal', ?)`,
       [numeroorder, usuariosId, id, `${quote.tipo_servicio}: ${quote.descripcion}`, req.user.id]
     );

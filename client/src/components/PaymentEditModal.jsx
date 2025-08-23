@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { X, CheckCircle, User, DollarSign, Calendar, FileText, CreditCard, Building } from 'lucide-react';
 
-const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders }) => {
+const PaymentEditModal = ({ isOpen, onClose, onSave, payment, usuarios, pedidos }) => {
   const [formData, setFormData] = useState({
     concepto: '',
     monto: '',
@@ -11,10 +11,12 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
     fecha: '',
     referencia: '',
     estado: 'pendiente',
-    order_id: ''
+    pedido_id: '',
+    paypal_order_id: ''
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [filteredPedidos, setFilteredPedidos] = useState([]);
 
   useEffect(() => {
     if (payment) {
@@ -26,10 +28,28 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
         fecha: payment.fecha ? payment.fecha.split('T')[0] : '',
         referencia: payment.referencia || '',
         estado: payment.estado || 'pendiente',
-        order_id: payment.order_id || ''
+        pedido_id: payment.pedido_id || '',
+        paypal_order_id: payment.paypal_order_id || ''
       });
     }
   }, [payment]);
+
+  // Filtrar pedidos cuando cambie el usuario seleccionado
+  useEffect(() => {
+    if (formData.usuario_id && pedidos) {
+      const userPedidos = pedidos.filter(pedido => 
+        pedido.usuario_id === parseInt(formData.usuario_id)
+      );
+      setFilteredPedidos(userPedidos);
+      
+      // Si estamos editando y el pedido actual no pertenece al nuevo usuario, resetear
+      if (payment && payment.pedido_id && !userPedidos.find(p => p.id === payment.pedido_id)) {
+        setFormData(prev => ({ ...prev, pedido_id: '' }));
+      }
+    } else {
+      setFilteredPedidos([]);
+    }
+  }, [formData.usuario_id, pedidos, payment]);
 
   if (!isOpen) return null;
 
@@ -77,7 +97,7 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
     { value: 'cancelado', label: 'Cancelado' }
   ];
 
-  const selectedClient = clients.find(client => client.id === parseInt(formData.usuario_id));
+  const selectedClient = usuarios.find(usuario => usuario.id === parseInt(formData.usuario_id));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -155,9 +175,9 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                 >
                   <option value="">Seleccionar cliente...</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.nombre} ({client.email})
+                  {usuarios.map(usuario => (
+                    <option key={usuario.id} value={usuario.id}>
+                      {usuario.nombre} ({usuario.email})
                     </option>
                   ))}
                 </select>
@@ -216,27 +236,39 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
               </div>
             </div>
 
-            {/* order Association */}
-            {orders && orders.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Asociar a order (Opcional)
-                </label>
-                <select
-                  name="order_id"
-                  value={formData.order_id}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="">Sin asociar a order</option>
-                  {orders.map(order => (
-                    <option key={order.id} value={order.id}>
-                      order #{order.id} - {order.titulo || 'Sin título'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {/* Pedido Association */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Asociar a Pedido (Opcional)
+              </label>
+              <select
+                name="pedido_id"
+                value={formData.pedido_id}
+                onChange={handleChange}
+                disabled={!formData.usuario_id}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {!formData.usuario_id 
+                    ? 'Primero selecciona un usuario' 
+                    : filteredPedidos.length === 0 
+                      ? 'No hay pedidos para este usuario'
+                      : 'Sin asociar a pedido'
+                  }
+                </option>
+                {filteredPedidos && filteredPedidos.map(pedido => (
+                  <option key={pedido.id} value={pedido.id}>
+                    Pedido #{pedido.id} - {pedido.titulo || pedido.descripcion || 'Sin título'}
+                    {pedido.monto_total && ` - $${parseFloat(pedido.monto_total).toFixed(2)}`}
+                  </option>
+                ))}
+              </select>
+              {formData.usuario_id && filteredPedidos.length === 0 && (
+                <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                  ⚠️ Este usuario no tiene pedidos disponibles
+                </p>
+              )}
+            </div>
 
             {/* Reference */}
             <div>
@@ -251,6 +283,24 @@ const PaymentEditModal = ({ isOpen, onClose, onSave, payment, clients, orders })
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                 placeholder="Número de referencia o transacción"
               />
+            </div>
+
+            {/* PayPal Order ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                PayPal Order ID
+              </label>
+              <input
+                type="text"
+                name="paypal_order_id"
+                value={formData.paypal_order_id}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
+                placeholder="ID de orden de PayPal (opcional)"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                💡 Solo para pagos realizados a través de PayPal
+              </p>
             </div>
 
             {/* Client Info Display */}
@@ -315,8 +365,8 @@ PaymentEditModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   payment: PropTypes.object,
-  clients: PropTypes.array,
-  orders: PropTypes.array
+  usuarios: PropTypes.array,
+  pedidos: PropTypes.array
 };
 
 export default PaymentEditModal;

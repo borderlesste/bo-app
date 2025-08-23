@@ -512,7 +512,7 @@ const PaymentsPage = () => {
                   <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3 mb-4">
                     <h3 className="text-xl font-semibold text-ghost-800 dark:text-ghost-100">
-                      Pago #{payment.id} - {payment.cliente_nombre || payment.clienteNombre || 'Cliente desconocido'}
+                      Pago #{payment.id} - {payment.cliente_nombre || payment.usuarioNombre || 'Usuario desconocido'}
                     </h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(payment.estado)}`}>
                       {payment.estado}
@@ -538,13 +538,13 @@ const PaymentsPage = () => {
                       <p className="text-ghost-800 dark:text-ghost-200">{formatDate(payment.fecha_pago || payment.created_at)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-ghost-600 dark:text-ghost-400">Cliente</p>
-                      <p className="text-ghost-800 dark:text-ghost-200">{payment.cliente_email || payment.clienteEmail || 'Email no disponible'}</p>
+                      <p className="text-sm text-ghost-600 dark:text-ghost-400">Usuario</p>
+                      <p className="text-ghost-800 dark:text-ghost-200">{payment.cliente_email || payment.usuarioEmail || 'Email no disponible'}</p>
                     </div>
-                    {payment.orderTitulo && (
+                    {payment.pedidoTitulo && (
                       <div>
-                        <p className="text-sm text-ghost-600 dark:text-ghost-400">Proyecto</p>
-                        <p className="text-ghost-800 dark:text-ghost-200 font-medium">{payment.orderTitulo}</p>
+                        <p className="text-sm text-ghost-600 dark:text-ghost-400">Pedido</p>
+                        <p className="text-ghost-800 dark:text-ghost-200 font-medium">{payment.pedidoTitulo}</p>
                       </div>
                     )}
                     {payment.transaccion_id && (

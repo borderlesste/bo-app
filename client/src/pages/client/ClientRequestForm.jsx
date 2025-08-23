@@ -62,7 +62,7 @@ const ClientRequestForm = () => {
       }
 
       // Enviar solicitud
-      const response = await api.post('/api/orders', formData);
+      const response = await api.post('/api/pedidos', formData);
 
       if (response.data.success) {
         setSubmitted(true);
@@ -163,6 +163,7 @@ const ClientRequestForm = () => {
           {/* Tipo de Servicio */}
           <div>
             <label htmlFor="servicio" className="block text-sm font-medium text-gray-700 mb-2">
+              <Package className="inline w-4 h-4 mr-2" />
               Tipo de Servicio <span className="text-red-500">*</span>
             </label>
             <select

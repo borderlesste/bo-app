@@ -11,10 +11,12 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, usuarios, pedidos, user }
     fecha: new Date().toISOString().split('T')[0],
     referencia: '',
     estado: 'pendiente',
-    pedido_id: ''
+    pedido_id: '',
+    paypal_order_id: ''
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [filteredPedidos, setFilteredPedidos] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -26,11 +28,28 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, usuarios, pedidos, user }
         fecha: new Date().toISOString().split('T')[0],
         referencia: '',
         estado: 'pendiente',
-        pedido_id: ''
+        pedido_id: '',
+        paypal_order_id: ''
       });
       setError(null);
+      setFilteredPedidos([]);
     }
   }, [isOpen]);
+
+  // Filtrar pedidos cuando cambie el usuario seleccionado
+  useEffect(() => {
+    if (formData.usuario_id && pedidos) {
+      const userPedidos = pedidos.filter(pedido => 
+        pedido.usuario_id === parseInt(formData.usuario_id)
+      );
+      setFilteredPedidos(userPedidos);
+      
+      // Reset pedido selection when user changes
+      setFormData(prev => ({ ...prev, pedido_id: '' }));
+    } else {
+      setFilteredPedidos([]);
+    }
+  }, [formData.usuario_id, pedidos]);
 
   if (!isOpen) return null;
 
@@ -52,10 +71,16 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, usuarios, pedidos, user }
         throw new Error('El monto debe ser mayor a 0');
       }
       if (!formData.usuario_id) {
-        throw new Error('Debe seleccionar un cliente');
+        throw new Error('Debe seleccionar un usuario');
       }
       if (!formData.pedido_id) {
-        throw new Error('Debe asociar el pago a un pedido');
+        throw new Error('Debe asociar el pago a un pedido del usuario seleccionado');
+      }
+      
+      // Validar que el pedido pertenece al usuario seleccionado
+      const selectedPedido = filteredPedidos.find(p => p.id === parseInt(formData.pedido_id));
+      if (!selectedPedido) {
+        throw new Error('El pedido seleccionado no pertenece al usuario especificado');
       }
       
       await onSave(formData);
@@ -233,15 +258,29 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, usuarios, pedidos, user }
                 value={formData.pedido_id}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
+                disabled={!formData.usuario_id}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">Seleccionar pedido</option>
-                {pedidos && pedidos.map(pedido => (
+                <option value="">
+                  {!formData.usuario_id 
+                    ? 'Primero selecciona un usuario' 
+                    : filteredPedidos.length === 0 
+                      ? 'No hay pedidos para este usuario'
+                      : 'Seleccionar pedido'
+                  }
+                </option>
+                {filteredPedidos && filteredPedidos.map(pedido => (
                   <option key={pedido.id} value={pedido.id}>
-                    Pedido #{pedido.id} - {pedido.titulo || 'Sin título'}
+                    Pedido #{pedido.id} - {pedido.titulo || pedido.descripcion || 'Sin título'} 
+                    {pedido.monto_total && ` - $${parseFloat(pedido.monto_total).toFixed(2)}`}
                   </option>
                 ))}
               </select>
+              {formData.usuario_id && filteredPedidos.length === 0 && (
+                <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                  ⚠️ Este usuario no tiene pedidos disponibles
+                </p>
+              )}
             </div>
 
             {/* Reference */}
@@ -257,6 +296,24 @@ const PaymentCreateModal = ({ isOpen, onClose, onSave, usuarios, pedidos, user }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
                 placeholder="Número de referencia o transacción"
               />
+            </div>
+
+            {/* PayPal Order ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                PayPal Order ID
+              </label>
+              <input
+                type="text"
+                name="paypal_order_id"
+                value={formData.paypal_order_id}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-gray-900 dark:text-gray-100"
+                placeholder="ID de orden de PayPal (opcional)"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                💡 Solo para pagos realizados a través de PayPal
+              </p>
             </div>
 
             {/* Admin Info */}

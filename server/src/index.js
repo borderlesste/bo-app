@@ -10,11 +10,11 @@ const { pool } = require('./config/db.js');
 
 // Rutas principales
 const authRoutes = require('./routes/auth.js');
-const ordersRoutes = require('./routes/orders.js');
+const pedidosRoutes = require('./routes/pedidos.js');
 const paymentsRoutes = require('./routes/payments.js');
 const clientPaymentsRoutes = require('./routes/clientPayments.js');
 const paymentGatewayRoutes = require('./routes/paymentGateway.js');
-const paypalordersRoutes = require('./routes/paypalOrders.js');
+const paypalPedidosRoutes = require('./routes/paypalPedidos.js');
 const contactRoutes = require('./routes/contact.js');
 const usersRoutes = require('./routes/users.js');
 const notificationsRoutes = require('./routes/notifications.js');
@@ -37,7 +37,6 @@ const emailCampaignsRoutes = require('./routes/emailCampaigns.js');
 // UNIFIED ROUTES (replaces duplicates)
 const quotationsUnifiedRoutes = require('./routes/quotationsUnified.js');
 const configurationUnifiedRoutes = require('./routes/configurationUnified.js');
-const pedidosRoutes = require('./routes/pedidos.js');
 
 // LEGACY ROUTES (for backward compatibility - will show deprecation warnings)
 const configRoutes = require('./routes/config.js');
@@ -123,15 +122,17 @@ if (process.env.NODE_ENV === 'production') {
     next();
   });
 
-  // Rate limiting for production - simplified for Render
+  // Rate limiting for production - increased limits for dashboard usage
   const rateLimit = require('express-rate-limit');
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 200, // Increased limit for production
+    max: 500, // Increased limit for dashboard heavy usage
     message: {
       error: 'Too many requests, please try again later.',
       retryAfter: '15 minutes'
-    }
+    },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   });
   
   app.use('/api/', limiter);
@@ -177,12 +178,12 @@ app.use('/api/configuration-unified', configurationUnifiedRoutes);
 
 // CORE API ROUTES
 app.use('/api/auth', authRoutes);
-app.use('/api/orders', ordersRoutes);
+app.use('/api/orders', pedidosRoutes); // Alias for backward compatibility
 app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/client-payments', clientPaymentsRoutes);
 app.use('/api/payment-gateway', paymentGatewayRoutes);
-app.use('/api/paypal', paypalordersRoutes);
+app.use('/api/paypal', paypalPedidosRoutes);
 app.use('/api/contacto', contactRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/notifications', notificationsRoutes);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   CreditCard, 
   Clock, 
@@ -13,75 +13,67 @@ import {
   Download,
   ExternalLink
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import PaymentGatewayModal from '../../components/payments/PaymentGatewayModal';
+import CreatePedidoModal from '../../components/CreatePedidoModal';
+import PaymentDetailsModal from '../../components/modals/PaymentDetailsModal';
+import api from '../../api/axios';
 
 const ClientPayments = () => {
-  const [orders, setOrders] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedPedido, setSelectedPedido] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [activeTab, setActiveTab] = useState('unpaid');
-  const { user } = useAuth();
+  const [filterDate, setFilterDate] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  // const { user } = useAuth(); // Disponible para futuras funcionalidades
   const { success: showSuccess, error: showError } = useToast();
 
-  useEffect(() => {
-    fetchOrdersAndPayments();
-  }, []);
-
-  const fetchOrdersAndPayments = async () => {
+  const fetchPedidosAndPayments = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Fetch orders using the useClientData context
-      const ordersResponse = await fetch('/api/client/dashboard/projects', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Fetch pedidos using the useClientData context
+      const pedidosResponse = await api.get('/api/client/projects');
       
-      if (ordersResponse.ok) {
-        const ordersData = await ordersResponse.json();
-        console.log('Orders data received:', ordersData); // Debug log
+      if (pedidosResponse.data && pedidosResponse.data.success) {
+        const pedidosData = pedidosResponse.data.data; // Access the actual array
+        console.log('Pedidos data received:', pedidosData); // Debug log
         
-        // Process orders data to ensure consistent structure
-        const processedOrders = (ordersData || []).map(order => ({
-          ...order,
-          estado: order.status || order.estado || 'nuevo', // Priorizar status ya que viene del backend
-          id: order.id,
-          numero_pedido: order.numero_pedido,
-          value: parseFloat(order.presupuesto_estimado) || parseFloat(order.value) || parseFloat(order.total) || 0,
-          descripcion: order.descripcion || order.description || order.name || '',
-          servicio: order.servicio || '',
-          fecha_entrega_deseada: order.fecha_entrega_deseada,
-          fecha_entrega_estimada: order.fecha_entrega_estimada,
-          created_at: order.created_at
+        // Process pedidos data to ensure consistent structure
+        const processedPedidos = (pedidosData || []).map(pedido => ({
+          ...pedido,
+          estado: pedido.status || pedido.estado || 'nuevo', // Priorizar status ya que viene del backend
+          id: pedido.id,
+          numero_pedido: pedido.numero_pedido,
+          value: parseFloat(pedido.presupuesto_estimado) || parseFloat(pedido.value) || parseFloat(pedido.total) || 0,
+          descripcion: pedido.descripcion || pedido.description || pedido.name || '',
+          servicio: pedido.servicio || '',
+          fecha_entrega_deseada: pedido.fecha_entrega_deseada,
+          fecha_entrega_estimada: pedido.fecha_entrega_estimada,
+          created_at: pedido.created_at
         }));
         
-        console.log('Processed orders:', processedOrders); // Debug log
-        setOrders(processedOrders);
+        console.log('Processed pedidos:', processedPedidos); // Debug log
+        setPedidos(processedPedidos);
       } else {
-        console.error('Error fetching orders:', ordersResponse.status);
-        setOrders([]);
+        console.error('Error fetching pedidos:', pedidosResponse.status);
+        setPedidos([]);
       }
 
       // Fetch payments using correct endpoint
-      const paymentsResponse = await fetch('/api/client/dashboard/payments', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const paymentsResponse = await api.get('/api/client/dashboard/payments');
       
-      if (paymentsResponse.ok) {
-        const paymentsData = await paymentsResponse.json();
-        setPayments(paymentsData || []);
+      if (paymentsResponse.data && paymentsResponse.data.success) {
+        setPayments(paymentsResponse.data.data || []);
       } else {
-        console.error('Error fetching payments:', paymentsResponse.status);
+        console.error('Error fetching payments: No data received');
         // Don't show error for payments as it might be empty
       }
       
@@ -91,22 +83,19 @@ const ClientPayments = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    fetchPedidosAndPayments();
+  }, [fetchPedidosAndPayments]);
 
   const handlePayment = async (paymentData) => {
     try {
-      const response = await fetch('/api/client-payments', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(paymentData)
-      });
+      const response = await api.post('/api/client-payments', paymentData);
 
-      const result = await response.json();
+      const result = response.data;
 
-      if (response.ok && result.success) {
+      if (result.success) {
         showSuccess('Pago procesado exitosamente');
         
         if (result.order_updated) {
@@ -114,8 +103,8 @@ const ClientPayments = () => {
         }
         
         setShowPaymentModal(false);
-        setSelectedOrder(null);
-        await fetchOrdersAndPayments();
+        setSelectedPedido(null);
+        await fetchPedidosAndPayments();
       } else {
         showError(result.message || 'Error al procesar el pago');
       }
@@ -123,6 +112,71 @@ const ClientPayments = () => {
       console.error('Error processing payment:', error);
       showError('Error al procesar el pago');
     }
+  };
+
+  // Función para filtrar por fecha
+  const handleDateFilter = (event) => {
+    setFilterDate(event.target.value);
+  };
+
+  // Función para crear nuevo pedido
+  const handleCreatePedido = () => {
+    setShowCreateModal(true);
+  };
+
+  // Función para ver detalles de pago
+  const handleViewPaymentDetails = (payment) => {
+    setSelectedPayment(payment);
+    setShowPaymentDetails(true);
+  };
+
+  // Función para descargar reporte de pagos
+  const handleDownloadReport = async () => {
+    try {
+      // TODO: Implement payments report endpoint
+      showError('Función de reporte no disponible temporalmente');
+      return;
+      
+      /*
+      const response = await api.get('/api/client/dashboard/payments/report', {
+        responseType: 'blob',
+        params: { date: filterDate }
+      });
+      
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reporte-pagos-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      showSuccess('Reporte descargado exitosamente');
+      */
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      showError('Error al descargar el reporte');
+    }
+  };
+
+  // Función para obtener estadísticas de usuario
+  const getClientStats = () => {
+    const totalAmount = payments
+      .filter(p => p.estado === 'aplicado')
+      .reduce((sum, p) => sum + parseFloat(p.monto || 0), 0);
+    
+    const pendingAmount = pedidos
+      .filter(o => o.estado !== 'completado' && o.estado !== 'cancelado')
+      .reduce((sum, o) => sum + parseFloat(o.value || 0), 0);
+
+    return {
+      totalPaid: totalAmount,
+      pendingPayments: pendingAmount,
+      totalPedidos: pedidos.length,
+      completedPedidos: pedidos.filter(o => o.estado === 'completado').length
+    };
   };
 
   // Filter payments by status
@@ -134,29 +188,28 @@ const ClientPayments = () => {
     payment.estado === 'aplicado'
   );
 
-  // Filter orders that need payment (only confirmed projects without completed payments)
-  const pendingOrders = orders.filter(order => {
+  // Filter pedidos that need payment (only confirmed projects without completed payments)
+  const pendingPedidos = pedidos.filter(pedido => {
     // Only show projects that are confirmed by admin and need payment
-    const isConfirmedByAdmin = order.estado === 'confirmado' || order.estado === 'en_proceso';
-    const needsPayment = order.estado !== 'completado' && (order.value > 0);
-    // Check if there's already a completed payment for this order
+    const isConfirmedByAdmin = pedido.estado === 'confirmado' || pedido.estado === 'en_proceso';
+    const needsPayment = pedido.estado !== 'completado' && (pedido.value > 0);
+    // Check if there's already a completed payment for this pedido
     const hasCompletedPayment = payments.some(payment => 
-      payment.pedido_id === order.id && payment.estado === 'aplicado'
+      payment.pedido_id === pedido.id && payment.estado === 'aplicado'
     );
     return isConfirmedByAdmin && needsPayment && !hasCompletedPayment;
   });
 
-  // Filter orders waiting for admin approval (nuevo status)
-  const ordersWaitingApproval = orders.filter(order => {
-    const isWaitingApproval = order.estado === 'nuevo';
-    const hasValue = order.value > 0;
+  // Filter pedidos waiting for admin approval (nuevo status)
+    const pedidosWaitingApproval = pedidos.filter(pedido => {
+    // Only show projects waiting for admin approval (value is > 0 and there's no completed payment)
+    const isWaitingApproval = pedido.estado === 'nuevo' || pedido.estado === 'revision';
+    const hasValue = pedido.value > 0;
     const hasCompletedPayment = payments.some(payment => 
-      payment.pedido_id === order.id && payment.estado === 'aplicado'
+      payment.pedido_id === pedido.id && payment.estado === 'aplicado'
     );
     return isWaitingApproval && hasValue && !hasCompletedPayment;
   });
-
-  const completedOrders = orders.filter(order => order.estado === 'completado');
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -211,50 +264,86 @@ const ClientPayments = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with Statistics and Actions */}
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Mis Pagos</h1>
             <p className="mt-1 text-sm text-gray-500">
               Gestiona los pagos de tus proyectos
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="bg-red-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <AlertCircle className="h-8 w-8 text-red-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-red-600">Listos para Pago</p>
-                  <p className="text-2xl font-bold text-red-900">{pendingOrders.length}</p>
-                </div>
+          <div className="flex items-center space-x-3">
+            {/* Filtro por fecha */}
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5 text-gray-400" />
+              <input
+                type="date"
+                value={filterDate}
+                onChange={handleDateFilter}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Filtrar por fecha"
+              />
+            </div>
+            
+            {/* Botón de descarga */}
+            <button
+              onClick={handleDownloadReport}
+              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              <span>Descargar Reporte</span>
+            </button>
+            
+            {/* Botón crear pedido */}
+            <button
+              onClick={handleCreatePedido}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nuevo Pedido</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <DollarSign className="h-8 w-8 text-blue-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-blue-600">Total Pagado</p>
+                <p className="text-2xl font-bold text-blue-900">${getClientStats().totalPaid.toFixed(2)}</p>
               </div>
             </div>
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <Clock className="h-8 w-8 text-orange-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-orange-600">Esperando Aprobación</p>
-                  <p className="text-2xl font-bold text-orange-900">{ordersWaitingApproval.length}</p>
-                </div>
+          </div>
+          
+          <div className="bg-red-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-red-600">Listos para Pago</p>
+                <p className="text-2xl font-bold text-red-900">{pendingPedidos.length}</p>
               </div>
             </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <Clock className="h-8 w-8 text-yellow-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-yellow-600">Pagos Pendientes</p>
-                  <p className="text-2xl font-bold text-yellow-900">{pendingPayments.length}</p>
-                </div>
+          </div>
+          
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Clock className="h-8 w-8 text-orange-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-orange-600">Pendientes</p>
+                <p className="text-2xl font-bold text-orange-900">${getClientStats().pendingPayments.toFixed(2)}</p>
               </div>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="flex items-center">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-green-600">Pagos Completados</p>
-                  <p className="text-2xl font-bold text-green-900">{completedPayments.length}</p>
-                </div>
+          </div>
+          
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-600">Completados</p>
+                <p className="text-2xl font-bold text-green-900">{getClientStats().completedPedidos}</p>
               </div>
             </div>
           </div>
@@ -275,7 +364,7 @@ const ClientPayments = () => {
             >
               <div className="flex items-center">
                 <CreditCard className="h-4 w-4 mr-2" />
-                Listos para Pagar ({pendingOrders.length})
+                Listos para Pagar ({pendingPedidos.length})
               </div>
             </button>
             <button
@@ -288,7 +377,7 @@ const ClientPayments = () => {
             >
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-2" />
-                Esperando Aprobación ({ordersWaitingApproval.length})
+                Esperando Aprobación ({pedidosWaitingApproval.length})
               </div>
             </button>
             <button
@@ -323,7 +412,7 @@ const ClientPayments = () => {
         <div className="p-6">
           {activeTab === 'unpaid' && (
             <div className="space-y-4">
-              {pendingOrders.length === 0 ? (
+              {pendingPedidos.length === 0 ? (
                 <div className="text-center py-12">
                   <CreditCard className="mx-auto h-12 w-12 text-green-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -334,21 +423,21 @@ const ClientPayments = () => {
                   </p>
                 </div>
               ) : (
-                pendingOrders.map((order) => (
-                  <div key={order.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                pendingPedidos.map((pedido) => (
+                  <div key={pedido.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        {getStatusIcon(order.estado)}
+                        {getStatusIcon(pedido.estado)}
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">
-                            Proyecto #{order.numero_pedido || order.id}
+                            Proyecto #{pedido.numero_pedido || pedido.id}
                           </h3>
-                          <p className="text-sm text-gray-500">{order.descripcion}</p>
+                          <p className="text-sm text-gray-500">{pedido.descripcion}</p>
                           <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                            <span>Estado: {getStatusText(order.estado)}</span>
-                            <span>Servicio: {order.servicio}</span>
-                            {order.fecha_entrega_deseada && (
-                              <span>Entrega: {new Date(order.fecha_entrega_deseada).toLocaleDateString()}</span>
+                            <span>Estado: {getStatusText(pedido.estado)}</span>
+                            <span>Servicio: {pedido.servicio}</span>
+                            {pedido.fecha_entrega_deseada && (
+                              <span>Entrega: {new Date(pedido.fecha_entrega_deseada).toLocaleDateString()}</span>
                             )}
                           </div>
                         </div>
@@ -356,15 +445,15 @@ const ClientPayments = () => {
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
                           <p className="text-2xl font-bold text-blue-600">
-                            ${parseFloat(order.value || 0).toFixed(2)}
+                            ${parseFloat(pedido.value || 0).toFixed(2)}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {order.tipo_presupuesto === 'estimado' ? 'Presupuesto Estimado' : 'Total a Pagar'}
+                            {pedido.tipo_presupuesto === 'estimado' ? 'Presupuesto Estimado' : 'Total a Pagar'}
                           </p>
                         </div>
                         <button
                           onClick={() => {
-                            setSelectedOrder(order);
+                            setSelectedPedido(pedido);
                             setShowPaymentModal(true);
                           }}
                           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
@@ -382,7 +471,7 @@ const ClientPayments = () => {
 
           {activeTab === 'waiting' && (
             <div className="space-y-4">
-              {ordersWaitingApproval.length === 0 ? (
+              {pedidosWaitingApproval.length === 0 ? (
                 <div className="text-center py-12">
                   <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -393,8 +482,8 @@ const ClientPayments = () => {
                   </p>
                 </div>
               ) : (
-                ordersWaitingApproval.map((order) => (
-                  <div key={order.id} className="border border-orange-200 rounded-lg p-6 bg-orange-50">
+                pedidosWaitingApproval.map((pedido) => (
+                  <div key={pedido.id} className="border border-orange-200 rounded-lg p-6 bg-orange-50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className="bg-orange-100 p-2 rounded-lg">
@@ -402,14 +491,14 @@ const ClientPayments = () => {
                         </div>
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">
-                            Proyecto #{order.numero_pedido || order.id}
+                            Proyecto #{pedido.numero_pedido || pedido.id}
                           </h3>
-                          <p className="text-sm text-gray-600">{order.descripcion}</p>
+                          <p className="text-sm text-gray-600">{pedido.descripcion}</p>
                           <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                            <span>Estado: {getStatusText(order.estado)}</span>
-                            <span>Servicio: {order.servicio}</span>
-                            {order.fecha_entrega_deseada && (
-                              <span>Entrega: {new Date(order.fecha_entrega_deseada).toLocaleDateString()}</span>
+                            <span>Estado: {getStatusText(pedido.estado)}</span>
+                            <span>Servicio: {pedido.servicio}</span>
+                            {pedido.fecha_entrega_deseada && (
+                              <span>Entrega: {new Date(pedido.fecha_entrega_deseada).toLocaleDateString()}</span>
                             )}
                           </div>
                         </div>
@@ -417,7 +506,7 @@ const ClientPayments = () => {
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
                           <p className="text-2xl font-bold text-orange-600">
-                            ${parseFloat(order.value || 0).toFixed(2)}
+                            ${parseFloat(pedido.value || 0).toFixed(2)}
                           </p>
                           <p className="text-sm text-gray-500">
                             Esperando Aprobación
@@ -479,6 +568,15 @@ const ClientPayments = () => {
                           </p>
                           <p className="text-sm text-gray-500">{payment.tipo}</p>
                         </div>
+                        {payment.referencia && (
+                          <button
+                            onClick={() => window.open(`https://www.paypal.com/activity/payment/${payment.referencia}`, '_blank')}
+                            className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200 transition-colors"
+                            title="Ver en PayPal"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -531,6 +629,13 @@ const ClientPayments = () => {
                           </p>
                           <p className="text-sm text-gray-500">{payment.tipo}</p>
                         </div>
+                        <button
+                          onClick={() => handleViewPaymentDetails(payment)}
+                          className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition-colors"
+                          title="Ver detalles del pago"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -542,14 +647,38 @@ const ClientPayments = () => {
       </div>
 
       {/* Payment Modal */}
-      {showPaymentModal && selectedOrder && (
+      {showPaymentModal && selectedPedido && (
         <PaymentGatewayModal 
-          order={selectedOrder}
+          pedido={selectedPedido}
           onClose={() => {
             setShowPaymentModal(false);
-            setSelectedOrder(null);
+            setSelectedPedido(null);
           }}
           onPayment={handlePayment}
+        />
+      )}
+
+      {/* Create Pedido Modal */}
+      {showCreateModal && (
+        <CreatePedidoModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onPedidoCreated={() => {
+            fetchPedidosAndPayments();
+            setShowCreateModal(false);
+          }}
+        />
+      )}
+
+      {/* Payment Details Modal */}
+      {showPaymentDetails && selectedPayment && (
+        <PaymentDetailsModal
+          isOpen={showPaymentDetails}
+          onClose={() => {
+            setShowPaymentDetails(false);
+            setSelectedPayment(null);
+          }}
+          payment={selectedPayment}
         />
       )}
     </div>

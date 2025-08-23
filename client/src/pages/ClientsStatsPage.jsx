@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
-import { getUsers, getOrders, getPayments } from '../api/axios';
+import { getUsers, getPedidos, getPayments } from '../api/axios';
 import { 
   Users, 
   TrendingUp, 
@@ -19,7 +19,7 @@ import {
 
 const ClientsStatsPage = ({ showNavigation = true }) => {
   const [clients, setClients] = useState([]);
-  const [orders, setorders] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('month');
@@ -32,9 +32,9 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
   const fetchAllData = async () => {
     try {
       setLoading(true);
-      const [usersRes, ordersRes, paymentsRes] = await Promise.all([
+      const [usersRes, pedidosRes, paymentsRes] = await Promise.all([
         getUsers(),
-        getOrders(),
+        getPedidos(),
         getPayments()
       ]);
 
@@ -42,8 +42,8 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
         const clientUsers = usersRes.data.data.filter(user => user.rol !== 'admin');
         setClients(clientUsers);
       }
-      if (ordersRes.data.success) {
-        setorders(ordersRes.data.data);
+      if (pedidosRes.data.success) {
+        setPedidos(pedidosRes.data.data);
       }
       if (paymentsRes.data.success) {
         setPayments(paymentsRes.data.data);
@@ -110,30 +110,30 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
     };
   };
 
-  const calculateorderstats = () => {
-    const clientorders = orders.filter(order => {
-      const orderClient = clients.find(c => c.id === order.usuario_id || c.name === order.cliente_nombre);
-      return orderClient;
+  const calculatePedidosStats = () => {
+    const clientPedidos = pedidos.filter(pedido => {
+      const pedidoClient = clients.find(c => c.id === pedido.usuario_id || c.name === pedido.cliente_nombre);
+      return pedidoClient;
     });
 
-    const ordersPerClient = clients.map(client => {
-      const clientorderCount = clientorders.filter(order => 
-        order.usuario_id === client.id || order.cliente_nombre === client.nombre
+    const pedidosPerClient = clients.map(client => {
+      const clientPedidoCount = clientPedidos.filter(pedido => 
+        pedido.usuario_id === client.id || pedido.cliente_nombre === client.nombre
       ).length;
       return {
         client: client.nombre || client.username,
-        orders: clientorderCount,
+        pedidos: clientPedidoCount,
         email: client.email
       };
-    }).sort((a, b) => b.orders - a.orders);
+    }).sort((a, b) => b.pedidos - a.pedidos);
 
-    const averageordersPerClient = clients.length > 0 ? 
-      Math.round((clientorders.length / clients.length) * 100) / 100 : 0;
+    const averagePedidosPerClient = clients.length > 0 ? 
+      Math.round((clientPedidos.length / clients.length) * 100) / 100 : 0;
 
     return {
-      totalorders: clientorders.length,
-      averagePerClient: averageordersPerClient,
-      topClients: ordersPerClient.slice(0, 5)
+      totalPedidos: clientPedidos.length,
+      averagePerClient: averagePedidosPerClient,
+      topClients: pedidosPerClient.slice(0, 5)
     };
   };
 
@@ -192,7 +192,7 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
   const exportStats = () => {
     const statsData = {
       clients: calculateClientStats(),
-      orders: calculateorderstats(),
+      pedidos: calculatePedidosStats(),
       payments: calculatePaymentStats(),
       distribution: getClientDistribution(),
       exportDate: new Date().toISOString(),
@@ -233,7 +233,7 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
   }
 
   const clientStats = calculateClientStats();
-  const orderstats = calculateorderstats();
+  const pedidosStats = calculatePedidosStats();
   const paymentStats = calculatePaymentStats();
   const { statusDistribution, companyDistribution } = getClientDistribution();
 
@@ -337,11 +337,11 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
               <Package className="w-8 h-8 text-purple-600" />
             </div>
             <div className="text-3xl font-bold text-purple-600 mb-2">
-              {orderstats.averagePerClient}
+              {pedidosStats.averagePerClient}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">orders/Cliente</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Pedidos/Cliente</div>
             <div className="text-xs text-purple-600">
-              {orderstats.totalorders} total
+              {pedidosStats.totalPedidos} total
             </div>
           </Card>
 
@@ -429,11 +429,11 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
             <div className="flex items-center gap-2 mb-6">
               <BarChart3 className="w-5 h-5 text-green-600" />
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-                Top Clientes por orders
+                Top Clientes por Pedidos
               </h3>
             </div>
             <div className="space-y-3">
-              {orderstats.topClients.map((client, index) => (
+              {pedidosStats.topClients.map((client, index) => (
                 <div key={client.client} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-8 h-8 bg-green-100 dark:bg-green-900/20 text-green-600 rounded-full text-sm font-bold">
@@ -445,8 +445,8 @@ const ClientsStatsPage = ({ showNavigation = true }) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">{client.orders}</p>
-                    <p className="text-xs text-gray-500">orders</p>
+                    <p className="font-bold text-green-600">{client.pedidos}</p>
+                    <p className="text-xs text-gray-500">pedidos</p>
                   </div>
                 </div>
               ))}

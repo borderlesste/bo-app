@@ -89,9 +89,9 @@ exports.createPayment = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
+  const { usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id } = req.body;
   try {
-    const newPayment = await paymentService.createPayment(usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
+    const newPayment = await paymentService.createPayment(usuario_id, order_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id);
     
     // Registrar actividad de nuevo pago
     const usuariosName = await getClienteName(usuario_id);
@@ -227,7 +227,8 @@ exports.createClientPayment = async (req, res) => {
       metodo_pago,
       estado,
       referencia_transferencia || null, // referencia (para PayPal real, aquí iría el ID)
-      banco_origen || null
+      banco_origen || null,
+      null // paypal_order_id - not used in this client payment flow
     );
     
     res.status(201).json({
@@ -354,7 +355,8 @@ exports.confirmStripePayment = async (req, res) => {
           'Stripe',
           'Completado',
           result.data.id,
-          null
+          null,
+          null // paypal_order_id - not used in Stripe flow
         );
       } catch (dbError) {
         console.error('Error saving payment to database:', dbError);
@@ -446,7 +448,8 @@ exports.capturePayPalPayment = async (req, res) => {
           'PayPal',
           'Completado',
           result.data.id,
-          null
+          null,
+          order_id // paypal_order_id - this is the PayPal order ID
         );
       } catch (dbError) {
         console.error('Error saving PayPal payment to database:', dbError);

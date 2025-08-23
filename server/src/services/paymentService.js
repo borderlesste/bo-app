@@ -38,7 +38,7 @@ const paymentService = {
     return rows[0];
   },
 
-  async createPayment(usuario_id, pedido_id, concepto, monto, metodo, estado, referencia, banco_origen) {
+  async createPayment(usuario_id, pedido_id, concepto, monto, metodo, estado, referencia, banco_origen, paypal_order_id) {
     const connection = await pool.getConnection();
     
     try {
@@ -53,7 +53,7 @@ const paymentService = {
       
       // Create payment record
       const [result] = await connection.execute(
-        'INSERT INTO pagos (numero_pago, usuario_id, pedido_id, tipo, concepto, monto, metodo_pago, estado, referencia, banco_origen, fecha_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        'INSERT INTO pagos (numero_pago, usuario_id, pedido_id, tipo, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id, fecha_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
         [
           `PAY-${Date.now()}`, 
           usuario_id, 
@@ -64,7 +64,8 @@ const paymentService = {
           metodoPagoMapped, 
           estadoCorregido, 
           referencia || null, 
-          banco_origen || null
+          banco_origen || null,
+          paypal_order_id || null
         ]
       );
       

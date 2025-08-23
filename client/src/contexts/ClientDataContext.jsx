@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import api from '../api/axios';
 
@@ -122,7 +122,7 @@ function clientDataReducer(state, action) {
         }
       };
 
-    case ACTIONS.INVALIDATE_CACHE:
+    case ACTIONS.INVALIDATE_CACHE: {
       const cacheToInvalidate = action.payload?.type || 'all';
       if (cacheToInvalidate === 'all') {
         return {
@@ -142,6 +142,7 @@ function clientDataReducer(state, action) {
           }
         };
       }
+    }
 
     default:
       return state;
@@ -152,6 +153,7 @@ function clientDataReducer(state, action) {
 const ClientDataContext = createContext();
 
 // Hook para usar el contexto
+// eslint-disable-next-line react-refresh/only-export-components
 export const useClientData = () => {
   const context = useContext(ClientDataContext);
   if (!context) {
@@ -169,7 +171,7 @@ export const ClientDataProvider = ({ children }) => {
   const isCacheValid = useCallback((type) => {
     const cache = state.cache[type];
     return cache.data && cache.timestamp && (Date.now() - cache.timestamp < CACHE_DURATION);
-  }, [state.cache]);
+  }, [state.cache, CACHE_DURATION]);
 
   const fetchStats = useCallback(async (forceRefresh = false) => {
     if (!forceRefresh && isCacheValid('stats')) {
@@ -217,7 +219,7 @@ export const ClientDataProvider = ({ children }) => {
       // Normalizar datos
       const normalizedProjects = projectsData.map(project => ({
         id: project.id,
-        numero_order: project.numero_order,
+        numero_pedido: project.numero_pedido || project.numero_order,
         name: project.name || project.descripcion || 'Proyecto sin nombre',
         description: project.description || project.descripcion || '',
         servicio: project.servicio,

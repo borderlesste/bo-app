@@ -1,7 +1,7 @@
 const { pool, beginTransaction, commitTransaction, rollbackTransaction } = require('../config/db.js');
 
-const pedidoservice = {
-  async getpedidos(userId, role) {
+const pedidoService = {
+  async getPedidos(userId, role) {
     let query = `
       SELECT p.id, p.numero_pedido, p.usuario_id, c.nombre as cliente_nombre, c.email as cliente_email,
              p.descripcion, p.servicio, p.estado, p.prioridad, 
@@ -56,7 +56,7 @@ const pedidoservice = {
     return processedpedidos;
   },
 
-  async getpedidoById(id) {
+  async getPedidoById(id) {
     const [rows] = await pool.execute(
       `SELECT p.id, p.numero_pedido, p.usuario_id, c.nombre as cliente_nombre, c.email as cliente_email,
               p.descripcion, p.servicio, p.estado, p.prioridad,
@@ -77,7 +77,7 @@ const pedidoservice = {
   },
 
   // Método específico para dashboard del admin con información completa
-  async getpedidosSummaryForAdmin() {
+  async getPedidosSummaryForAdmin() {
     const query = `
       SELECT p.id, p.numero_pedido, p.usuario_id, p.cotizacion_id,
              c.nombre as cliente_nombre, c.email as cliente_email,
@@ -170,7 +170,7 @@ const pedidoservice = {
     return 'baja';
   },
 
-  async updatepedidoPartial(id, updateData) {
+  async updatePedidoPartial(id, updateData) {
     const connection = await pool.getConnection();
     try {
       // Construir query dinámico basado en los campos a actualizar
@@ -214,14 +214,14 @@ const pedidoservice = {
       }
       
       // Devolver el pedido actualizado
-      return await this.getpedidoById(id);
+      return await this.getPedidoById(id);
       
     } finally {
       connection.release();
     }
   },
 
-  async createpedido(usuario_id, pedidoData) {
+  async createPedido(usuario_id, pedidoData) {
     // Generar número de pedido único
     const numero_pedido = `PED-${Date.now()}`;
     
@@ -251,7 +251,7 @@ const pedidoservice = {
     return rows[0];
   },
 
-  async updatepedido(id, descripcion, estado, prioridad, total, fecha_entrega_estimada) {
+  async updatePedido(id, descripcion, estado, prioridad, total, fecha_entrega_estimada) {
     let connection;
     try {
       if (estado === 'Completado') {
@@ -307,7 +307,7 @@ const pedidoservice = {
     }
   },
 
-  async deletepedido(id) {
+  async deletePedido(id) {
     const [result] = await pool.execute('DELETE FROM pedidos WHERE id = ?', [id]);
     if (result.affectedRows === 0) {
       throw new Error('pedido no encontrado');
@@ -315,7 +315,7 @@ const pedidoservice = {
     return { message: `pedido con id ${id} eliminado correctamente` };
   },
 
-  async cancelpedidoClient(id, usuario_id) {
+  async cancelPedidoClient(id, usuario_id) {
     const [pedidoResult] = await pool.execute('SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?', [id, usuario_id]);
 
     if (pedidoResult.length === 0) {
@@ -330,7 +330,7 @@ const pedidoservice = {
     return rows[0];
   },
 
-  async resumepedidoClient(id, usuario_id) {
+  async resumePedidoClient(id, usuario_id) {
     const [pedidoResult] = await pool.execute('SELECT * FROM pedidos WHERE id = ? AND usuario_id = ?', [id, usuario_id]);
 
     if (pedidoResult.length === 0) {
@@ -350,4 +350,4 @@ const pedidoservice = {
   }
 };
 
-module.exports = { pedidoservice };
+module.exports = { pedidoService };

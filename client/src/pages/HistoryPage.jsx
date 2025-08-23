@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getQuotes, getOrders, getPayments } from '../api/axios';
-import OrdersNavigation from '../components/OrdersNavigation';
+import { getQuotes, getPedidos, getPayments } from '../api/axios';
+import PedidosNavigation from '../components/PedidosNavigation';
 import { 
   Search, 
   Filter, 
@@ -30,7 +30,7 @@ import {
 const HistoryPage = ({ showNavigation = true }) => {
   const { user } = useAuth();
   const [quotes, setQuotes] = useState([]);
-  const [orders, setorders] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -66,17 +66,17 @@ const HistoryPage = ({ showNavigation = true }) => {
   const fetchAllData = async () => {
     try {
       setLoading(true);
-      const [quotesRes, ordersRes, paymentsRes] = await Promise.all([
+      const [quotesRes, pedidosRes, paymentsRes] = await Promise.all([
         getQuotes(),
-        getOrders(),
+        getPedidos(),
         getPayments()
       ]);
 
       if (quotesRes.data.success) {
         setQuotes(quotesRes.data.data);
       }
-      if (ordersRes.data.success) {
-        setorders(ordersRes.data.data);
+      if (pedidosRes.data.success) {
+        setPedidos(pedidosRes.data.data);
       }
       if (paymentsRes.data.success) {
         setPayments(paymentsRes.data.data);
@@ -102,7 +102,7 @@ const HistoryPage = ({ showNavigation = true }) => {
         description: quote.descripcion,
         status: quote.estado,
         date: quote.createdAt,
-        cliente: quote.nombre,
+        usuario: quote.nombre,
         email: quote.email,
         telefono: quote.telefono,
         valor: null,
@@ -110,21 +110,21 @@ const HistoryPage = ({ showNavigation = true }) => {
       });
     });
 
-    // Agregar orders
-    orders.forEach(order => {
+    // Agregar pedidos
+    pedidos.forEach(pedido => {
       items.push({
-        id: `order-${order.id}`,
-        type: 'order',
-        title: `order #${order.id} - ${order.servicio}`,
-        subtitle: `Cliente: ${order.cliente_nombre || 'No especificado'}`,
-        description: order.descripcion,
-        status: order.estado,
-        date: order.fecha_creacion,
-        cliente: order.cliente_nombre,
-        valor: order.valor,
-        prioridad: order.prioridad,
-        fecha_entrega: order.fecha_entrega_estimada,
-        rawData: order
+        id: `pedido-${pedido.id}`,
+        type: 'pedido',
+        title: `Pedido #${pedido.id} - ${pedido.servicio}`,
+        subtitle: `Cliente: ${pedido.cliente_nombre || 'No especificado'}`,
+        description: pedido.descripcion,
+        status: pedido.estado,
+        date: pedido.fecha_creacion,
+        usuario: pedido.cliente_nombre,
+        valor: pedido.valor,
+        prioridad: pedido.prioridad,
+        fecha_entrega: pedido.fecha_entrega_estimada,
+        rawData: pedido
       });
     });
 
@@ -138,7 +138,7 @@ const HistoryPage = ({ showNavigation = true }) => {
         description: `Método: ${payment.metodo_pago || payment.metodo || 'No especificado'}`,
         status: payment.estado,
         date: payment.fecha_pago,
-        cliente: payment.cliente_nombre,
+        usuario: payment.cliente_nombre,
         valor: payment.monto,
         referencia: payment.referencia_transferencia,
         rawData: payment
@@ -151,7 +151,7 @@ const HistoryPage = ({ showNavigation = true }) => {
   const getTypeIcon = (type) => {
     switch (type) {
       case 'quote': return <FileText className="w-5 h-5" />;
-      case 'order': return <Package className="w-5 h-5" />;
+      case 'pedido': return <Package className="w-5 h-5" />;
       case 'payment': return <CreditCard className="w-5 h-5" />;
       default: return <Activity className="w-5 h-5" />;
     }
@@ -160,7 +160,7 @@ const HistoryPage = ({ showNavigation = true }) => {
   const getTypeColor = (type) => {
     switch (type) {
       case 'quote': return 'bg-blue-500 text-white';
-      case 'order': return 'bg-green-500 text-white';
+      case 'pedido': return 'bg-green-500 text-white';
       case 'payment': return 'bg-purple-500 text-white';
       default: return 'bg-gray-500 text-white';
     }
@@ -171,11 +171,11 @@ const HistoryPage = ({ showNavigation = true }) => {
       switch (status.toLowerCase()) {
         case 'pendiente': case 'nuevo': return <Clock className="w-4 h-4" />;
         case 'contactado': return <CheckCircle className="w-4 h-4" />;
-        case 'convertido a order': return <ArrowRight className="w-4 h-4" />;
+        case 'convertido a pedido': return <ArrowRight className="w-4 h-4" />;
         case 'rechazado': return <XCircle className="w-4 h-4" />;
         default: return <AlertCircle className="w-4 h-4" />;
       }
-    } else if (type === 'order') {
+    } else if (type === 'pedido') {
       switch (status.toLowerCase()) {
         case 'pendiente': case 'nuevo': return <Clock className="w-4 h-4" />;
         case 'en_proceso': return <Activity className="w-4 h-4" />;
@@ -198,7 +198,7 @@ const HistoryPage = ({ showNavigation = true }) => {
     switch (status.toLowerCase()) {
       case 'pendiente': case 'nuevo': return 'bg-yellow-500 text-white';
       case 'contactado': case 'en_proceso': return 'bg-blue-500 text-white';
-      case 'completado': case 'pagado': case 'convertido a order': return 'bg-green-500 text-white';
+      case 'completado': case 'pagado': case 'convertido a pedido': return 'bg-green-500 text-white';
       case 'cancelado': case 'rechazado': case 'vencido': return 'bg-red-500 text-white';
       default: return 'bg-gray-500 text-white';
     }
@@ -234,7 +234,7 @@ const HistoryPage = ({ showNavigation = true }) => {
     const typeMatch = filter === 'all' || item.type === filter;
     const searchMatch = searchTerm === '' || 
       item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.usuario?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description?.toLowerCase().includes(searchTerm.toLowerCase());
     return typeMatch && searchMatch;
   });
@@ -260,14 +260,14 @@ const HistoryPage = ({ showNavigation = true }) => {
         return {
           total: quotes.length,
           pending: quotes.filter(q => q.estado?.toLowerCase() === 'pendiente' || q.estado?.toLowerCase() === 'nuevo').length,
-          completed: quotes.filter(q => q.estado?.toLowerCase() === 'convertido a order').length
+          completed: quotes.filter(q => q.estado?.toLowerCase() === 'convertido a pedido').length
         };
-      case 'order':
+      case 'pedido':
         return {
-          total: orders.length,
-          pending: orders.filter(o => o.estado?.toLowerCase() === 'pendiente' || o.estado?.toLowerCase() === 'nuevo').length,
-          completed: orders.filter(o => o.estado?.toLowerCase() === 'completado').length,
-          totalValue: orders.reduce((sum, o) => sum + (parseFloat(o.valor) || 0), 0)
+          total: pedidos.length,
+          pending: pedidos.filter(p => p.estado?.toLowerCase() === 'pendiente' || p.estado?.toLowerCase() === 'nuevo').length,
+          completed: pedidos.filter(p => p.estado?.toLowerCase() === 'completado').length,
+          totalValue: pedidos.reduce((sum, p) => sum + (parseFloat(p.valor) || 0), 0)
         };
       case 'payment':
         return {
@@ -307,8 +307,8 @@ const HistoryPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <OrdersNavigation />}
-        
+        {showNavigation && <PedidosNavigation />}
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -317,7 +317,7 @@ const HistoryPage = ({ showNavigation = true }) => {
                 📚 Historial Completo
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl">
-                Visualiza el historial completo de cotizaciones, orders y pagos en una línea de tiempo unificada
+                Visualiza el historial completo de cotizaciones, pedidos y pagos en una línea de tiempo unificada
               </p>
               {user && (
                 <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -361,11 +361,11 @@ const HistoryPage = ({ showNavigation = true }) => {
               <TrendingUp className="w-6 h-6 text-green-600 ml-2" />
             </div>
             <div className="text-3xl font-bold text-green-600 mb-2">
-              {getStatsForType('order').total}
+              {getStatsForType('pedido').total}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">orders</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Pedidos</div>
             <div className="text-xs text-gray-500">
-              {getStatsForType('order').pending} pendientes, {getStatsForType('order').completed} completados
+              {getStatsForType('pedido').pending} pendientes, {getStatsForType('pedido').completed} completados
             </div>
           </Card>
           <Card variant="gradient" className="text-center group hover:scale-105 transition-transform">
@@ -388,7 +388,7 @@ const HistoryPage = ({ showNavigation = true }) => {
             </div>
             <div className="text-3xl font-bold text-gray-700 dark:text-gray-300 mb-2">
               {formatCurrency(
-                getStatsForType('order').totalValue + getStatsForType('payment').totalValue
+                getStatsForType('pedido').totalValue + getStatsForType('payment').totalValue
               )}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Valor Total</div>
@@ -426,13 +426,13 @@ const HistoryPage = ({ showNavigation = true }) => {
                 Cotizaciones ({quotes.length})
               </Button>
               <Button
-                variant={filter === 'order' ? 'primary' : 'ghost'}
+                variant={filter === 'pedido' ? 'primary' : 'ghost'}
                 size="sm"
-                onClick={() => setFilter('order')}
+                onClick={() => setFilter('pedido')}
                 className="flex items-center gap-2"
               >
                 <Package className="w-4 h-4" />
-                orders ({orders.length})
+                Pedidos ({pedidos.length})
               </Button>
               <Button
                 variant={filter === 'payment' ? 'primary' : 'ghost'}
@@ -528,10 +528,10 @@ const HistoryPage = ({ showNavigation = true }) => {
                   <p className="text-gray-600 dark:text-gray-300 mb-3">{item.subtitle}</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    {item.cliente && (
+                    {item.usuario && (
                       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                         <User className="w-4 h-4" />
-                        <span>{item.cliente}</span>
+                        <span>{item.usuario}</span>
                       </div>
                     )}
                     {item.valor && (
@@ -591,7 +591,7 @@ const HistoryPage = ({ showNavigation = true }) => {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                     Detalles del {selectedItem.type === 'quote' ? 'Cotización' : 
-                                selectedItem.type === 'order' ? 'order' : 'Pago'}
+                                selectedItem.type === 'pedido' ? 'Pedido' : 'Pago'}
                   </h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -606,7 +606,7 @@ const HistoryPage = ({ showNavigation = true }) => {
                     <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(selectedItem.type)}`}>
                       {getTypeIcon(selectedItem.type)}
                       {selectedItem.type === 'quote' ? 'Cotización' : 
-                       selectedItem.type === 'order' ? 'order' : 'Pago'}
+                       selectedItem.type === 'pedido' ? 'Pedido' : 'Pago'}
                     </span>
                     <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedItem.status)}`}>
                       {getStatusIcon(selectedItem.status, selectedItem.type)}
@@ -627,12 +627,12 @@ const HistoryPage = ({ showNavigation = true }) => {
                       </label>
                       <p className="text-gray-900 dark:text-gray-100">{formatDate(selectedItem.date)}</p>
                     </div>
-                    {selectedItem.cliente && (
+                    {selectedItem.usuario && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Cliente
+                          Usuario
                         </label>
-                        <p className="text-gray-900 dark:text-gray-100">{selectedItem.cliente}</p>
+                        <p className="text-gray-900 dark:text-gray-100">{selectedItem.usuario}</p>
                       </div>
                     )}
                     {selectedItem.valor && (

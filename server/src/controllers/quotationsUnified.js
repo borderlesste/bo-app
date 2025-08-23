@@ -426,7 +426,7 @@ const convertQuotationToorder = async (req, res) => {
         
         const [orderResult] = await connection.execute(`
           INSERT INTO pedidos 
-          (numero_order, usuario_id, cotizacion_id, estado, subtotal, total, 
+          (numero_pedido, usuario_id, cotizacion_id, estado, subtotal, total, 
            descripcion, created_at, updated_at) 
           VALUES (?, ?, ?, 'nuevo', ?, ?, ?, NOW(), NOW())
         `, [

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getPayments, createAdminPayment, updateAdminPayment, deletePayment, getUsers, getOrders } from '../api/axios';
+import { getPayments, createAdminPayment, updateAdminPayment, deletePayment, getUsers, getPedidos } from '../api/axios';
 import PaymentCreateModal from '../components/PaymentCreateModal';
 import PaymentEditModal from '../components/PaymentEditModal';
 import { 
@@ -30,8 +30,8 @@ import {
 const FinancePaymentsPage = ({ showNavigation = true }) => {
   const { user } = useAuth();
   const [payments, setPayments] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [orders, setorders] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
@@ -49,20 +49,20 @@ const FinancePaymentsPage = ({ showNavigation = true }) => {
   const fetchAllData = async () => {
     try {
       setLoading(true);
-      const [paymentsRes, usersRes, ordersRes] = await Promise.all([
+      const [paymentsRes, usersRes, pedidosRes] = await Promise.all([
         getPayments(),
         getUsers(),
-        getOrders()
+        getPedidos()
       ]);
 
       if (paymentsRes.data.success) {
         setPayments(paymentsRes.data.data);
       }
       if (usersRes.data.success) {
-        setClients(usersRes.data.data.filter(user => user.rol !== 'admin'));
+        setUsuarios(usersRes.data.data.filter(user => user.rol !== 'admin'));
       }
-      if (ordersRes.data.success) {
-        setorders(ordersRes.data.data);
+      if (pedidosRes.data.success) {
+        setPedidos(pedidosRes.data.data);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -716,8 +716,8 @@ const FinancePaymentsPage = ({ showNavigation = true }) => {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSave={handleCreatePayment}
-          clients={clients}
-          orders={orders}
+          usuarios={usuarios}
+          pedidos={pedidos}
           user={user}
         />
 
@@ -730,8 +730,8 @@ const FinancePaymentsPage = ({ showNavigation = true }) => {
           }}
           onSave={handleEditPayment}
           payment={selectedPayment}
-          clients={clients}
-          orders={orders}
+          usuarios={usuarios}
+          pedidos={pedidos}
         />
       </div>
     </div>

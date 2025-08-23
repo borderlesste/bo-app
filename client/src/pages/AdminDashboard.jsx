@@ -33,9 +33,12 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  createOrder,
-  updateOrder,
-  deleteOrder,
+  getUsers,
+  getPedidos,
+  getPayments,
+  createPedido,
+  updatePedido,
+  deletePedido,
   createAdminPayment,
   updateAdminPayment,
   deletePayment,
@@ -47,11 +50,11 @@ import {
   getFinancialSummary
 } from '../api/axios';
 import UserModal from '../components/UserModal';
-import OrderModal from '../components/OrderModal';
+import PedidoModal from '../components/CreatePedidoModal';
 import PaymentModal from '../components/PaymentModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import QuotesPage from './QuotesPage';
-import OrdersPage from './OrdersPage';
+import PedidosPage from './PedidosPage';
 import HistoryPage from './HistoryPage';
 import ClientsViewPage from './ClientsViewPage';
 import ClientsNewPage from './ClientsNewPage';
@@ -81,15 +84,15 @@ const AdminDashboard = () => {
   const [error, setError] = useState(null);
 
   // CRUD Data States
-  const [clientes] = useState([]);
-  const [orders] = useState([]);
-  const [pagos] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [pedidos, setPedidos] = useState([]);
+  const [pagos, setPagos] = useState([]);
 
   // Modal States
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isorderModalOpen, setorderModalOpen] = useState(false);
-  const [selectedorder, setSelectedorder] = useState(null);
+  const [isPedidoModalOpen, setPedidoModalOpen] = useState(false);
+  const [selectedPedido, setSelectedPedido] = useState(null);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [isChangePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
@@ -105,12 +108,12 @@ const AdminDashboard = () => {
     if (['dashboard', 'overview', 'analytics', 'quick-stats'].includes(optionId)) {
       setActiveTab(optionId);
     }
-    // Si es una opción de orders y Cotizaciones, cambiar a la pestaña correspondiente
-    if (['cotizaciones', 'orders', 'historial'].includes(optionId)) {
+    // Si es una opción de Pedidos y Cotizaciones, cambiar a la pestaña correspondiente
+    if (['cotizaciones', 'pedidos', 'historial'].includes(optionId)) {
       setActiveTab(optionId);
     }
-    // Si es una opción de Gestión de Clientes, cambiar a la pestaña correspondiente
-    if (['ver-clientes', 'nuevo-cliente', 'estadisticas-clientes'].includes(optionId)) {
+    // Si es una opción de Gestión de Usuarios, cambiar a la pestaña correspondiente
+    if (['ver-usuarios', 'nuevo-usuario', 'estadisticas-usuarios'].includes(optionId)) {
       setActiveTab(optionId);
     }
     // Si es una opción de Finanzas, cambiar a la pestaña correspondiente
@@ -136,12 +139,15 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [statsRes, activityRes, clientsRes, chartsRes, financialRes] = await Promise.all([
+        const [statsRes, activityRes, clientsRes, chartsRes, financialRes, usersRes, pedidosRes, pagosRes] = await Promise.all([
           getAdminStats(),
           getRecentActivity(),
           getTopClients(),
           getChartsData(timeRange),
-          getFinancialSummary()
+          getFinancialSummary(),
+          getUsers(),
+          getPedidos(),
+          getPayments()
         ]);
 
         if (statsRes.data.success) {
@@ -163,6 +169,18 @@ const AdminDashboard = () => {
         if (financialRes.data.success) {
           setFinancialSummary(financialRes.data.data);
         }
+
+        if (usersRes.data) {
+          setUsuarios(usersRes.data);
+        }
+
+        if (pedidosRes.data) {
+          setPedidos(pedidosRes.data);
+        }
+
+        if (pagosRes.data) {
+          setPagos(pagosRes.data);
+        }
         
       } catch (error) {
         console.error('Error al cargar datos del dashboard:', error);
@@ -173,6 +191,9 @@ const AdminDashboard = () => {
         setTopClients([]);
         setChartsData({});
         setFinancialSummary({});
+        setUsuarios([]);
+        setPedidos([]);
+        setPagos([]);
       } finally {
         setLoading(false);
       }
@@ -183,8 +204,29 @@ const AdminDashboard = () => {
 
   // Función para refrescar todos los datos
   const fetchAllData = async () => {
-    // Esta función puede ser expandida para recargar datos específicos si es necesario
-    window.location.reload(); // Por ahora, simplemente recarga la página
+    try {
+      // Fetch all necessary data for the admin dashboard
+      const [usersResponse, pedidosResponse, pagosResponse] = await Promise.all([
+        getUsers(),
+        getPedidos(),
+        getPayments()
+      ]);
+      
+      if (usersResponse.data) {
+        setUsuarios(usersResponse.data);
+      }
+      
+      if (pedidosResponse.data) {
+        setPedidos(pedidosResponse.data);
+      }
+      
+      if (pagosResponse.data) {
+        setPagos(pagosResponse.data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Error al cargar los datos');
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -283,36 +325,36 @@ const AdminDashboard = () => {
     }
   };
 
-  // order Handlers
-  const handleOpenorderModal = (order = null) => {
-    setSelectedorder(order);
-    setorderModalOpen(true);
+  // Pedido Handlers
+  const handleOpenPedidoModal = (pedido = null) => {
+    setSelectedPedido(pedido);
+    setPedidoModalOpen(true);
   };
-  const handleCloseorderModal = () => {
-    setSelectedorder(null);
-    setorderModalOpen(false);
+  const handleClosePedidoModal = () => {
+    setSelectedPedido(null);
+    setPedidoModalOpen(false);
   };
-  const handleSaveorder = async (orderData) => {
+  const handleSavePedido = async (pedidoData) => {
     try {
-      if (selectedorder) {
-        await updateOrder(selectedorder.id, orderData);
+      if (selectedPedido) {
+        await updatePedido(selectedPedido.id, pedidoData);
       } else {
-        await createOrder(orderData);
+        await createPedido(pedidoData);
       }
       await fetchAllData();
     } catch (error) {
-      console.error("Error al guardar el order:", error);
+      console.error("Error al guardar el pedido:", error);
       throw error;
     }
   };
-  const handleDeleteOrder = async (orderId) => {
-    if (window.confirm("¿Estás seguro de que quieres eliminar este order?")) {
+  const handleDeletePedido = async (pedidoId) => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar este pedido?")) {
       try {
-        await deleteOrder(orderId);
+        await deletePedido(pedidoId);
         await fetchAllData();
       } catch (error) {
-        console.error("Error al eliminar el order:", error);
-        setError("No se pudo eliminar el order.");
+        console.error("Error al eliminar el pedido:", error);
+        setError("No se pudo eliminar el pedido.");
       }
     }
   };
@@ -407,11 +449,11 @@ const AdminDashboard = () => {
 
   const handleAddClick = () => {
     switch (activeTab) {
-      case 'clientes':
+      case 'usuarios':
         handleOpenUserModal();
         break;
-      case 'orders':
-        handleOpenorderModal();
+      case 'pedidos':
+        handleOpenPedidoModal();
         break;
       case 'pagos':
         handleOpenPaymentModal();
@@ -424,13 +466,13 @@ const AdminDashboard = () => {
   // Handlers para acciones rápidas
   const handleQuickAction = (actionId) => {
     switch (actionId) {
-      case 'new_client':
-        setActiveTab('clientes');
+      case 'new_user':
+        setActiveTab('usuarios');
         handleOpenUserModal();
         break;
-      case 'new_order':
-        setActiveTab('orders');
-        handleOpenorderModal();
+      case 'new_pedido':
+        setActiveTab('pedidos');
+        handleOpenPedidoModal();
         break;
       case 'new_payment':
         setActiveTab('pagos');
@@ -450,12 +492,12 @@ const AdminDashboard = () => {
   };
 
   // Calculated values for AdminPanel dashboard
-  const completedordersCount = orders.filter(p => p.estado?.toLowerCase() === 'completado').length;
+  const completedPedidosCount = pedidos.filter(p => p.estado?.toLowerCase() === 'completado').length;
   const totalIncome = pagos.reduce((sum, p) => 
     p.estado?.toLowerCase() === 'pagado' ? sum + parseFloat(p.monto || 0) : sum, 
     0
   );
-  const pendingordersCount = orders.filter(p => p.estado?.toLowerCase() === 'pendiente').length;
+  const pendingPedidosCount = pedidos.filter(p => p.estado?.toLowerCase() === 'pendiente').length;
 
   if (loading) {
     return (
@@ -544,7 +586,7 @@ const AdminDashboard = () => {
         <div className="flex flex-wrap gap-2 mb-8 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-lg">
           {[
             { id: "dashboard", label: "Dashboard Principal", icon: BarChart3 }, 
-            { id: "clientes", label: "Clientes (CRUD)", icon: Users },
+            //{ id: "clientes", label: "Clientes (CRUD)", icon: Users },
             { id: "pagos", label: "Pagos", icon: CreditCard },
             { id: "configuracion", label: "Configuración (Legacy)", icon: Settings }
           ].map((tab) => (
@@ -584,13 +626,13 @@ const AdminDashboard = () => {
                 className="px-4 py-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white"
               >
                 <option value="todos">Todos</option>
-                {activeTab === 'clientes' && (
+                {activeTab === 'usuarios' && (
                   <>
                     <option value="activo">Activo</option>
                     <option value="inactivo">Inactivo</option>
                   </>
                 )}
-                {activeTab === 'orders' && (
+                {activeTab === 'pedidos' && (
                   <>
                     <option value="pendiente">Pendiente</option>
                     <option value="en_proceso">En Progreso</option>
@@ -771,7 +813,7 @@ const AdminDashboard = () => {
                 <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Métricas de Conversión</h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-400">Cotizaciones a orders</span>
+                    <span className="text-gray-600 dark:text-gray-400">Cotizaciones a pedidos</span>
                     <span className="font-semibold text-green-600">68%</span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -851,8 +893,8 @@ const AdminDashboard = () => {
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-violet-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Clientes</p>
-                    <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{clientes.length}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Usuarios</p>
+                    <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{usuarios.length}</p>
                   </div>
                   <Users className="w-8 h-8 text-violet-500" />
                 </div>
@@ -860,8 +902,8 @@ const AdminDashboard = () => {
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">orders Completados</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{completedordersCount}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Pedidos Completados</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{completedPedidosCount}</p>
                   </div>
                   <CheckCircle className="w-8 h-8 text-blue-500" />
                 </div>
@@ -878,8 +920,8 @@ const AdminDashboard = () => {
               <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">orders Pendientes</p>
-                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{pendingordersCount}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Pedidos Pendientes</p>
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{pendingPedidosCount}</p>
                   </div>
                   <AlertCircle className="w-8 h-8 text-orange-500" />
                 </div>
@@ -889,12 +931,12 @@ const AdminDashboard = () => {
 
         {/* CRUD Tables */}
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
-          {activeTab === "clientes" && (
+          {activeTab === "usuarios" && (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Cliente</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Usuario</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Contacto</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Rol</th>
@@ -903,52 +945,52 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filterData(clientes, ['nombre', 'email']).map((cliente) => (
-                    <tr key={cliente.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  {filterData(usuarios, ['nombre', 'email']).map((usuario) => (
+                    <tr key={usuario.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                       <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-r from-violet-400 to-purple-400 flex items-center justify-center text-white font-medium">
-                              {cliente.nombre?.charAt(0)}
+                              {usuario.nombre?.charAt(0)}
                             </div>
                             <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">{cliente.nombre}</div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">ID: {cliente.id}</div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{usuario.nombre}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">ID: {usuario.id}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 dark:text-white flex items-center">
                             <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                            {cliente.email}
+                            {usuario.email}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                             <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                            {cliente.telefono}
+                            {usuario.telefono}
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {getStatusIcon(cliente.estado)}
-                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(cliente.estado)}`}>
-                              {cliente.estado}
+                            {getStatusIcon(usuario.estado)}
+                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(usuario.estado)}`}>
+                              {usuario.estado}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">{cliente.rol}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{usuario.rol}</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(cliente.fecha_registro).toLocaleDateString()}
+                            {new Date(usuario.fecha_registro).toLocaleDateString()}
                           </div>
                         </td>
                       <td className="px-6 py-4">
                         <div className="flex space-x-2">
-                          <button onClick={() => handleOpenUserModal(cliente)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
+                          <button onClick={() => handleOpenUserModal(usuario)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
                             <Edit3 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDeleteUser(cliente.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                          <button onClick={() => handleDeleteUser(usuario.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -960,7 +1002,7 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {activeTab === "orders" && (
+          {activeTab === "pedidos" && (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-slate-700">
@@ -975,43 +1017,43 @@ const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filterData(orders, ['cliente_nombre', 'descripcion']).map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  {filterData(pedidos, ['cliente_nombre', 'descripcion']).map((pedido) => (
+                    <tr key={pedido.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                       <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{order.cliente_nombre}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{pedido.cliente_nombre}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 dark:text-white">{order.descripcion}</div>
+                          <div className="text-sm text-gray-900 dark:text-white">{pedido.descripcion}</div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {getStatusIcon(order.estado)}
-                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.estado)}`}>
-                              {order.estado}
+                            {getStatusIcon(pedido.estado)}
+                            <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(pedido.estado)}`}>
+                              {pedido.estado}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className={`w-2 h-2 rounded-full mr-2 ${getPriorityColor(order.prioridad)}`}></div>
-                            <span className="text-sm text-gray-600 dark:text-gray-300">{order.prioridad}</span>
+                            <div className={`w-2 h-2 rounded-full mr-2 ${getPriorityColor(pedido.prioridad)}`}></div>
+                            <span className="text-sm text-gray-600 dark:text-gray-300">{pedido.prioridad}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">${order.valor?.toLocaleString()}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">${pedido.valor?.toLocaleString()}</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(order.fecha_creacion).toLocaleDateString()}
+                            {new Date(pedido.fecha_creacion).toLocaleDateString()}
                           </div>
                         </td>
                       <td className="px-6 py-4">
                         <div className="flex space-x-2">
-                          <button onClick={() => handleOpenorderModal(order)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
+                          <button onClick={() => handleOpenPedidoModal(pedido)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
                             <Edit3 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleDeleteOrder(order.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                          <button onClick={() => handleDeletePedido(pedido.id)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -1180,10 +1222,10 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* orders Tab */}
-          {activeTab === "orders" && (
+          {/* pedidos Tab */}
+          {activeTab === "pedidos" && (
             <div>
-              <OrdersPage showNavigation={false} />
+              <PedidosPage showNavigation={false} />
             </div>
           )}
 
@@ -1194,22 +1236,22 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* Ver Clientes Tab */}
-          {activeTab === "ver-clientes" && (
+          {/* Ver Usuarios Tab */}
+          {activeTab === "ver-usuarios" && (
             <div>
               <ClientsViewPage showNavigation={false} />
             </div>
           )}
 
-          {/* Nuevo Cliente Tab */}
-          {activeTab === "nuevo-cliente" && (
+          {/* Nuevo Usuario Tab */}
+          {activeTab === "nuevo-usuario" && (
             <div>
               <ClientsNewPage showNavigation={false} />
             </div>
           )}
 
-          {/* Estadísticas Clientes Tab */}
-          {activeTab === "estadisticas-clientes" && (
+          {/* Estadísticas Usuarios Tab */}
+          {activeTab === "estadisticas-usuarios" && (
             <div>
               <ClientsStatsPage showNavigation={false} />
             </div>
@@ -1288,8 +1330,8 @@ const AdminDashboard = () => {
 
         {/* Modals */}
         <UserModal isOpen={isUserModalOpen} onClose={handleCloseUserModal} onSave={handleSaveUser} user={selectedUser} />
-        <OrderModal isOpen={isorderModalOpen} onClose={handleCloseorderModal} onSave={handleSaveorder} order={selectedorder} clients={clientes} />
-        <PaymentModal isOpen={isPaymentModalOpen} onClose={handleClosePaymentModal} onSave={handleSavePayment} payment={selectedPayment} clients={clientes} orders={orders} />
+        <PedidoModal isOpen={isPedidoModalOpen} onClose={handleClosePedidoModal} onSave={handleSavePedido} pedido={selectedPedido} clients={usuarios} />
+        <PaymentModal isOpen={isPaymentModalOpen} onClose={handleClosePaymentModal} onSave={handleSavePayment} payment={selectedPayment} usuarios={usuarios} />
         <ChangePasswordModal isOpen={isChangePasswordModalOpen} onClose={handleCloseChangePasswordModal} />
       </div>
     </DashboardLayout>

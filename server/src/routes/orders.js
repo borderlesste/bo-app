@@ -9,7 +9,7 @@ const {
   deletepedido,
   cancelpedidoUsuario,
   resumepedidoUsuario
-} = require('../controllers/ordersController.js');
+} = require('../controllers/pedidosController.js');
 const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware.js');
 
 const router = express.Router();

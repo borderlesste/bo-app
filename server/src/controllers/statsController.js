@@ -15,7 +15,7 @@ const getMonthlyStats = async (req, res) => {
         proyectos_iniciados as active_projects,
         proyectos_completados as completed_projects,
         cotizaciones_enviadas as pending_quotes,
-        orders_nuevos as total_orders,
+        pedidos_nuevos as total_orders,
         created_at
       FROM estadisticas_mensuales 
     `;
@@ -132,7 +132,7 @@ const getYearlyStats = async (req, res) => {
         AVG(proyectos_iniciados) as avg_active_projects,
         SUM(proyectos_completados) as total_completed_projects,
         SUM(cotizaciones_enviadas) as total_pending_quotes,
-        SUM(orders_nuevos) as total_orders,
+        SUM(pedidos_nuevos) as total_orders,
         COUNT(*) as months_recorded
       FROM estadisticas_mensuales
       GROUP BY anio
@@ -179,7 +179,7 @@ const updateMonthlyStats = async (req, res) => {
     }
     
     const [result] = await pool.execute(`
-      INSERT INTO estadisticas_mensuales (anio, mes, total_ingresos, nuevos_usuarios, proyectos_iniciados, proyectos_completados, cotizaciones_enviadas, orders_nuevos)
+      INSERT INTO estadisticas_mensuales (anio, mes, total_ingresos, nuevos_usuarios, proyectos_iniciados, proyectos_completados, cotizaciones_enviadas, pedidos_nuevos)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         total_ingresos = VALUES(total_ingresos),
@@ -187,7 +187,7 @@ const updateMonthlyStats = async (req, res) => {
         proyectos_iniciados = VALUES(proyectos_iniciados),
         proyectos_completados = VALUES(proyectos_completados),
         cotizaciones_enviadas = VALUES(cotizaciones_enviadas),
-        orders_nuevos = VALUES(orders_nuevos),
+        pedidos_nuevos = VALUES(pedidos_nuevos),
         updated_at = CURRENT_TIMESTAMP
     `, [
       year, 

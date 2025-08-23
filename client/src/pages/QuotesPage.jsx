@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Skeleton } from '../components';
-import { getQuotes, updateQuote, deleteQuote, convertQuoteToOrder, createQuote } from '../api/axios';
-import OrdersNavigation from '../components/OrdersNavigation';
+import { getQuotes, updateQuote, deleteQuote, convertQuoteToPedido, createQuote } from '../api/axios';
+import PedidosNavigation from '../components/PedidosNavigation';
 import CreateQuoteModal from '../components/CreateQuoteModal';
 import EditQuoteModal from '../components/EditQuoteModal';
 import PropTypes from 'prop-types';
@@ -111,12 +111,12 @@ const QuotesPage = ({ showNavigation = true }) => {
 
   const handleConvertToorder = async (id) => {
     try {
-      const response = await convertQuoteToOrder(id);
+      const response = await convertQuoteToPedido(id);
       if (response.data.success) {
         setQuotes(quotes.map(quote => 
           quote.id === id ? { ...quote, estado: 'aceptada' } : quote
         ));
-        alert('Cotización convertida a order exitosamente');
+        alert('Cotización convertida a pedido exitosamente');
       }
     } catch (error) {
       console.error('Error converting quote:', error);
@@ -207,8 +207,8 @@ const QuotesPage = ({ showNavigation = true }) => {
     <div className={showNavigation ? "min-h-screen bg-gradient-to-br from-violet-50 via-white to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-6" : ""}>
       <div className={showNavigation ? "max-w-7xl mx-auto" : ""}>
         {/* Navigation */}
-        {showNavigation && <OrdersNavigation />}
-        
+        {showNavigation && <PedidosNavigation />}
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -444,7 +444,7 @@ const QuotesPage = ({ showNavigation = true }) => {
                       onClick={() => handleConvertToorder(quote.id)}
                     >
                       <ArrowRight className="w-4 h-4" />
-                      Convertir a order
+                      Convertir a pedido
                     </Button>
                   )}
                   
@@ -606,7 +606,7 @@ const QuotesPage = ({ showNavigation = true }) => {
                         }}
                       >
                         <ArrowRight className="w-4 h-4" />
-                        Convertir a order
+                        Convertir a pedido
                       </Button>
                     )}
                     <Button 

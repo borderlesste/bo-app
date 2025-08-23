@@ -20,7 +20,7 @@ exports.getPedidos = async (req, res) => {
 };
 
 // Obtener resumen de pedidos para admin (con información completa)
-exports.getpedidosSummaryForAdmin = async (req, res) => {
+exports.getPedidosSummaryForAdmin = async (req, res) => {
   try {
     if (req.user.rol !== 'admin') {
       return res.status(403).json({
@@ -29,7 +29,7 @@ exports.getpedidosSummaryForAdmin = async (req, res) => {
       });
     }
 
-    const pedidos = await pedidoservice.getpedidosSummaryForAdmin();
+    const pedidos = await pedidoService.getPedidosSummaryForAdmin();
     res.json({
       success: true,
       data: pedidos
@@ -44,10 +44,10 @@ exports.getpedidosSummaryForAdmin = async (req, res) => {
 };
 
 // Obtener un pedido por ID
-exports.getpedidoById = async (req, res) => {
+exports.getPedidoById = async (req, res) => {
   const { id } = req.params;
   try {
-    const pedido = await pedidoservice.getpedidoById(id);
+    const pedido = await pedidoService.getPedidoById(id);
     res.json(pedido);
   } catch (error) {
     console.error(`Error fetching pedido with id ${id}:`, error);
@@ -56,7 +56,7 @@ exports.getpedidoById = async (req, res) => {
 };
 
 // Crear un nuevo pedido
-exports.createpedido = async (req, res) => {
+exports.createPedido = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -66,7 +66,7 @@ exports.createpedido = async (req, res) => {
   const usuario_id = req.user.id; // Obtener el ID del usuario autenticado
 
   try {
-    const newpedido = await pedidoservice.createpedido(usuario_id, pedidoData);
+    const newpedido = await pedidoService.createPedido(usuario_id, pedidoData);
     res.status(201).json({ 
       success: true, 
       message: 'Solicitud enviada correctamente',
@@ -82,7 +82,7 @@ exports.createpedido = async (req, res) => {
 };
 
 // Actualizar un pedido
-exports.updatepedido = async (req, res) => {
+exports.updatePedido = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -92,7 +92,7 @@ exports.updatepedido = async (req, res) => {
   
   try {
     // Obtener el pedido antes de actualizarlo para comparar estados
-    const originalpedido = await pedidoservice.getpedidoById(id);
+    const originalpedido = await pedidoService.getPedidoById(id);
     
     // Solo pasar los campos que fueron enviados en el request
     const updateData = {};
@@ -102,7 +102,7 @@ exports.updatepedido = async (req, res) => {
     if (req.body.total !== undefined) updateData.total = req.body.total;
     if (req.body.fecha_entrega_estimada !== undefined) updateData.fecha_entrega_estimada = req.body.fecha_entrega_estimada;
     
-    const updatedpedido = await pedidoservice.updatepedidoPartial(id, updateData);
+    const updatedpedido = await pedidoService.updatePedidoPartial(id, updateData);
 
     // Si cambió el estado, crear notificación
     if (updateData.estado && updateData.estado !== originalpedido.estado) {
@@ -133,10 +133,10 @@ exports.updatepedido = async (req, res) => {
 };
 
 // Cancelar un pedido (cliente)
-exports.cancelpedidoClient = async (req, res) => {
+exports.cancelPedidoClient = async (req, res) => {
   const { id } = req.params;
   try {
-    const canceledpedido = await pedidoservice.cancelpedidoClient(id, req.user.id);
+    const canceledpedido = await pedidoService.cancelPedidoClient(id, req.user.id);
     res.json(canceledpedido);
   } catch (err) {
     console.error(`Error canceling pedido with id ${id} by client ${req.user.id}:`, err);
@@ -145,10 +145,10 @@ exports.cancelpedidoClient = async (req, res) => {
 };
 
 // Reanudar un pedido (cliente)
-exports.resumepedidoClient = async (req, res) => {
+exports.resumePedidoClient = async (req, res) => {
   const { id } = req.params;
   try {
-    const resumedpedido = await pedidoservice.resumepedidoClient(id, req.user.id);
+    const resumedpedido = await pedidoService.resumePedidoClient(id, req.user.id);
     res.json(resumedpedido);
   } catch (err) {
     console.error(`Error resuming pedido with id ${id} by client ${req.user.id}:`, err);
@@ -156,11 +156,46 @@ exports.resumepedidoClient = async (req, res) => {
   }
 };
 
-// Eliminar un pedido
-exports.deletepedido = async (req, res) => {
+// Obtener el status de un pedido específico
+exports.getPedidoStatus = async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pedidoservice.deletepedido(id);
+    const pedido = await pedidoService.getPedidoById(id);
+    if (!pedido) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pedido no encontrado'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        id: pedido.id,
+        numero_pedido: pedido.numero_pedido,
+        estado: pedido.estado,
+        prioridad: pedido.prioridad,
+        fecha_inicio: pedido.fecha_inicio,
+        fecha_entrega_estimada: pedido.fecha_entrega_estimada,
+        fecha_entrega_real: pedido.fecha_entrega_real,
+        updated_at: pedido.updated_at
+      }
+    });
+  } catch (err) {
+    console.error(`Error getting status for pedido with id ${id}:`, err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al obtener el estado del pedido',
+      error: err.message 
+    });
+  }
+};
+
+// Eliminar un pedido
+exports.deletePedido = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pedidoService.deletePedido(id);
     res.status(200).json(result);
   } catch (err) {
     console.error(`Error deleting pedido with id ${id}:`, err);
