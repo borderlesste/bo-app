@@ -2,23 +2,30 @@ const securityLogService = require('../services/securityLogService.js');
 const { User } = require('../models');
 
 const isAuthenticated = (req, res, next) => {
-  console.log('Verificando sesión. SessionID:', req.session.id);
-  console.log('Usuario en sesión:', req.session.userId);
+  console.log('Verificando sesión. SessionID:', req.session?.id);
+  console.log('Usuario en sesión:', req.session?.userId);
+  console.log('Session object:', req.session);
   
-  if (!req.session.userId) {
+  if (!req.session || !req.session.userId) {
     // Registrar acceso denegado por falta de sesión
     const ip = securityLogService.constructor.extractIP(req);
     const userAgent = securityLogService.constructor.extractUserAgent(req);
     
-    securityLogService.logAccessDenied(
-      null,
-      null,
-      ip,
-      userAgent,
-      req.originalUrl,
-      'sesion_no_encontrada'
-    ).catch(err => console.error('Error logging access denied:', err));
-    
+    (async () => {
+      try {
+        await securityLogService.logAccessDenied(
+          null,
+          null,
+          ip,
+          userAgent,
+          req.originalUrl,
+          'sesion_no_encontrada'
+        );
+      } catch (e) {
+        console.error('Error logging access denied (non-fatal):', e);
+      }
+    })();
+
     return res.status(401).json({ message: 'No autorizado - Sesión requerida' });
   }
 
@@ -46,15 +53,21 @@ const isAdmin = (req, res, next) => {
   const ip = securityLogService.constructor.extractIP(req);
   const userAgent = securityLogService.constructor.extractUserAgent(req);
   
-  securityLogService.logAccessDenied(
-    req.user.id,
-    req.user.email,
-    ip,
-    userAgent,
-    req.originalUrl,
-    'permisos_insuficientes_admin'
-  ).catch(err => console.error('Error logging access denied:', err));
-  
+  (async () => {
+    try {
+      await securityLogService.logAccessDenied(
+        req.user.id,
+        req.user.email,
+        ip,
+        userAgent,
+        req.originalUrl,
+        'permisos_insuficientes_admin'
+      );
+    } catch (e) {
+      console.error('Error logging access denied (non-fatal):', e);
+    }
+  })();
+
   return res.status(403).json({ message: 'Acceso denegado - Se requiere rol de administrador' });
 };
 
@@ -67,15 +80,21 @@ const requireRole = (role) => {
       const ip = securityLogService.constructor.extractIP(req);
       const userAgent = securityLogService.constructor.extractUserAgent(req);
       
-      securityLogService.logAccessDenied(
-        req.user?.id || null,
-        req.user?.email || null,
-        ip,
-        userAgent,
-        req.originalUrl,
-        `permisos_insuficientes_${role}`
-      ).catch(err => console.error('Error logging access denied:', err));
-      
+      (async () => {
+        try {
+          await securityLogService.logAccessDenied(
+            req.user?.id || null,
+            req.user?.email || null,
+            ip,
+            userAgent,
+            req.originalUrl,
+            `permisos_insuficientes_${role}`
+          );
+        } catch (e) {
+          console.error('Error logging access denied (non-fatal):', e);
+        }
+      })();
+
       return res.status(403).json({ 
         message: `Acceso denegado - Se requiere rol de ${role}` 
       });

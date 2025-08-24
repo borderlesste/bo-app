@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const morgan = require('morgan');
 const { pool } = require('./config/db.js');
+const mysqlForSessions = require('mysql2');
 
 // Rutas principales
 const authRoutes = require('./routes/auth.js');
@@ -52,7 +53,18 @@ const PORT = process.env.PORT || 4000;
 // Render: configurar confianza en proxy
 app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
-// Sesiones con MySQLStore
+// Sesiones con MySQLStore (usar opciones de conexión en lugar de pasar el pool de mysql2/promise)
+// Create a callback-style mysql pool for use by express-mysql-session
+const sessionDbConfig = {
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  connectionLimit: 5
+};
+const sessionPool = mysqlForSessions.createPool(sessionDbConfig);
+
 const sessionStore = new MySQLStore({
   expiration: 1000 * 60 * 60 * 24 * 7, // 7 días
   createDatabaseTable: false,
@@ -66,7 +78,7 @@ const sessionStore = new MySQLStore({
       data: 'data'
     }
   }
-}, pool);
+}, sessionPool);
 
 // Configuración CORS
 const corsOptions = {
@@ -166,11 +178,24 @@ app.use(session({
   store: sessionStore,
   cookie: {
     httpOnly: true,
-    secure: false, // Temporarily disable for cross-origin development
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 1000 * 60 * 60 * 24 * 7,
-    sameSite: 'lax' // Changed to lax for development compatibility
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 }));
+
+// Session-store and DB error handler: convert low-level DB errors into a 503 JSON response
+// This prevents express-session/store errors from returning a 500 and exposing stack traces.
+app.use((err, req, res, next) => {
+  if (!err) return next();
+  const dbErrorCodes = ['ETIMEDOUT', 'ENETUNREACH', 'ECONNRESET', 'PROTOCOL_CONNECTION_LOST', 'ECONNREFUSED'];
+  if (err && err.code && dbErrorCodes.includes(err.code)) {
+    console.error('🔴 Session/store DB error converted to 503:', err.code, err.message || err);
+    return res.status(503).json({ success: false, message: 'Servicio temporalmente no disponible. Intente nuevamente en unos minutos.' });
+  }
+  // For other errors, pass to the default error handlers
+  next(err);
+});
 
 // UNIFIED ROUTES (Primary endpoints)
 app.use('/api/quotations-unified', quotationsUnifiedRoutes);
