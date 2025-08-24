@@ -137,14 +137,20 @@ const FinanceInvoicesPage = ({ showNavigation = true }) => {
       const response = await sendBulkInvoiceReminders();
       
       if (response.data.success) {
-        const { sent, errors, total } = response.data.summary;
-        alert(
-          `Recordatorios masivos completados:\n` +
-          `• Total procesadas: ${total}\n` +
-          `• Enviadas: ${sent}\n` +
-          `• Errores: ${errors}\n\n` +
-          `${response.data.message}`
-        );
+        if (response.data.summary) {
+          // Hay resumen de resultados (se procesaron facturas)
+          const { sent, errors, total } = response.data.summary;
+          alert(
+            `Recordatorios masivos completados:\n` +
+            `• Total procesadas: ${total}\n` +
+            `• Enviadas: ${sent}\n` +
+            `• Errores: ${errors}\n\n` +
+            `${response.data.message}`
+          );
+        } else {
+          // No había facturas para procesar
+          alert(`Recordatorios masivos:\n${response.data.message}`);
+        }
       } else {
         alert('Error al enviar recordatorios masivos: ' + (response.data.message || 'Error desconocido'));
       }
