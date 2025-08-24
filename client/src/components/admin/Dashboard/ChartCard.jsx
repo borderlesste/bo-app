@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -165,6 +165,26 @@ const ChartCard = ({ title, data, type = 'line', color = '#3B82F6', className = 
       )}
     </div>
   );
+};
+
+ChartCard.propTypes = {
+  title: PropTypes.string.isRequired,
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      month: PropTypes.string,
+      label: PropTypes.string,
+      name: PropTypes.string,
+      total: PropTypes.number,
+      value: PropTypes.number,
+      newClients: PropTypes.number,
+      count: PropTypes.number,
+      status: PropTypes.string,
+      category: PropTypes.string
+    })
+  ),
+  type: PropTypes.oneOf(['line', 'bar', 'doughnut', 'pie']),
+  color: PropTypes.string,
+  className: PropTypes.string
 };
 
 export default ChartCard;

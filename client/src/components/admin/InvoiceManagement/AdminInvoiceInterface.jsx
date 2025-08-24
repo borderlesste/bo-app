@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   Plus,
@@ -40,11 +40,7 @@ const AdminInvoiceInterface = () => {
     notas: ''
   });
 
-  useEffect(() => {
-    loadInvoices();
-  }, [statusFilter]);
-
-  const loadInvoices = async () => {
+  const loadInvoices = useCallback(async () => {
     try {
       setLoading(true);
       const params = {};
@@ -57,7 +53,11 @@ const AdminInvoiceInterface = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    loadInvoices();
+  }, [loadInvoices]);
 
   const searchUsers = async (query) => {
     if (!query || query.length < 2) {
@@ -84,6 +84,26 @@ const AdminInvoiceInterface = () => {
     setShowUserSelector(false);
     setUserSearchTerm('');
     setUsers([]);
+  };
+
+  const toggleUserSelector = () => {
+    setShowUserSelector(!showUserSelector);
+    if (!showUserSelector) {
+      setUserSearchTerm('');
+      setUsers([]);
+    }
+  };
+
+  const handleUserContact = (user, method) => {
+    if (method === 'phone' && user.telefono) {
+      window.open(`tel:${user.telefono}`);
+    } else if (method === 'email' && user.email) {
+      window.open(`mailto:${user.email}`);
+    }
+  };
+
+  const getUserCompanyInfo = (user) => {
+    return user.empresa || user.nombre || 'Sin información';
   };
 
   const createInvoice = async () => {
@@ -393,22 +413,54 @@ const AdminInvoiceInterface = () => {
                   {selectedUser ? (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium text-gray-900">{selectedUser.nombre}</h3>
-                          <p className="text-sm text-gray-600">{selectedUser.email}</p>
+                        <div className="flex-1">
+                          <div className="flex items-center mb-2">
+                            <User className="h-4 w-4 text-blue-600 mr-2" />
+                            <h3 className="font-medium text-gray-900">{selectedUser.nombre}</h3>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            <Mail className="h-4 w-4 text-blue-600 mr-2" />
+                            <button
+                              onClick={() => handleUserContact(selectedUser, 'email')}
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                            >
+                              {selectedUser.email}
+                            </button>
+                          </div>
                           {selectedUser.empresa && (
-                            <p className="text-sm text-gray-600">{selectedUser.empresa}</p>
+                            <div className="flex items-center mb-2">
+                              <Building className="h-4 w-4 text-blue-600 mr-2" />
+                              <p className="text-sm text-gray-600">{getUserCompanyInfo(selectedUser)}</p>
+                            </div>
                           )}
                           {selectedUser.telefono && (
-                            <p className="text-sm text-gray-600">{selectedUser.telefono}</p>
+                            <div className="flex items-center">
+                              <Phone className="h-4 w-4 text-blue-600 mr-2" />
+                              <button
+                                onClick={() => handleUserContact(selectedUser, 'phone')}
+                                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {selectedUser.telefono}
+                              </button>
+                            </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => setSelectedUser(null)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={toggleUserSelector}
+                            className="text-blue-600 hover:text-blue-800 p-1"
+                            title="Cambiar usuario"
+                          >
+                            <Search className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setSelectedUser(null)}
+                            className="text-red-600 hover:text-red-800 p-1"
+                            title="Quitar usuario"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -420,6 +472,7 @@ const AdminInvoiceInterface = () => {
                           placeholder="Buscar por nombre, email, teléfono o empresa..."
                           value={userSearchTerm}
                           onChange={handleUserSearch}
+                          onFocus={() => setShowUserSelector(true)}
                           className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         />
                       </div>

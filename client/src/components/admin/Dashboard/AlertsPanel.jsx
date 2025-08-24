@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
 
 const AlertsPanel = ({ alerts, className = '' }) => {
@@ -142,6 +142,19 @@ const AlertsPanel = ({ alerts, className = '' }) => {
       )}
     </div>
   );
+};
+
+AlertsPanel.propTypes = {
+  alerts: PropTypes.arrayOf(
+    PropTypes.shape({
+      type: PropTypes.oneOf(['danger', 'warning', 'info']).isRequired,
+      title: PropTypes.string.isRequired,
+      message: PropTypes.string.isRequired,
+      amount: PropTypes.number,
+      action: PropTypes.string
+    })
+  ),
+  className: PropTypes.string
 };
 
 export default AlertsPanel;

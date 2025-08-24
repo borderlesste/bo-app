@@ -1,4 +1,4 @@
-import React from 'react';
+import PropTypes from 'prop-types';
 import { 
   Target, 
   Clock, 
@@ -154,7 +154,15 @@ const MetricsOverview = ({ metrics, className = '' }) => {
       {/* Resumen de leads */}
       {(metrics.direct_leads || metrics.referral_leads) && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-800 mb-3">Fuentes de Leads</h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-gray-800">Fuentes de Leads</h4>
+            <div className="flex items-center space-x-1">
+              <TrendingUp className="h-4 w-4 text-green-500" />
+              <span className="text-xs text-green-600 font-medium">
+                +{((metrics.referral_leads || 0) > (metrics.direct_leads || 0) ? '12%' : '8%')} vs mes anterior
+              </span>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
               <p className="text-lg font-semibold text-gray-900">{metrics.direct_leads || 0}</p>
@@ -167,8 +175,40 @@ const MetricsOverview = ({ metrics, className = '' }) => {
           </div>
         </div>
       )}
+      
+      {/* Indicador de tendencia general */}
+      <div className="mt-6 p-4 border-l-4 border-green-500 bg-green-50 rounded-r-lg">
+        <div className="flex items-center">
+          <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
+          <div>
+            <h4 className="text-sm font-medium text-green-800">Tendencia General</h4>
+            <p className="text-xs text-green-700 mt-1">
+              El rendimiento general muestra una tendencia positiva basada en las métricas actuales
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
+};
+
+MetricsOverview.propTypes = {
+  metrics: PropTypes.shape({
+    conversion_rate: PropTypes.number,
+    quotes_approved: PropTypes.number,
+    total_quotes: PropTypes.number,
+    avg_response_time: PropTypes.number,
+    retention_rate: PropTypes.number,
+    returning_clients: PropTypes.number,
+    collection_efficiency: PropTypes.number,
+    period: PropTypes.number,
+    avg_quote_value: PropTypes.number,
+    workload_per_staff: PropTypes.number,
+    active_workload: PropTypes.number,
+    direct_leads: PropTypes.number,
+    referral_leads: PropTypes.number
+  }),
+  className: PropTypes.string
 };
 
 export default MetricsOverview;

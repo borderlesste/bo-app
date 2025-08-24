@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -28,9 +28,9 @@ const AdvancedDashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, [period]);
+  }, [loadDashboardData]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const [
@@ -57,7 +57,7 @@ const AdvancedDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
 
   if (loading) {
     return (
@@ -118,6 +118,36 @@ const AdvancedDashboard = () => {
       {/* Alertas */}
       {alerts.length > 0 && (
         <AlertsPanel alerts={alerts} className="mb-6 sm:mb-8" />
+      )}
+
+      {/* Indicadores Críticos */}
+      {(trends?.critical_metrics && Object.keys(trends.critical_metrics).length > 0) && (
+        <div className="mb-6 sm:mb-8 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center mb-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+            <h3 className="text-lg font-semibold text-red-800">Métricas que Requieren Atención</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {trends?.critical_metrics?.low_conversion && (
+              <div className="bg-white p-3 rounded-lg border border-red-200">
+                <p className="text-sm font-medium text-red-800">Conversión Baja</p>
+                <p className="text-xs text-red-600">Tasa actual: {advancedMetrics?.conversion_rate?.toFixed(1) || 0}%</p>
+              </div>
+            )}
+            {trends?.critical_metrics?.slow_response && (
+              <div className="bg-white p-3 rounded-lg border border-red-200">
+                <p className="text-sm font-medium text-red-800">Respuesta Lenta</p>
+                <p className="text-xs text-red-600">Tiempo actual: {advancedMetrics?.avg_response_time?.toFixed(1) || 0} días</p>
+              </div>
+            )}
+            {trends?.critical_metrics?.low_retention && (
+              <div className="bg-white p-3 rounded-lg border border-red-200">
+                <p className="text-sm font-medium text-red-800">Retención Baja</p>
+                <p className="text-xs text-red-600">Tasa actual: {advancedMetrics?.retention_rate?.toFixed(1) || 0}%</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* KPIs Principales */}
@@ -264,24 +294,43 @@ const AdvancedDashboard = () => {
 
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
+            {(trends?.growth?.clients >= 0 && trends?.growth?.revenue >= 0 && trends?.growth?.pedidos >= 0) ? (
+              <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
+            ) : (
+              <TrendingDown className="h-5 w-5 mr-2 text-red-600" />
+            )}
             Tendencias del Período
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Nuevos Clientes</span>
+              <div className="flex items-center">
+                <span className="text-gray-600">Nuevos Clientes</span>
+                {trends?.growth?.clients < 0 && (
+                  <TrendingDown className="h-4 w-4 ml-1 text-red-500" />
+                )}
+              </div>
               <span className={`font-semibold ${trends?.growth?.clients >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatPercentage(trends?.growth?.clients || 0)}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Ingresos</span>
+              <div className="flex items-center">
+                <span className="text-gray-600">Ingresos</span>
+                {trends?.growth?.revenue < 0 && (
+                  <TrendingDown className="h-4 w-4 ml-1 text-red-500" />
+                )}
+              </div>
               <span className={`font-semibold ${trends?.growth?.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatPercentage(trends?.growth?.revenue || 0)}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Nuevos Pedidos</span>
+              <div className="flex items-center">
+                <span className="text-gray-600">Nuevos Pedidos</span>
+                {trends?.growth?.pedidos < 0 && (
+                  <TrendingDown className="h-4 w-4 ml-1 text-red-500" />
+                )}
+              </div>
               <span className={`font-semibold ${trends?.growth?.pedidos >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatPercentage(trends?.growth?.pedidos || 0)}
               </span>
