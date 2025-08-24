@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, User, FileText, Calculator, Calendar } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
+import { X, Plus, Trash2, User, FileText, Calculator } from 'lucide-react';
 import { createInvoice, getUsers } from '../../api/axios';
 import { useToast } from '../ui/use-toast';
 
@@ -35,9 +36,9 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     if (isOpen) {
       loadClients();
     }
-  }, [isOpen]);
+  }, [isOpen, loadClients]);
 
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       const response = await getUsers({ rol: 'cliente', limit: 100 });
       if (response.data.success) {
@@ -47,7 +48,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
       console.error('Error loading clients:', error);
       addToast('Error al cargar clientes', 'error');
     }
-  };
+  }, [addToast]);
 
   // Resetear formulario al abrir/cerrar
   useEffect(() => {
@@ -594,6 +595,12 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
       </div>
     </div>
   );
+};
+
+CreateInvoiceModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func
 };
 
 export default CreateInvoiceModal;
