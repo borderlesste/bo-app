@@ -759,7 +759,46 @@ export default {
       address: 'Adresse'
     }
   },
-
+  payment: {
+    title: "Effectuer un Paiement",
+    fields: {
+      concept: "Concept",
+      amount: "Montant",
+        reference: "Numéro de Référence",
+      referencePlaceholder: "Ex : 987654321",
+      noConcept: "N/A"
+    },
+    chooseMethod: "Sélectionnez un mode de paiement :",
+    methods: {
+      bank: "Virement Bancaire"
+    },
+    bankDetails: {
+      bank: "Banque",
+      account: "Numéro de Compte",
+      beneficiary: "Bénéficiaire",
+      clabe: "CLABE"
+    },
+    bankData: {
+      title: "Informations pour le Virement",
+      confirm: "Fait, Notifier le Paiement"
+    },
+    paypal: {
+      title: "Procéder avec PayPal",
+      description: "Vous serez redirigé vers PayPal pour compléter votre paiement en toute sécurité.",
+      confirm: "Confirmer le Paiement"
+    },
+    simulation: "(Ceci est actuellement une simulation. Une fois confirmé, le paiement sera marqué comme payé.)",
+    errors: {
+      referenceRequired: "Veuillez entrer le numéro de référence."
+    },
+    actions: {
+      copied: "Copié dans le presse-papiers"
+    }
+  },
+  actions: {
+    back: "Retour",
+    cancel: "Annuler"
+  },
   // Footer
   footer: {
     privacyPolicy: 'Politique de Confidentialité',

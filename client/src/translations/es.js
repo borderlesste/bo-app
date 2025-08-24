@@ -760,6 +760,48 @@ export default {
     }
   },
 
+  // Payment Modal
+  pagos: {
+    title: "Realizar Pago",
+    fields: {
+      concept: "Concepto",
+      amount: "Monto",
+      reference: "Número de Referencia",
+      referencePlaceholder: "Ej: 987654321",
+      noConcept: "N/A"
+    },
+    chooseMethod: "Seleccione un método de pago:",
+    methods: {
+      bank: "Transferencia Bancaria"
+    },
+    bankDetails: {
+      bank: "Banco",
+      account: "Número de Cuenta",
+      beneficiary: "Beneficiario",
+      clabe: "CLABE"
+    },
+    bankData: {
+      title: "Datos para la Transferencia",
+      confirm: "Hecho, Notificar Pago"
+    },
+    paypal: {
+      title: "Proceder con PayPal",
+      description: "Serás redirigido a PayPal para completar tu pago de forma segura.",
+      confirm: "Confirmar Pago"
+    },
+    simulation: "(Actualmente esto es una simulación. Al confirmar, el pago se marcará como pagado.)",
+    errors: {
+      referenceRequired: "Por favor, ingrese el número de referencia."
+    },
+    actions: {
+      copied: "Copiado al portapapeles"
+    }
+  },
+  actions: {
+    back: "Atrás",
+    cancel: "Cancelar"
+  },
+
   // Footer
   footer: {
     privacyPolicy: 'Política de Privacidad',
@@ -779,4 +821,5 @@ export default {
     followUsOn: 'Síguenos en',
     visit: 'Visitar'
   }
+
 };

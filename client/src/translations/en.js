@@ -760,6 +760,46 @@ export default {
       address: 'Address'
     }
   },
+  payment: {
+    title: 'Make a Payment',
+    fields: {
+      concept: "Concept",
+      amount: "Amount",
+      reference: "Reference Number",
+      referencePlaceholder: "Ex: 987654321",
+      noConcept: "N/A"
+    },
+    chooseMethod: "Select a payment method:",
+    methods: {
+      bank: "Bank Transfer"
+    },
+    bankDetails: {
+      bank: "Bank",
+      account: "Account Number",
+      beneficiary: "Beneficiary",
+      clabe: "CLABE"
+    },
+    bankData: {
+      title: "Bank Transfer Details",
+      confirm: "Done, Notify Payment"
+    },
+    paypal: {
+      title: "Proceed with PayPal",
+      description: "You will be redirected to PayPal to securely complete your payment.",
+      confirm: "Confirm Payment"
+    },
+    simulation: "(This is currently a simulation. Once confirmed, the payment will be marked as paid.)",
+    errors: {
+      referenceRequired: "Please enter the reference number."
+    },
+    actions: {
+      copied: "Copied to clipboard"
+    }
+  },
+  actions: {
+    back: "Back",
+    cancel: "Cancel"
+  },
 
   // Footer
   footer: {

@@ -759,6 +759,47 @@ export default {
       address: 'Endereço'
     }
   },
+  // Payment Page
+  payment: {
+    title: "Realizar Pagamento",
+    fields: {
+      concept: "Conceito",
+      amount: "Valor",
+      reference: "Número de Referência",
+      referencePlaceholder: "Ex: 987654321",
+      noConcept: "N/A"
+    },
+    chooseMethod: "Selecione um método de pagamento:",
+    methods: {
+      bank: "Transferência Bancária"
+    },
+    bankDetails: {
+      bank: "Banco",
+      account: "Número da Conta",
+      beneficiary: "Beneficiário",
+      clabe: "CLABE"
+    },
+    bankData: {
+      title: "Dados para Transferência",
+      confirm: "Feito, Notificar Pagamento"
+    },
+    paypal: {
+      title: "Prosseguir com PayPal",
+      description: "Você será redirecionado ao PayPal para concluir seu pagamento com segurança.",
+      confirm: "Confirmar Pagamento"
+    },
+    simulation: "(Atualmente esta é uma simulação. Ao confirmar, o pagamento será marcado como pago.)",
+    errors: {
+      referenceRequired: "Por favor, insira o número de referência."
+    },
+    actions: {
+      copied: "Copiado para a área de transferência"
+    }
+  },
+  actions: {
+    back: "Voltar",
+    cancel: "Cancelar"
+  },
 
   // Footer
   footer: {
