@@ -618,6 +618,12 @@ export const addInvoiceItem = (invoiceId, itemData) => api.post(`/api/invoices/$
 export const updateInvoiceItem = (itemId, itemData) => api.put(`/api/invoices/items/${itemId}`, itemData);
 export const deleteInvoiceItem = (itemId) => api.delete(`/api/invoices/items/${itemId}`);
 
+// ================ EMAIL FUNCTIONS ================
+export const sendInvoiceReminder = (invoiceId) => api.post(`/api/email/invoice-reminder/${invoiceId}`);
+export const sendBulkInvoiceReminders = () => api.post('/api/email/bulk-invoice-reminders');
+export const testEmailTemplate = (templateData) => api.post('/api/email/test-template', templateData);
+export const getEmailConfig = () => api.get('/api/email/config');
+
 // --- Monthly Statistics Management ---
 export const generateCurrentMonthStats = () => api.post('/api/stats/generate-current-month');
 export const getStatsComparison = (year1, month1, year2, month2) => 

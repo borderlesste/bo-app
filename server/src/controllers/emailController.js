@@ -20,13 +20,14 @@ class EmailController {
           u.nombre as client_name
         FROM facturas f
         JOIN usuarios u ON f.usuario_id = u.id
-        WHERE f.id = ? AND f.estado != 'pagada'
+        WHERE f.id = ? AND f.estado != 'pagada' 
+          AND u.email IS NOT NULL AND u.email != ''
       `, [invoice_id]);
 
       if (invoiceRows.length === 0) {
         return res.status(404).json({
           success: false,
-          message: 'Factura no encontrada o ya está pagada'
+          message: 'Factura no encontrada, ya está pagada, o el cliente no tiene email registrado'
         });
       }
 
@@ -85,6 +86,7 @@ class EmailController {
         WHERE f.estado IN ('pendiente', 'enviada') 
           AND f.fecha_vencimiento < NOW()
           AND DATEDIFF(NOW(), f.fecha_vencimiento) <= 30
+          AND u.email IS NOT NULL AND u.email != ''
       `);
 
       if (invoiceRows.length === 0) {

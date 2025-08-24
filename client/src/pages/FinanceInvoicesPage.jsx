@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Card, Button, Skeleton } from '../components';
 import { useAuth } from '../contexts/AuthContext';
-import { getAdminInvoices, updateInvoiceStatus } from '../api/axios';
+import { getAdminInvoices, updateInvoiceStatus, sendInvoiceReminder, sendBulkInvoiceReminders } from '../api/axios';
 import { 
   Search, 
   FileText, 
@@ -95,19 +95,69 @@ const FinanceInvoicesPage = ({ showNavigation = true }) => {
         alert('No se puede enviar la factura: el cliente no tiene email registrado');
         return;
       }
-
-      // En un sistema real, aquí se enviaría un email con la factura
-      // Por ahora simularemos el envío
-      console.log('Enviando factura:', {
-        to: invoice.cliente_email,
-        subject: `Factura ${invoice.numero_factura}`,
-        invoice: invoice
-      });
-
-      alert(`Factura ${invoice.numero_factura} enviada exitosamente a ${invoice.cliente_email}`);
+      
+      // Enviar recordatorio de factura usando el sistema profesional de emails
+      const response = await sendInvoiceReminder(invoice.id);
+      
+      if (response.data.success) {
+        alert(`Recordatorio de factura ${invoice.numero_factura} enviado exitosamente a ${invoice.cliente_email}`);
+        
+        // Actualizar estado de la factura a "enviada" si estaba pendiente
+        if (invoice.estado === 'borrador' || invoice.estado === 'pendiente') {
+          await updateInvoiceStatus(invoice.id, { estado: 'enviada' });
+          fetchInvoices(); // Recargar lista
+        }
+      } else {
+        alert('Error al enviar el recordatorio: ' + (response.data.message || 'Error desconocido'));
+      }
     } catch (error) {
-      console.error('Error sending invoice:', error);
-      alert('Error al enviar la factura. Intente nuevamente.');
+      console.error('Error sending invoice reminder:', error);
+      
+      // Manejo específico de errores
+      if (error.response?.status === 404) {
+        alert('Factura no encontrada o ya está pagada');
+      } else if (error.response?.status === 403) {
+        alert('No tienes permisos para enviar recordatorios de factura');
+      } else if (error.response?.data?.message) {
+        alert('Error: ' + error.response.data.message);
+      } else {
+        alert('Error al enviar el recordatorio. Intente nuevamente.');
+      }
+    }
+  };
+
+  const handleBulkReminders = async () => {
+    try {
+      const confirmed = window.confirm(
+        '¿Enviar recordatorios a todas las facturas vencidas? Esta acción enviará emails a todos los clientes con facturas pendientes de pago.'
+      );
+      
+      if (!confirmed) return;
+      
+      const response = await sendBulkInvoiceReminders();
+      
+      if (response.data.success) {
+        const { sent, errors, total } = response.data.summary;
+        alert(
+          `Recordatorios masivos completados:\n` +
+          `• Total procesadas: ${total}\n` +
+          `• Enviadas: ${sent}\n` +
+          `• Errores: ${errors}\n\n` +
+          `${response.data.message}`
+        );
+      } else {
+        alert('Error al enviar recordatorios masivos: ' + (response.data.message || 'Error desconocido'));
+      }
+    } catch (error) {
+      console.error('Error sending bulk reminders:', error);
+      
+      if (error.response?.status === 403) {
+        alert('No tienes permisos para enviar recordatorios masivos');
+      } else if (error.response?.data?.message) {
+        alert('Error: ' + error.response.data.message);
+      } else {
+        alert('Error al enviar recordatorios masivos. Intente nuevamente.');
+      }
     }
   };
 
@@ -219,6 +269,15 @@ const FinanceInvoicesPage = ({ showNavigation = true }) => {
               )}
             </div>
             <div className="flex gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkReminders}
+                className="flex items-center gap-2 text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300"
+              >
+                <Send className="w-4 h-4" />
+                Recordatorios Masivos
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"
