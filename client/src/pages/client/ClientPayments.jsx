@@ -47,18 +47,25 @@ const ClientPayments = () => {
         console.log('Pedidos data received:', pedidosData); // Debug log
         
         // Process pedidos data to ensure consistent structure
-        const processedPedidos = (pedidosData || []).map(pedido => ({
-          ...pedido,
-          estado: pedido?.status || pedido?.estado || 'nuevo', // Priorizar status ya que viene del backend
-          id: pedido.id,
-          numero_pedido: pedido?.numero_pedido,
-          value: parseFloat(pedido?.presupuesto_estimado) || parseFloat(pedido?.value) || parseFloat(pedido?.total) || 0,
-          descripcion: pedido?.descripcion || pedido?.description || pedido?.name || '',
-          servicio: pedido?.servicio || '',
-          fecha_entrega_deseada: pedido?.fecha_entrega_deseada,
-          fecha_entrega_estimada: pedido?.fecha_entrega_estimada,
-          created_at: pedido.created_at
-        })).filter(pedido => pedido && pedido.id); // Filter out any invalid pedidos
+        const processedPedidos = (pedidosData || []).map((pedido, index) => {
+          console.log(`Processing pedido ${index}:`, pedido); // Debug log
+          if (!pedido) {
+            console.warn(`Pedido at index ${index} is null/undefined`);
+            return null;
+          }
+          return {
+            ...pedido,
+            estado: pedido?.status || pedido?.estado || 'nuevo', // Priorizar status ya que viene del backend
+            id: pedido.id,
+            numero_pedido: pedido?.numero_pedido,
+            value: parseFloat(pedido?.presupuesto_estimado) || parseFloat(pedido?.value) || parseFloat(pedido?.total) || 0,
+            descripcion: pedido?.descripcion || pedido?.description || pedido?.name || '',
+            servicio: pedido?.servicio || '',
+            fecha_entrega_deseada: pedido?.fecha_entrega_deseada,
+            fecha_entrega_estimada: pedido?.fecha_entrega_estimada,
+            created_at: pedido.created_at
+          };
+        }).filter(pedido => pedido && pedido.id); // Filter out any invalid pedidos
         
         console.log('Processed pedidos:', processedPedidos); // Debug log
         setPedidos(processedPedidos);
@@ -190,27 +197,43 @@ const ClientPayments = () => {
 
   // Filter pedidos that need payment (only confirmed projects without completed payments)
   const pendingPedidos = (pedidos || []).filter(pedido => {
-    if (!pedido || !pedido.id) return false; // Validación defensiva
-    // Only show projects that are confirmed by admin and need payment
-    const isConfirmedByAdmin = pedido.estado === 'confirmado' || pedido.estado === 'en_proceso';
-    const needsPayment = pedido.estado !== 'completado' && (pedido.value > 0);
-    // Check if there's already a completed payment for this pedido
-    const hasCompletedPayment = payments.some(payment => 
-      payment.pedido_id === pedido.id && payment.estado === 'aplicado'
-    );
-    return isConfirmedByAdmin && needsPayment && !hasCompletedPayment;
+    try {
+      if (!pedido || !pedido.id) {
+        console.warn('Skipping invalid pedido in pendingPedidos filter:', pedido);
+        return false; // Validación defensiva
+      }
+      // Only show projects that are confirmed by admin and need payment
+      const isConfirmedByAdmin = pedido.estado === 'confirmado' || pedido.estado === 'en_proceso';
+      const needsPayment = pedido.estado !== 'completado' && (pedido.value > 0);
+      // Check if there's already a completed payment for this pedido
+      const hasCompletedPayment = payments.some(payment => 
+        payment.pedido_id === pedido.id && payment.estado === 'aplicado'
+      );
+      return isConfirmedByAdmin && needsPayment && !hasCompletedPayment;
+    } catch (error) {
+      console.error('Error filtering pendingPedidos:', error, pedido);
+      return false;
+    }
   });
 
   // Filter pedidos waiting for admin approval (nuevo status)
     const pedidosWaitingApproval = (pedidos || []).filter(pedido => {
-    if (!pedido || !pedido.id) return false; // Validación defensiva
-    // Only show projects waiting for admin approval (value is > 0 and there's no completed payment)
-    const isWaitingApproval = pedido.estado === 'nuevo' || pedido.estado === 'revision';
-    const hasValue = pedido.value > 0;
-    const hasCompletedPayment = payments.some(payment => 
-      payment.pedido_id === pedido.id && payment.estado === 'aplicado'
-    );
-    return isWaitingApproval && hasValue && !hasCompletedPayment;
+    try {
+      if (!pedido || !pedido.id) {
+        console.warn('Skipping invalid pedido in pedidosWaitingApproval filter:', pedido);
+        return false; // Validación defensiva
+      }
+      // Only show projects waiting for admin approval (value is > 0 and there's no completed payment)
+      const isWaitingApproval = pedido.estado === 'nuevo' || pedido.estado === 'revision';
+      const hasValue = pedido.value > 0;
+      const hasCompletedPayment = payments.some(payment => 
+        payment.pedido_id === pedido.id && payment.estado === 'aplicado'
+      );
+      return isWaitingApproval && hasValue && !hasCompletedPayment;
+    } catch (error) {
+      console.error('Error filtering pedidosWaitingApproval:', error, pedido);
+      return false;
+    }
   });
 
   const getStatusIcon = (status) => {
