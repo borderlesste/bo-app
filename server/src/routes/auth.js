@@ -9,13 +9,13 @@ const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware.js');
 const router = express.Router();
 
 router.post('/register', [
-    body('nombre', 'El nombre es obligatorio').not().isEmpty(),
-    body('email', 'Por favor, incluye un email válido').isEmail(),
+    body('nombre', 'El nombre es obligatorio').not().isEmpty().trim(),
+    body('email', 'Por favor, incluye un email válido').isEmail().normalizeEmail(),
     body('password', 'La contraseña debe tener 6 o más caracteres').isLength({ min: 6 }),
-    body('direccion', 'La dirección es obligatoria').not().isEmpty(),
-    body('telefono', 'El teléfono es obligatorio').not().isEmpty(),
-    body('empresa').optional(),
-    body('rfc').optional()
+    body('direccion', 'La dirección es obligatoria').not().isEmpty().trim(),
+    body('telefono', 'El teléfono es obligatorio').not().isEmpty().trim(),
+    body('empresa', 'La empresa es obligatoria').not().isEmpty().trim(),
+    body('rfc', 'El RFC es obligatorio').not().isEmpty().trim()
 ], register);
 
 router.post('/login', [

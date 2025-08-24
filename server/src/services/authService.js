@@ -7,6 +7,17 @@ const JWT_SECRET = process.env.JWT_SECRET || 'Wop39Jd!lf0d$w9v1qXL4#dOl1wP';
 
 const authService = {
   async registerUser({ nombre, direccion, telefono, email, password, empresa, rfc }) {
+    // Validate all required fields
+    if (!nombre || !direccion || !telefono || !email || !password || !empresa || !rfc) {
+      throw new Error('Todos los campos son obligatorios');
+    }
+
+    // Check if email already exists
+    const existingUser = await User.findByEmail(email);
+    if (existingUser) {
+      throw new Error('El email ya está registrado');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Check if this is the first user (should be admin)
@@ -14,14 +25,14 @@ const authService = {
     const rol = allUsers.length === 0 ? 'admin' : 'usuario';
 
     const userId = await User.create({
-      nombre, 
-      email, 
+      nombre: nombre.trim(), 
+      email: email.toLowerCase().trim(), 
       password: hashedPassword, 
       rol, 
-      telefono, 
-      direccion, 
-      empresa, 
-      rfc
+      telefono: telefono.trim(), 
+      direccion: direccion.trim(), 
+      empresa: empresa.trim(), 
+      rfc: rfc.trim().toUpperCase()
     });
 
     const user = await User.findById(userId);
