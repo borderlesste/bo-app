@@ -127,8 +127,9 @@ class PaymentGatewayService {
     }
   }
 
+  /* ----------------------------- PAYPAL: High-level orchestration ----------------------------- */
   // Crear order en base de datos y orden de PayPal (Paso 1 y 2 del flujo)
-  async createPayPalorder(userId, orderItems, orderData = {}) {
+  async createOrderAndPayPalOrder(userId, orderItems, orderData = {}) {
     const connection = await pool.getConnection();
     
     try {
@@ -174,11 +175,11 @@ class PaymentGatewayService {
         );
       }
       
-      // 4. Crear orden en PayPal
-      const paypalorder = await this.createPayPalorder(total, orderData.currency || 'USD', {
+      // 4. Crear orden en PayPal (método SDK remoto renombrado)
+      const paypalorder = await this.createPayPalOrderRemote(total, orderData.currency || 'USD', {
         ...orderData,
         reference_id: numeroorder,
-        pedido_id: orderId
+        pedido_id: pedidoId
       });
       
       if (!paypalorder.success) {
@@ -208,7 +209,7 @@ class PaymentGatewayService {
       
     } catch (error) {
       await connection.rollback();
-      console.error('Error creating PayPal order:', error);
+      console.error('Error creating PayPal order (createOrderAndPayPalOrder):', error);
       return {
         success: false,
         message: 'Error al crear el order',
@@ -219,11 +220,13 @@ class PaymentGatewayService {
     }
   }
 
-  // Crear orden de PayPal (método interno)
-  async createPayPalorder(amount, currency = 'USD', orderData = {}) {
-    // Para desarrollo sin credenciales válidas, simular orden
-    if (!paypalClient || !pedidosController || process.env.NODE_ENV === 'development') {
-      console.log('🔧 Development mode: Simulating PayPal order creation');
+  /* ----------------------------- PAYPAL: SDK-level helpers ----------------------------- */
+  // Crear orden remota en PayPal
+  async createPayPalOrderRemote(amount, currency = 'USD', orderData = {}) {
+    // Solo simular si NO hay credenciales configuradas (no por estar en development)
+    if (!paypalClient || !pedidosController) {
+      console.log('🔧 No PayPal credentials: Simulating PayPal order creation');
+      console.log('⚠️ Configure PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in .env to use real PayPal');
       return {
         success: true,
         data: {
@@ -261,18 +264,18 @@ class PaymentGatewayService {
           }
         }
       };
-      
-      console.log('🔄 Creating PayPal order:', JSON.stringify(request.body, null, 2));
-      
+
+      console.log('🔄 Creating PayPal order (remote):', JSON.stringify(request.body, null, 2));
+
       const orderRequest = new pedidosController.pedidosCreateRequest();
       orderRequest.requestBody(request.body);
       const response = await paypalClient.execute(orderRequest);
-      
-      console.log('✅ PayPal order created:', response.body.id);
-      
+
+      console.log('✅ PayPal order created (remote):', response.body?.id);
+
       if (response.body && response.body.id) {
-        const approveLink = response.body.links.find(link => link.rel === 'approve');
-        
+        const approveLink = (response.body.links || []).find(link => link.rel === 'approve');
+
         return {
           success: true,
           data: {
@@ -287,7 +290,7 @@ class PaymentGatewayService {
         throw new Error('Invalid PayPal response - missing order ID');
       }
     } catch (error) {
-      console.error('❌ Error creating PayPal order:', error);
+      console.error('❌ Error creating PayPal order (remote):', error);
       return {
         success: false,
         message: 'Error al crear la orden de PayPal',
@@ -296,8 +299,9 @@ class PaymentGatewayService {
     }
   }
 
-  // Capturar pago de PayPal y actualizar order (Paso 4 del flujo)
-  async capturePayPalorder(paypalorderId, additionalData = {}) {
+  /* ----------------------------- PAYPAL: Capture helpers ----------------------------- */
+  // Alto nivel: capturar en PayPal y actualizar BD
+  async capturePayPalOrderAndUpdateDb(paypalorderId, additionalData = {}) {
     const connection = await pool.getConnection();
     
     try {
@@ -319,8 +323,8 @@ class PaymentGatewayService {
 
       const pedido = pedidos[0];
 
-      // 2. Capturar pago en PayPal
-      const captureResult = await this.capturePayPalorder(paypalorderId);
+      // 2. Capturar pago en PayPal (método SDK remoto)
+      const captureResult = await this.capturePayPalOrderRemote(paypalorderId);
       
       if (!captureResult.success) {
         await connection.rollback();
@@ -341,11 +345,10 @@ class PaymentGatewayService {
           pedido.usuario_id,
           capture.amount,
           capture.currency,
-          capture.capture_id,
+          `Pago PayPal para pedido ${pedido.numero_pedido}`,
           paypalorderId,
           capture.capture_id,
-          capture.payer_email,
-          `Pago PayPal para pedido ${pedido.numero_pedido}`
+          capture.payer_email
         ]
       );
 
@@ -384,7 +387,7 @@ class PaymentGatewayService {
       
     } catch (error) {
       await connection.rollback();
-      console.error('Error capturing PayPal order:', error);
+      console.error('Error capturing PayPal order (capturePayPalOrderAndUpdateDb):', error);
       return {
         success: false,
         message: 'Error al capturar el pago',
@@ -395,17 +398,17 @@ class PaymentGatewayService {
     }
   }
 
-  // Capturar orden PayPal (método interno)
-  async capturePayPalorder(orderId) {
+  // SDK: captura remota
+  async capturePayPalOrderRemote(orderId) {
     // Para desarrollo, simular captura de órdenes demo
-    if (orderId.startsWith('DEMO_order_') || process.env.NODE_ENV === 'development') {
-      console.log('🔧 Development mode: Simulating PayPal payment capture');
+    if ((orderId || '').startsWith('DEMO_order_') || process.env.NODE_ENV === 'development') {
+      console.log('🔧 Development mode: Simulating PayPal payment capture (remote)');
       return {
         success: true,
         data: {
           id: orderId,
           status: 'COMPLETED',
-          amount: parseFloat(Math.random() * 1000 + 100), // Amount simulado
+          amount: parseFloat(Math.random() * 1000 + 100),
           currency: 'USD',
           capture_id: 'DEMO_CAPTURE_' + Date.now(),
           payer_email: 'test@sandbox.paypal.com',
@@ -425,14 +428,14 @@ class PaymentGatewayService {
     }
 
     try {
-      console.log('🔄 Capturing PayPal order:', orderId);
+      console.log('🔄 Capturing PayPal order (remote):', orderId);
       
       const request = new pedidosController.pedidosCaptureRequest(orderId);
       request.requestBody({});
       
       const response = await paypalClient.execute(request);
       
-      console.log('📦 PayPal capture response:', JSON.stringify(response.body, null, 2));
+      console.log('📦 PayPal capture response (remote):', JSON.stringify(response.body, null, 2));
       
       if (response.body && response.body.status === 'COMPLETED') {
         const capture = response.body.purchase_units[0].payments.captures[0];
@@ -452,10 +455,10 @@ class PaymentGatewayService {
           }
         };
       } else {
-        throw new Error(`Payment not completed. Status: ${response.body.status}`);
+        throw new Error(`Payment not completed. Status: ${response.body?.status}`);
       }
     } catch (error) {
-      console.error('❌ Error capturing PayPal order:', error);
+      console.error('❌ Error capturing PayPal order (remote):', error);
       return {
         success: false,
         message: 'Error al capturar el pago de PayPal',
@@ -464,6 +467,22 @@ class PaymentGatewayService {
     }
   }
 
+  /* ----------------------------- Utilities / Backwards compatibility ----------------------------- */
+  // Mantener wrappers con los nombres antiguos para no romper llamadas existentes
+  async createPayPalorder(userId, orderItems, orderData = {}) {
+    return this.createOrderAndPayPalOrder(userId, orderItems, orderData);
+  }
+
+  async capturePayPalorder(paypalorderId, additionalData = {}) {
+    return this.capturePayPalOrderAndUpdateDb(paypalorderId, additionalData);
+  }
+
+  // Compat alias para processPayment (que antes llamaba a capturePayPalPayment)
+  async capturePayPalPayment(paypalorderId) {
+    return this.capturePayPalOrderAndUpdateDb(paypalorderId);
+  }
+
+  /* ----------------------------- Remaining methods (refunds, getPaymentInfo, webhook) ----------------------------- */
   // Procesar pago completo (incluyendo notificaciones)
   async processPayment(paymentData, paymentMethod = 'stripe') {
     try {
@@ -704,10 +723,18 @@ class PaymentGatewayService {
   async handlePaymentCaptureCompleted(resource, connection) {
     try {
       const captureId = resource.id;
-      const orderId = resource.supplementary_data?.related_ids?.pedido_id;
-      const amount = parseFloat(resource.amount.value);
-      const currency = resource.amount.currency_code;
-      const payerEmail = resource.payee?.email_address;
+      // Intentar obtener order id desde campos comunes
+      const orderId =
+        resource.supplementary_data?.related_ids?.order_id ||
+        resource.supplementary_data?.related_ids?.pedido_id ||
+        resource.invoice_id ||
+        resource.custom_id ||
+        resource.reference_id ||
+        resource.purchase_units?.[0]?.reference_id;
+
+      const amount = parseFloat(resource.amount?.value || 0);
+      const currency = resource.amount?.currency_code || 'USD';
+      const payerEmail = resource.payer?.email_address || resource.payee?.email_address;
       
       if (!orderId) {
         return { success: false, error: 'order ID not found in webhook' };
@@ -723,7 +750,7 @@ class PaymentGatewayService {
         return { success: false, error: 'pedido no encontrado' };
       }
       
-      const order = pedidos[0];
+      const pedido = pedidos[0];
       
       // Si ya está confirmado, no hacer nada (reconciliación)
       if (pedido.estado === 'confirmado' && pedido.paypal_capture_id) {
@@ -757,11 +784,10 @@ class PaymentGatewayService {
             pedido.usuario_id,
             amount,
             currency,
+            `Pago webhook PayPal para pedido ${pedido.numero_pedido}`,
+            orderId,
             captureId,
-            pedido.id,
-            captureId,
-            payerEmail,
-            `Pago webhook PayPal para pedido ${pedido.numero_pedido}`
+            payerEmail
           ]
         );
       }
@@ -776,7 +802,9 @@ class PaymentGatewayService {
   // Manejar captura de pago fallida
   async handlePaymentCaptureFailed(resource, connection) {
     try {
-      const orderId = resource.supplementary_data?.related_ids?.pedido_id;
+      const orderId =
+        resource.supplementary_data?.related_ids?.order_id ||
+        resource.supplementary_data?.related_ids?.pedido_id;
       
       if (orderId) {
         await connection.execute(

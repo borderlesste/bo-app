@@ -228,33 +228,63 @@ const pedidoService = {
   },
 
   async createPedido(usuario_id, pedidoData) {
-    // Generar número de pedido único
-    const numero_pedido = `PED-${Date.now()}`;
-    
-    const {
-      servicio,
-      descripcion,
-      presupuesto_estimado,
-      fecha_entrega_deseada,
-      prioridad = 'normal',
-      notas_adicionales
-    } = pedidoData;
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    const [result] = await pool.execute(
-      `INSERT INTO pedidos (
-        numero_pedido, usuario_id, servicio, descripcion, 
-        presupuesto_estimado, fecha_entrega_deseada, 
-        prioridad, notas_adicionales, estado
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'nuevo')`,
-      [
-        numero_pedido, usuario_id, servicio, descripcion,
-        presupuesto_estimado, fecha_entrega_deseada,
-        prioridad, notas_adicionales
-      ]
-    );
-    
-    const [rows] = await pool.execute('SELECT * FROM pedidos WHERE id = ?', [result.insertId]);
-    return rows[0];
+      // Generar número de pedido único
+      const numero_pedido = `PED-${Date.now()}`;
+      
+      const {
+        servicio,
+        descripcion,
+        presupuesto_estimado,
+        fecha_entrega_deseada,
+        prioridad = 'normal',
+        notas_adicionales
+      } = pedidoData;
+
+      // 1. Crear el pedido
+      const [result] = await connection.execute(
+        `INSERT INTO pedidos (
+          numero_pedido, usuario_id, servicio, descripcion, 
+          presupuesto_estimado, fecha_entrega_deseada, 
+          prioridad, notas_adicionales, estado
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'nuevo')`,
+        [
+          numero_pedido, usuario_id, servicio, descripcion,
+          presupuesto_estimado, fecha_entrega_deseada,
+          prioridad, notas_adicionales
+        ]
+      );
+
+      const pedidoId = result.insertId;
+
+      // 2. OBLIGATORIO: Crear al menos un pedido_item
+      await connection.execute(
+        `INSERT INTO pedido_items (
+          pedido_id, descripcion, cantidad, precio_unitario, subtotal, orden
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          pedidoId,
+          descripcion || `Servicio: ${servicio}`,
+          1,
+          presupuesto_estimado || 0,
+          presupuesto_estimado || 0,
+          0
+        ]
+      );
+
+      await connection.commit();
+      
+      const [rows] = await connection.execute('SELECT * FROM pedidos WHERE id = ?', [pedidoId]);
+      return rows[0];
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 
   async updatePedido(id, descripcion, estado, prioridad, total, fecha_entrega_estimada) {

@@ -40,7 +40,7 @@ const ClientQuotations = () => {
       if (filters.search) params.search = filters.search;
       
       const response = await getClientQuotes(params);
-      setQuotations(response.data || []);
+      setQuotations(response.data?.data || []);
     } catch (error) {
       console.error('Error loading quotations:', error);
       setQuotations([]);

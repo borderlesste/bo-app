@@ -48,7 +48,7 @@ router.post('/create-sample-users', async (req, res) => {
     
     const users = [
       {
-        nombre: 'Administrador Principal',
+        nombre: 'Admin',
         email: 'admin@borderlesstechno.com',
         password: '123456', // Usar la contraseña que quiere el usuario
         rol: 'admin',

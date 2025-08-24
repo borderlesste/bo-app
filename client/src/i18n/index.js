@@ -197,13 +197,7 @@ i18n
     },
     
     // Configuración adicional
-    debug: process.env.NODE_ENV === 'development',
-    
-    // Configuración de detección de idioma
-    detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
-    }
+    debug: import.meta.env.DEV
   });
 
 export default i18n;

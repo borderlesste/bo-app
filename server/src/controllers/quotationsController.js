@@ -99,11 +99,22 @@ const createQuotation = async (req, res) => {
       terminos_condiciones
     });
 
-    // Add items
-    for (const [index, item] of items.entries()) {
+    // Add items - OBLIGATORIO: Al menos un item
+    if (items.length > 0) {
+      for (const [index, item] of items.entries()) {
+        await Cotizacion.addItem(quotationId, {
+          ...item,
+          orden: index + 1
+        });
+      }
+    } else {
+      // Crear item por defecto si no se proporcionaron items
       await Cotizacion.addItem(quotationId, {
-        ...item,
-        orden: index + 1
+        descripcion: descripcion || titulo || 'Servicio solicitado',
+        cantidad: 1,
+        precio_unitario: precio_estimado || 0,
+        descuento: 0,
+        orden: 1
       });
     }
 

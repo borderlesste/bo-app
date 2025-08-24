@@ -12,17 +12,18 @@ router.post('/paypal/create-order',
     isAuthenticated,
     body('amount', 'El monto es obligatorio').isFloat({ gt: 0 }),
     body('currency', 'La moneda es obligatoria').isIn(['USD', 'MXN', 'EUR']),
-    body('orderData').optional().isObject()
+    body('pedidoData').optional().isObject()
   ],
   async (req, res) => {
     try {
-      const { amount, currency, orderData } = req.body;
-      
-      const result = await paymentGatewayService.createPayPalorder(
+      const { amount, currency, pedidoData } = req.body;
+
+      // Create only the remote PayPal order (no DB pedido) using SDK helper
+      const result = await paymentGatewayService.createPayPalOrderRemote(
         amount, 
         currency, 
         {
-          ...orderData,
+          ...pedidoData,
           user_id: req.user.id
         }
       );
@@ -51,17 +52,55 @@ router.post('/paypal/create-order',
   }
 );
 
+// Nuevo endpoint: crear pedido en BD + orden PayPal
+router.post('/paypal/create-order-with-pedido',
+  [
+    isAuthenticated,
+    body('items').isArray({ min: 1 }).withMessage('Debe incluir al menos un item'),
+    body('items.*.descripcion').notEmpty().withMessage('Descripción del item es obligatoria'),
+    body('items.*.precio_unitario').isFloat({ gt: 0 }).withMessage('Precio unitario debe ser mayor a 0'),
+    body('items.*.cantidad').optional().isInt({ min: 1 }).withMessage('Cantidad debe ser un entero positivo'),
+    body('currency').optional().isIn(['USD', 'MXN', 'EUR']).withMessage('Moneda no válida'),
+    body('descripcion').optional().isString().withMessage('Descripción debe ser texto')
+  ],
+  async (req, res) => {
+    try {
+      const { items, currency = 'USD', descripcion } = req.body;
+      const userId = req.user.id;
+
+      // Calls the high-level service that creates DB pedido + PayPal order
+      const result = await paymentGatewayService.createOrderAndPayPalOrder(userId, items, {
+        currency,
+        descripcion
+      });
+
+      if (result.success) {
+        res.status(201).json({
+          success: true,
+          message: 'Pedido y orden PayPal creados exitosamente',
+          data: result.data
+        });
+      } else {
+        res.status(400).json({ success: false, message: result.message || 'Error al crear pedido' });
+      }
+    } catch (error) {
+      console.error('Error creating order with pedido:', error);
+      res.status(500).json({ success: false, message: 'Error interno del servidor' });
+    }
+  }
+);
+
 router.post('/paypal/capture-order',
   [
     isAuthenticated,
-    body('orderID', 'ID de orden es obligatorio').notEmpty(),
+    body('pedidoID', 'ID de pedido es obligatorio').notEmpty(),
     body('paymentID').optional().notEmpty()
   ],
   async (req, res) => {
     try {
-      const { orderID, paymentID } = req.body;
-      
-      const result = await paymentGatewayService.capturePayPalorder(orderID);
+      const { pedidoID, paymentID } = req.body;
+
+      const result = await paymentGatewayService.capturePayPalorder(pedidoID);
 
       if (result.success) {
         // Update payment status in database

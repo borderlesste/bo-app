@@ -2,7 +2,7 @@ import { X, Calendar, CreditCard, FileText, Download, ExternalLink } from 'lucid
 import PropTypes from 'prop-types';
 import { useToast } from '../../hooks/useToast';
 
-const PaymentDetailsModal = ({ isOpen, onClose, payment }) => {
+const PaymentDetailsModal = ({ isOpen, onClose, payment = null }) => {
   const { success: showSuccess, error: showError } = useToast();
 
   const handleDownloadInvoice = async () => {
@@ -196,8 +196,5 @@ PaymentDetailsModal.propTypes = {
   })
 };
 
-PaymentDetailsModal.defaultProps = {
-  payment: null
-};
 
 export default PaymentDetailsModal;

@@ -64,6 +64,10 @@ const CommunicationEmailMarketingPage = lazy(() => import('./pages/Communication
 // Lazy load components
 const RequestForm = lazy(() => import('./components/RequestForm'));
 
+// Lazy load payment pages
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
+const PaymentCancel = lazy(() => import('./pages/PaymentCancel'));
+
 // Loading fallback component
 const PageLoader = () => (
   <LoadingSpinner 
@@ -95,6 +99,11 @@ function App() {
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+          
+          {/* Payment return routes */}
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
+          
           <Route
             path="/solicitud"
             element={

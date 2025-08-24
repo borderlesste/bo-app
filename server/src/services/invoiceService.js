@@ -310,6 +310,15 @@ const invoiceService = {
 
       const invoice = await this.createInvoice(invoiceData);
       
+      // OBLIGATORIO: Crear pago_aplicaciones para vincular pago con factura
+      await pool.execute(
+        `INSERT INTO pago_aplicaciones (pago_id, factura_id, monto_aplicado, applied_by)
+         VALUES (?, ?, ?, ?)`,
+        [paymentId, invoice.id, total, 1] // applied_by = 1 (sistema)
+      );
+
+      console.log(`✓ Creada relación pago_aplicaciones: pago ${paymentId} -> factura ${invoice.id}`);
+      
       // Enviar factura por correo
       try {
         const emailService = require('./emailService.js');

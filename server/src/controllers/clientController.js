@@ -139,32 +139,35 @@ const getClientQuotations = async (req, res) => {
 
     let query = `
       SELECT 
-        c.*
+        c.*,
+        COALESCE(SUM(ci.subtotal), c.precio_estimado, 0) as total_calculado,
+        COUNT(ci.id) as items_count
       FROM cotizaciones c
+      LEFT JOIN cotizacion_items ci ON c.id = ci.cotizacion_id
       WHERE c.usuario_id = ?
     `;
     
-    let countQuery = 'SELECT COUNT(*) as total FROM cotizaciones WHERE usuario_id = ?';
+    let countQuery = 'SELECT COUNT(*) as total FROM cotizaciones c WHERE c.usuario_id = ?';
     let params = [usuarioId];
     let countParams = [usuarioId];
 
     // Add filters
     if (estado) {
       query += ' AND c.estado = ?';
-      countQuery += ' AND estado = ?';
+      countQuery += ' AND c.estado = ?';
       params.push(estado);
       countParams.push(estado);
     }
 
     if (search) {
       query += ' AND (c.titulo LIKE ? OR c.descripcion LIKE ?)';
-      countQuery += ' AND (titulo LIKE ? OR descripcion LIKE ?)';
+      countQuery += ' AND (c.titulo LIKE ? OR c.descripcion LIKE ?)';
       const searchParam = `%${search}%`;
       params.push(searchParam, searchParam);
       countParams.push(searchParam, searchParam);
     }
 
-    query += ' order BY c.created_at DESC LIMIT ? OFFSET ?';
+    query += ' GROUP BY c.id ORDER BY c.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [quotations] = await pool.execute(query, params);

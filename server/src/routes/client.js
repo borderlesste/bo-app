@@ -55,6 +55,21 @@ router.get('/stats', getClientStats);
 // Projects routes
 router.get('/projects', getClientProjects);
 
+// Debug route to check authentication
+router.get('/debug-auth', (req, res) => {
+  res.json({
+    success: true,
+    user: req.user ? {
+      id: req.user.id,
+      nombre: req.user.nombre,
+      email: req.user.email,
+      rol: req.user.rol
+    } : null,
+    authenticated: !!req.user,
+    session: req.session ? 'exists' : 'missing'
+  });
+});
+
 // Quotations routes
 router.get('/quotations', getClientQuotations);
 router.put('/quotations/:quotationId/:action', (req, res) => updateQuotationStatus(req, res));

@@ -57,6 +57,21 @@ const publicController = {
         })
       ]);
       
+      // OBLIGATORIO: Crear al menos un cotizacion_item
+      await connection.execute(`
+        INSERT INTO cotizacion_items (
+          cotizacion_id, descripcion, cantidad, precio_unitario, descuento, subtotal, orden
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [
+        quoteResult.insertId,
+        `Servicio solicitado: ${servicio}${mensaje ? ` - ${mensaje}` : ''}`,
+        1,
+        0, // precio por definir
+        0, // sin descuento
+        0, // subtotal por definir
+        0  // primer item
+      ]);
+      
       // Get the admin user for notifications
       const [adminUser] = await connection.execute(
         'SELECT id FROM usuarios WHERE rol = "admin" order BY id ASC LIMIT 1'

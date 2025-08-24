@@ -105,7 +105,7 @@ exports.login = async (req, res) => {
         if (email === 'admin@borderlesstechno.com') {
           shouldCreateUser = true;
           userDetails = {
-            nombre: 'Administrador Principal',
+            nombre: 'Admin',
             email: 'admin@borderlesstechno.com',
             password: '123456',
             rol: 'admin',

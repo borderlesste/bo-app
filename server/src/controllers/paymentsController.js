@@ -5,47 +5,49 @@ const { logActivity } = require('./dashboardController.js');
 const { pool } = require('../config/db.js');
 const emailService = require('../services/emailService.js');
 const notificationService = require('../services/notificationService.js');
-const { Pago, User } = require('../models');
+const { Pago } = require('../models');
 
-// Helper function para obtener el nombre del usuarios
-const getClienteName = async (usuariosId) => {
+// Estados de pago estandarizados
+const PAYMENT_STATUS = {
+  PENDING: 'pendiente',
+  APPLIED: 'aplicado',
+  COMPLETED: 'completado',
+  CANCELLED: 'cancelado',
+  REFUNDED: 'reembolsado'
+};
+
+// Helper function para obtener el nombre del usuario
+const getClienteName = async (usuarioId) => {
   try {
-    const [rows] = await pool.execute('SELECT nombre FROM usuarios WHERE id = ?', [usuariosId]);
+    const [rows] = await pool.execute('SELECT nombre FROM usuarios WHERE id = ?', [usuarioId]);
     return rows.length > 0 ? rows[0].nombre : 'Cliente desconocido';
   } catch (error) {
     return 'Cliente desconocido';
   }
 };
 
-// Obtener todos los pagos (admin) o los pagos de un usuario (usuarios)
+// Obtener todos los pagos (admin) o los pagos de un usuario (usuario)
 exports.getPayments = async (req, res) => {
   try {
     const filters = {
-      estado: req.query.estado,
-      tipo: req.query.tipo,
-      metodo_pago: req.query.metodo_pago,
-      fecha_desde: req.query.fecha_desde,
-      fecha_hasta: req.query.fecha_hasta,
-      search: req.query.search,
-      limit: req.query.limit
+      ...(req.query.estado && { estado: req.query.estado }),
+      ...(req.query.tipo && { tipo: req.query.tipo }),
+      ...(req.query.metodo_pago && { metodo_pago: req.query.metodo_pago }),
+      ...(req.query.fecha_desde && { fecha_desde: req.query.fecha_desde }),
+      ...(req.query.fecha_hasta && { fecha_hasta: req.query.fecha_hasta }),
+      ...(req.query.search && { search: req.query.search }),
     };
 
-    // Si es usuarios, solo mostrar sus pagos
-    if (req.user.rol === 'usuarios') {
+    // Si es usuario, solo mostrar sus pagos
+    if (req.user.rol === 'usuario') {
       filters.usuario_id = req.user.id;
     }
 
-    const payments = await Pago.findAll(filters);
-    res.json({
-      success: true,
-      data: payments
-    });
+    const payments = await Pago.findAll({ where: filters });
+    res.json({ success: true, data: payments });
   } catch (err) {
     console.error('Error fetching payments:', err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error al obtener los pagos.' 
-    });
+    res.status(500).json({ success: false, message: 'Error al obtener los pagos.' });
   }
 };
 
@@ -53,135 +55,84 @@ exports.getPayments = async (req, res) => {
 exports.getPaymentById = async (req, res) => {
   const { id } = req.params;
   try {
-    const payment = await Pago.findById(id);
+    const payment = await Pago.findByPk(id);
     if (!payment) {
-      return res.status(404).json({ 
-        success: false,
-        message: 'Pago no encontrado' 
-      });
+      return res.status(404).json({ success: false, message: 'Pago no encontrado' });
     }
 
     // Verificar permisos: solo admins o el dueño del pago
-    if (req.user.rol === 'usuarios' && payment.usuario_id !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: 'No tienes permisos para ver este pago'
-      });
+    if (req.user.rol === 'usuario' && payment.usuario_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'No tienes permisos para ver este pago' });
     }
 
-    res.json({
-      success: true,
-      data: payment
-    });
+    res.json({ success: true, data: payment });
   } catch (error) {
     console.error(`Error fetching payment with id ${id}:`, error);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error al obtener el pago' 
-    });
+    res.status(500).json({ success: false, message: 'Error al obtener el pago' });
   }
 };
 
 // Crear un nuevo pago
 exports.createPayment = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   const { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id } = req.body;
   try {
-    const newPayment = await paymentService.createPayment(usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id);
-    
-    // Registrar actividad de nuevo pago
-    const usuariosName = await getClienteName(usuario_id);
+    const newPayment = await paymentService.createPayment(
+      usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen, paypal_order_id
+    );
+
+    const usuarioName = await getClienteName(usuario_id);
     await logActivity(
       'new_payment',
-      `${usuariosName} realizó un pago de $${monto.toLocaleString('es-MX')}${pedido_id ? ` para pedido #${pedido_id}` : ''}`,
+      `${usuarioName} realizó un pago de $${monto.toLocaleString('es-MX')}${pedido_id ? ` para pedido #${pedido_id}` : ''}`,
       'normal',
       usuario_id,
       newPayment.id,
       'pago'
     );
 
-    // Enviar confirmación de pago por email (no bloquear si falla)
+    // Email + Notificación (no bloqueantes)
     try {
-      const [clientData] = await pool.execute(
-        'SELECT email FROM usuarios WHERE id = ?',
-        [usuario_id]
-      );
-      
-      if (clientData.length > 0) {
+      const [usuarioData] = await pool.execute('SELECT email FROM usuarios WHERE id = ?', [usuario_id]);
+      if (usuarioData.length > 0) {
         emailService.sendPaymentConfirmation({
-          client_email: clientData[0].email,
-          monto,
-          metodo_pago,
-          referencia
-        })
-        .then(result => {
-          if (result.success) {
-            console.log('✅ Confirmación de pago enviada por email');
-          } else {
-            console.log('⚠️ Fallo enviando confirmación de pago:', result.error);
-          }
-        })
-        .catch(err => {
-          console.log('⚠️ Error enviando confirmación de pago:', err.message);
-        });
+          client_email: usuarioData[0].email, monto, metodo_pago, referencia
+        }).catch(err => console.log('⚠️ Error enviando email:', err.message));
       }
     } catch (emailError) {
-      console.log('⚠️ Error obteniendo datos de usuarios para email:', emailError);
+      console.log('⚠️ Error obteniendo datos de usuario para email:', emailError);
     }
 
-    // Crear notificación de nuevo pago
     try {
-      await notificationService.notifyNewPayment({
-        monto,
-        metodo_pago,
-        concepto,
-        pedido_id
-      }, usuariosName);
+      await notificationService.notifyNewPayment({ monto, metodo_pago, concepto, pedido_id }, usuarioName);
     } catch (notificationError) {
-      console.log('⚠️ Error creando notificación de pago:', notificationError);
+      console.log('⚠️ Error creando notificación:', notificationError);
     }
     
-    res.status(201).json({
-      success: true,
-      message: 'Pago creado exitosamente',
-      data: newPayment
-    });
+    res.status(201).json({ success: true, message: 'Pago creado exitosamente', data: newPayment });
   } catch (err) {
     console.error('Error creating payment:', err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error al crear el pago.' 
-    });
+    res.status(500).json({ success: false, message: 'Error al crear el pago.' });
   }
 };
 
 // Actualizar un pago
 exports.updatePayment = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   const { id } = req.params;
   const { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen } = req.body;
   try {
-    const updatedPayment = await paymentService.updatePayment(id, usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen);
-    
-    res.json({
-      success: true,
-      message: 'Pago actualizado exitosamente',
-      data: updatedPayment
-    });
+    const updatedPayment = await paymentService.updatePayment(
+      id, { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia, banco_origen }
+    );
+    res.json({ success: true, message: 'Pago actualizado exitosamente', data: updatedPayment });
   } catch (err) {
     console.error(`Error updating payment with id ${id}:`, err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error al actualizar el pago.' 
-    });
+    res.status(500).json({ success: false, message: 'Error al actualizar el pago.' });
   }
 };
 
@@ -197,25 +148,17 @@ exports.deletePayment = async (req, res) => {
   }
 };
 
-// Crear un nuevo pago por un usuarios
+// Crear un nuevo pago por un usuario
 exports.createClientPayment = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   const usuario_id = req.user.id;
   const { pedido_id, concepto, monto, metodo_pago, banco_origen, referencia_transferencia } = req.body;
 
-  let estado;
-  if (metodo_pago === 'transferencia' || metodo_pago === 'Transferencia Bancaria') {
-    estado = 'pendiente'; // Needs verification
-  } else if (metodo_pago === 'paypal' || metodo_pago === 'PayPal') {
-    estado = 'aplicado'; // PayPal payments are instant - will trigger order completion
-  } else if (metodo_pago === 'tarjeta' || metodo_pago === 'Tarjeta de Crédito') {
-    estado = 'aplicado'; // Card payments are instant - will trigger order completion
-  } else {
-    estado = 'pendiente';
+  let estado = PAYMENT_STATUS.PENDING;
+  if (['paypal', 'PayPal', 'tarjeta', 'Tarjeta de Crédito'].includes(metodo_pago)) {
+    estado = PAYMENT_STATUS.APPLIED;
   }
 
   try {
@@ -226,78 +169,52 @@ exports.createClientPayment = async (req, res) => {
       monto,
       metodo_pago,
       estado,
-      referencia_transferencia || null, // referencia (para PayPal real, aquí iría el ID)
+      referencia_transferencia || null,
       banco_origen || null,
-      null // paypal_order_id - not used in this client payment flow
+      null
     );
 
-    // Si el pago fue exitoso (aplicado), generar factura automáticamente
-    if (estado === 'aplicado' && pedido_id) {
+    if (estado === PAYMENT_STATUS.APPLIED && pedido_id) {
       try {
         const invoiceService = require('../services/invoiceService.js');
         await invoiceService.generateInvoiceForPayment(newPayment.id, pedido_id, usuario_id);
       } catch (invoiceError) {
         console.error('Error generando factura automática:', invoiceError);
-        // No fallar el pago si hay error en la factura
       }
     }
     
-    res.status(201).json({
-      success: true,
-      message: 'Pago procesado exitosamente',
-      data: newPayment,
-      order_updated: estado === 'aplicado' // Indicate if order status was updated
-    });
+    res.status(201).json({ success: true, message: 'Pago procesado exitosamente', data: newPayment, order_updated: estado === PAYMENT_STATUS.APPLIED });
   } catch (err) {
     console.error('Error creating client payment:', err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Error al procesar el pago.' 
-    });
+    res.status(500).json({ success: false, message: 'Error al procesar el pago.' });
   }
 };
 
+// ⚠️ Lo mismo aplica para updateClientPayment y pasarelas (te ajusto si quieres también).
 exports.updateClientPayment = async (req, res) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-  const paymentId = req.params.id;
-  const usuario_id = req.user.id; // ID del usuario autenticado
-  const { metodo_pago, referencia_transferencia } = req.body;
+  const { id } = req.params;
+  const usuario_id = req.user.id;
+  const { pedido_id, concepto, monto, metodo_pago, estado, referencia_transferencia, banco_origen } = req.body;
 
   try {
-    // 1. Verificar que el pago pertenece al usuario
-    const existingPayment = await paymentService.getPaymentById(paymentId);
-    if (existingPayment.usuario_id !== usuario_id) {
-      return res.status(403).json({ message: 'Acción no autorizada.' });
-    }
+    const payment = await Pago.findByPk(id);
+    if (!payment) return res.status(404).json({ success: false, message: 'Pago no encontrado' });
+    if (payment.usuario_id !== usuario_id) return res.status(403).json({ success: false, message: 'No tienes permisos para actualizar este pago' });
 
-    // 2. Determinar el nuevo estado en el backend
-    const estado = metodo_pago === 'Transferencia Bancaria' ? 'Pendiente de Verificación' : 'Pagado';
-
-    // 3. Actualizar el pago usando el servicio
     const updatedPayment = await paymentService.updatePayment(
-      paymentId,
-      usuario_id,
-      existingPayment.pedido_id,
-      existingPayment.concepto,
-      existingPayment.monto,
-      metodo_pago,
-      estado,
-      null, // referencia (se llenaría en una integración real de PayPal)
-      referencia_transferencia
+      id, { usuario_id, pedido_id, concepto, monto, metodo_pago, estado, referencia: referencia_transferencia, banco_origen }
     );
-
-    res.json(updatedPayment);
+    res.json({ success: true, message: 'Pago actualizado exitosamente', data: updatedPayment });
   } catch (err) {
-    console.error(`Error updating client payment with id ${paymentId}:`, err);
-    res.status(500).json({ message: 'Error al actualizar el pago.' });
+    console.error(`Error updating client payment with id ${id}:`, err);
+    res.status(500).json({ success: false, message: 'Error al actualizar el pago.' });
   }
 };
 
-// ============ NUEVAS FUNCIONES PARA PASARELAS DE PAGO ============
+// ============ FUNCIONES PARA PASARELAS DE PAGO ============
 
 // Crear Payment Intent de Stripe
 exports.createStripePayment = async (req, res) => {
@@ -309,14 +226,14 @@ exports.createStripePayment = async (req, res) => {
     });
   }
 
-  const { amount, currency = 'mxn', order_id, client_email } = req.body;
+  const { amount, currency = 'mxn', pedido_id, client_email } = req.body;
 
   try {
     const result = await paymentGatewayService.createStripePayment(
       amount, 
       currency, 
       { 
-        order_id, 
+        pedido_id, 
         client_email,
         user_id: req.user?.id 
       }
@@ -360,14 +277,14 @@ exports.confirmStripePayment = async (req, res) => {
       try {
         await paymentService.createPayment(
           req.user?.id || null,
-          req.body.order_id || null,
+          req.body.pedido_id || null,
           'Pago por servicios de desarrollo',
           result.data.amount,
           'Stripe',
-          'Completado',
+          PAYMENT_STATUS.COMPLETED,
           result.data.id,
           null,
-          null // paypal_order_id - not used in Stripe flow
+          null
         );
       } catch (dbError) {
         console.error('Error saving payment to database:', dbError);
@@ -410,7 +327,7 @@ exports.createPayPalorder = async (req, res) => {
       currency, 
       { 
         service, 
-        reference_id: reference_id || `order_${Date.now()}`,
+        reference_id: reference_id || `pedido_${Date.now()}`,
         user_id: req.user?.id 
       }
     );
@@ -437,12 +354,12 @@ exports.createPayPalorder = async (req, res) => {
 
 // Capturar pago de PayPal
 exports.capturePayPalPayment = async (req, res) => {
-  const { order_id, client_email } = req.body;
+  const { pedido_id, client_email } = req.body;
 
   try {
     const result = await paymentGatewayService.processPayment(
       { 
-        payment_id: order_id, 
+        payment_id: pedido_id, 
         client_email 
       }, 
       'paypal'
@@ -453,14 +370,14 @@ exports.capturePayPalPayment = async (req, res) => {
       try {
         await paymentService.createPayment(
           req.user?.id || null,
-          req.body.order_ref || null,
+          req.body.pedido_ref || null,
           'Pago por servicios de desarrollo',
           result.data.amount,
           'PayPal',
-          'Completado',
+          PAYMENT_STATUS.COMPLETED,
           result.data.id,
           null,
-          order_id // paypal_order_id - this is the PayPal order ID
+          pedido_id
         );
       } catch (dbError) {
         console.error('Error saving PayPal payment to database:', dbError);
@@ -523,7 +440,6 @@ exports.createRefund = async (req, res) => {
     if (result.success) {
       // Actualizar el estado en la base de datos
       try {
-        // Aquí podrías agregar lógica para actualizar el estado del pago en la BD
         console.log(`Refund created: ${result.data.id}`);
       } catch (dbError) {
         console.error('Error updating refund in database:', dbError);

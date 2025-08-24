@@ -70,7 +70,7 @@ router.post('/setup-admin', async (req, res) => {
       `INSERT INTO usuarios (nombre, email, password, rol, estado, telefono, direccion, empresa, rfc) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        'Administrador Principal',
+        'Admin',
         'admin@borderlesstechno.com',
         hashedPassword,
         'admin',

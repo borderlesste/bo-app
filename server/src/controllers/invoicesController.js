@@ -66,7 +66,7 @@ const invoicesController = {
         FROM facturas f
         INNER JOIN usuarios u ON f.usuario_id = u.id
         ${whereClause}
-        order BY f.${sortBy} ${sortorder}
+        ORDER BY f.${sortBy} ${sortorder}
         LIMIT ? OFFSET ?
       `;
 
@@ -231,7 +231,7 @@ const invoicesController = {
       const countQuery = `
         SELECT COUNT(*) as total
         FROM usuarios 
-        WHERE rol = 'usuarios' 
+        WHERE rol = 'cliente' 
         AND estado = 'activo'
         AND (
           nombre LIKE ? OR 
@@ -293,7 +293,7 @@ const invoicesController = {
 
       // Validate user exists and is active
       const [userCheck] = await connection.execute(
-        'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "usuarios" AND estado = "activo"',
+        'SELECT id, nombre, email FROM usuarios WHERE id = ? AND rol = "cliente" AND estado = "activo"',
         [usuario_id]
       );
 
@@ -375,7 +375,7 @@ const invoicesController = {
       for (const item of processedItems) {
         await connection.execute(`
           INSERT INTO factura_items (
-            factura_id, descripcion, cantidad, precio_unitario, descuento, subtotal, orden
+            factura_id, descripcion, cantidad, precio_unitario, descuento, subtotal, pedido_id
           ) VALUES (?, ?, ?, ?, ?, ?, ?)
         `, [
           invoiceId, item.descripcion, item.cantidad, item.precio_unitario,
@@ -603,8 +603,8 @@ const invoicesController = {
         await connection.execute(`
           INSERT INTO factura_items (
             factura_id, descripcion, cantidad, precio_unitario, descuento,
-            subtotal, impuesto_porcentaje, impuesto_monto, total, orden
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            subtotal, impuesto_porcentaje, impuesto_monto, total, orden, pedido_id
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
           invoiceId, item.descripcion, item.cantidad, item.precio_unitario,
           0, itemSubtotal, 16, impuestoMonto, itemTotal, i

@@ -389,8 +389,8 @@ export const getClientPayments = () => api.get('/api/client/dashboard/payments')
 export const getClientActivity = () => api.get('/api/client/dashboard/activity');
 
 // --- Client Quotes Management ---
-export const getClientQuotes = (params = {}) => api.get('/api/client/dashboard/quotes', { params });
-export const updateClientQuoteStatus = (id, data) => api.put(`/api/client/dashboard/quotes/${id}/status`, data);
+export const getClientQuotes = (params = {}) => api.get('/api/client/quotations', { params });
+export const updateClientQuoteStatus = (id, action) => api.put(`/api/client/quotations/${id}/${action}`);
 
 // --- Client Profile Management ---
 export const getClientProfile = () => api.get('/api/client/dashboard/profile');
