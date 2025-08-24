@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 import { 
   CreditCard, 
   XCircle, 
@@ -11,7 +12,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../hooks/useToast';
 
-const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
+const PaymentGatewayModal = ({ pedido, onClose, onPayment }) => {
   const [paymentMethod, setPaymentMethod] = useState('paypal');
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState('select'); // select, processing, success, error
@@ -117,8 +118,8 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
           amount: paymentRequestData.monto,
           currency: 'USD',
           orderData: {
-            service: order.servicio || 'Desarrollo de Software',
-            reference_id: `order_${order.id}`,
+            service: pedido.servicio || 'Desarrollo de Software',
+            reference_id: `order_${pedido.id}`,
             payment_id: result.data?.id
           }
         })
@@ -137,7 +138,7 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
           pollPaymentStatus(result.data?.id);
         }
       } else {
-        throw new Error(paypalResult.message || 'Error al crear orden de PayPal');
+        throw new Error(paypalResult.message || 'Error al crear pedido de PayPal');
       }
 
     } catch (error) {
@@ -160,7 +161,7 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
           amount: paymentRequestData.monto,
           currency: 'usd',
           metadata: {
-            order_id: order.id,
+            order_id: pedido.id,
             user_id: user.id,
             payment_method: 'Tarjeta de Crédito'
           }
@@ -296,9 +297,9 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
     setStep('processing');
 
     const paymentRequestData = {
-      order_id: order.id,
-      concepto: `Pago del proyecto #${order.numero_pedido || order.id}`,
-      monto: parseFloat(order.value)
+      pedido_id: pedido.id,
+      concepto: `Pago del proyecto #${pedido.numero_pedido || pedido.id}`,
+      monto: parseFloat(pedido.value)
     };
 
     try {
@@ -408,12 +409,12 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* order Summary */}
       <div className="bg-gray-50 p-4 rounded-lg">
-        <h4 className="font-medium text-gray-900">Proyecto #{order.numero_pedido || order.id}</h4>
-        <p className="text-sm text-gray-600">{order.descripcion}</p>
+        <h4 className="font-medium text-gray-900">Proyecto #{pedido.numero_pedido || pedido.id}</h4>
+        <p className="text-sm text-gray-600">{pedido.descripcion}</p>
         <div className="flex justify-between items-center mt-2">
           <span className="text-sm text-gray-500">Total a pagar:</span>
           <span className="text-xl font-bold text-blue-600">
-            ${parseFloat(order.value).toFixed(2)} USD
+            ${parseFloat(pedido.value).toFixed(2)} USD
           </span>
         </div>
       </div>
@@ -636,7 +637,7 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
               Procesando...
             </>
           ) : (
-            `Pagar $${parseFloat(order.value).toFixed(2)}`
+            `Pagar $${parseFloat(pedido.value).toFixed(2)}`
           )}
         </button>
       </div>
@@ -667,6 +668,18 @@ const PaymentGatewayModal = ({ order, onClose, onPayment }) => {
       </div>
     </div>
   );
+};
+
+PaymentGatewayModal.propTypes = {
+  pedido: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    numero_pedido: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    descripcion: PropTypes.string,
+    servicio: PropTypes.string,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onPayment: PropTypes.func.isRequired
 };
 
 export default PaymentGatewayModal;
