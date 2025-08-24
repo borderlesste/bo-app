@@ -8,7 +8,7 @@ async function createSampleUsers() {
   try {
     const users = [
       {
-        nombre: 'Administrador Principal',
+        nombre: 'Admin',
         email: 'admin@borderlesstechno.com',
         password: 'admin123',
         rol: 'admin',

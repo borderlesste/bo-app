@@ -97,8 +97,14 @@ exports.createPayment = async (req, res) => {
     try {
       const [usuarioData] = await pool.execute('SELECT email FROM usuarios WHERE id = ?', [usuario_id]);
       if (usuarioData.length > 0) {
-        emailService.sendPaymentConfirmation({
-          client_email: usuarioData[0].email, monto, metodo_pago, referencia
+        emailService.sendPaymentReceived({
+          client_email: usuarioData[0].email, 
+          client_name: usuarioName,
+          amount: monto, 
+          metodo_pago, 
+          referencia,
+          payment_number: newPayment.id,
+          fecha_pago: new Date()
         }).catch(err => console.log('⚠️ Error enviando email:', err.message));
       }
     } catch (emailError) {

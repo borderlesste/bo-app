@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name=\"viewport\" content="width=device-width, initial-scale=1.0">
+    <title>Recordatorio de Factura - Borderless Techno</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+    <table cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 40px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Borderless Techno</h1>
+                <p style="color: #ffffff; margin: 8px 0 0; font-size: 14px; opacity: 0.9;">Soluciones Tecnológicas Sin Límites</p>
+            </td>
+        </tr>
+        
+        <!-- Content -->
+        <tr>
+            <td style="padding: 40px;">
+                <h2 style="color: #f59e0b; margin: 0 0 20px; font-size: 24px; font-weight: 600;">
+                    ⏰ Recordatorio de Factura Pendiente
+                </h2>
+                
+                <p style="color: #374151; margin: 0 0 20px; line-height: 1.6;">
+                    Estimado/a <strong>{{clientName}}</strong>,
+                </p>
+                
+                <p style="color: #374151; margin: 0 0 30px; line-height: 1.6;">
+                    Le recordamos que tiene una factura pendiente de pago. A continuación encontrará los detalles:
+                </p>
+                
+                <!-- Invoice Details Box -->
+                <table style="width: 100%; background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; margin: 30px 0;">
+                    <tr>
+                        <td style="padding: 25px;">
+                            <h3 style="color: #f59e0b; margin: 0 0 15px; font-size: 18px;">Detalles de la Factura</h3>
+                            <table style="width: 100%;">
+                                <tr>
+                                    <td style="padding: 8px 0; color: #374151; font-weight: 600;">Número de Factura:</td>
+                                    <td style="padding: 8px 0; color: #1f2937; text-align: right;">{{invoiceNumber}}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #374151; font-weight: 600;">Fecha de Emisión:</td>
+                                    <td style="padding: 8px 0; color: #1f2937; text-align: right;">{{issueDate}}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #374151; font-weight: 600;">Fecha de Vencimiento:</td>
+                                    <td style="padding: 8px 0; color: #dc2626; text-align: right; font-weight: 600;">{{dueDate}}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #374151; font-weight: 600;">Monto Total:</td>
+                                    <td style="padding: 8px 0; color: #f59e0b; text-align: right; font-weight: 700; font-size: 18px;">${{amount}} {{currency}}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px 0; color: #374151; font-weight: 600;">Estado:</td>
+                                    <td style="padding: 8px 0; color: #dc2626; text-align: right; font-weight: 600;">⏳ PENDIENTE</td>
+                                </tr>
+                                {{#if daysOverdue}}
+                                <tr>
+                                    <td style="padding: 8px 0; color: #374151; font-weight: 600;">Días de Retraso:</td>
+                                    <td style="padding: 8px 0; color: #dc2626; text-align: right; font-weight: 600;">{{daysOverdue}} días</td>
+                                </tr>
+                                {{/if}}
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+                
+                <!-- Payment Methods -->
+                <div style="background-color: #f0f9ff; border: 1px solid #0284c7; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                    <h4 style="color: #0284c7; margin: 0 0 15px;">💳 Métodos de Pago Disponibles</h4>
+                    <ul style="color: #374151; margin: 0; padding-left: 20px; line-height: 1.8;">
+                        <li><strong>Tarjeta de Crédito/Débito</strong> - Pago inmediato online</li>
+                        <li><strong>PayPal</strong> - Pago seguro con su cuenta PayPal</li>
+                        <li><strong>Transferencia Bancaria</strong> - Datos bancarios en la factura</li>
+                        <li><strong>Bizum</strong> - Pago instantáneo desde su banco</li>
+                    </ul>
+                </div>
+                
+                {{#if isOverdue}}
+                <div style="background-color: #fef2f2; border: 1px solid #dc2626; border-radius: 8px; padding: 20px; margin: 30px 0;">
+                    <h4 style="color: #dc2626; margin: 0 0 10px;">⚠️ Factura Vencida</h4>
+                    <p style="color: #374151; margin: 0; line-height: 1.6;">
+                        Esta factura tiene <strong>{{daysOverdue}} días de retraso</strong>. Para evitar la suspensión 
+                        del servicio, le rogamos que proceda al pago lo antes posible.
+                    </p>
+                </div>
+                {{/if}}
+                
+                <!-- Action Buttons -->
+                <div style="text-align: center; margin: 40px 0;">
+                    <a href="{{paymentUrl}}" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 6px; font-weight: 600; margin: 10px; font-size: 16px;">
+                        💳 Pagar Ahora
+                    </a>
+                    <a href="{{invoiceUrl}}" style="display: inline-block; background-color: #667eea; color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 6px; font-weight: 600; margin: 10px; font-size: 16px;">
+                        📄 Ver Factura
+                    </a>
+                </div>
+                
+                <!-- Login Details -->
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin: 30px 0;">
+                    <h4 style="color: #1f2937; margin: 0 0 15px;">🔑 Acceso a Su Cuenta</h4>
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="padding: 5px 0; color: #374151; font-weight: 600;">URL de Acceso:</td>
+                            <td style="padding: 5px 0; text-align: right;">
+                                <a href="{{loginUrl}}" style="color: #667eea; text-decoration: none;">{{loginUrl}}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0; color: #374151; font-weight: 600;">Email:</td>
+                            <td style="padding: 5px 0; color: #1f2937; text-align: right;">{{clientEmail}}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <p style="color: #374151; margin: 30px 0; line-height: 1.6;">
+                    Si ya ha realizado el pago de esta factura, por favor ignore este recordatorio. 
+                    Los pagos pueden tardar hasta 2 días hábiles en procesarse.
+                </p>
+                
+                <p style="color: #374151; margin: 0; line-height: 1.6;">
+                    Si tiene alguna consulta sobre esta factura, no dude en contactar a nuestro 
+                    <strong>Departamento de Facturación</strong>.
+                </p>
+            </td>
+        </tr>
+        
+        <!-- Footer -->
+        <tr>
+            <td style="background-color: #1f2937; color: #ffffff; padding: 30px 40px; text-align: center;">
+                <h3 style="margin: 0 0 15px; color: #ffffff;">Borderless Techno</h3>
+                <p style="margin: 0 0 10px; font-size: 14px; opacity: 0.8;">
+                    📍 Ciudad Tecnológica, Tech District<br>
+                    📧 billing@borderlesstechno.com | 📞 +1 (555) 123-4567
+                </p>
+                
+                <div style="margin: 20px 0; border-top: 1px solid #374151; padding-top: 20px;">
+                    <a href="{{websiteUrl}}" style="color: #60a5fa; text-decoration: none; margin: 0 10px;">🌐 Sitio Web</a>
+                    <a href="{{clientAreaUrl}}" style="color: #60a5fa; text-decoration: none; margin: 0 10px;">🔐 Área Cliente</a>
+                    <a href="{{supportUrl}}" style="color: #60a5fa; text-decoration: none; margin: 0 10px;">🎧 Soporte</a>
+                </div>
+                
+                <p style="margin: 20px 0 0; font-size: 12px; opacity: 0.7;">
+                    © 2025 Borderless Techno. Todos los derechos reservados.<br>
+                    Este es un email automático, por favor no responder directamente.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

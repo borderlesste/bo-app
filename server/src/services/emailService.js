@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const fs = require('fs').promises;
+const path = require('path');
 
 class EmailService {
   constructor() {
@@ -238,38 +240,67 @@ class EmailService {
     }
   }
 
-  async sendPaymentConfirmation(paymentData) {
+  async sendPaymentReceived(paymentData) {
     if (!this.transporter) await this.initTransporter();
     
-    const mailOptions = {
-      from: '"Borderless Techno" <payments@borderlesstechno.com>',
-      to: paymentData.client_email,
-      subject: 'Confirmación de Pago Recibido',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #10b981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-            <h2 style="margin: 0;">¡Pago Confirmado!</h2>
-          </div>
-          <div style="padding: 30px; background-color: #ffffff;">
-            <p>Hola,</p>
-            <p>Hemos recibido tu pago correctamente. Aquí están los detalles:</p>
-            <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-              <p><strong>Monto:</strong> $${paymentData.monto}</p>
-              <p><strong>Método:</strong> ${paymentData.metodo_pago || 'No especificado'}</p>
-              <p><strong>Fecha:</strong> ${new Date().toLocaleString('es-ES')}</p>
-              <p><strong>Estado:</strong> <span style="color: #10b981; font-weight: bold;">Pagado</span></p>
-            </div>
-            <p>Procesaremos tu order y te mantendremos informado sobre el progreso.</p>
-            <p>Gracias por confiar en nosotros.</p>
-            <p>Saludos,<br><strong>El equipo de Borderless Techno</strong></p>
-          </div>
-        </div>
-      `
-    };
-
     try {
+      // Leer el template HTML
+      const templatePath = path.join(__dirname, '../templates/email/paymentReceived.html');
+      let htmlTemplate = await fs.readFile(templatePath, 'utf8');
+      
+      // Reemplazar variables del template
+      const variables = {
+        clientName: paymentData.clientName || paymentData.client_name || 'Cliente',
+        paymentNumber: paymentData.payment_number || paymentData.id || 'N/A',
+        amount: paymentData.amount || paymentData.monto || '0.00',
+        currency: paymentData.currency || 'MXN',
+        paymentMethod: this.formatPaymentMethod(paymentData.metodo_pago || paymentData.payment_method),
+        paymentDate: new Date(paymentData.fecha_pago || paymentData.created_at || new Date()).toLocaleDateString('es-ES'),
+        reference: paymentData.referencia || paymentData.reference || '',
+        invoiceGenerated: paymentData.invoiceGenerated || false,
+        invoiceNumber: paymentData.invoiceNumber || '',
+        invoiceUrl: paymentData.invoiceUrl || '',
+        clientAreaUrl: process.env.CLIENT_AREA_URL || 'https://bo-app-n4uj.vercel.app/client',
+        loginUrl: process.env.LOGIN_URL || 'https://bo-app-n4uj.vercel.app/login',
+        clientEmail: paymentData.client_email || paymentData.email || '',
+        websiteUrl: process.env.WEBSITE_URL || 'https://bo-app-n4uj.vercel.app',
+        supportUrl: process.env.SUPPORT_URL || 'https://bo-app-n4uj.vercel.app/contact'
+      };
+      
+      // Reemplazar todas las variables en el template
+      for (const [key, value] = Object.entries(variables)) {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        htmlTemplate = htmlTemplate.replace(regex, value);
+      }
+      
+      // Manejar condicionales Handlebars básicos
+      if (variables.reference) {
+        htmlTemplate = htmlTemplate.replace(/{{#if reference}}([\s\S]*?){{/if}}/g, '$1');
+      } else {
+        htmlTemplate = htmlTemplate.replace(/{{#if reference}}[\s\S]*?{{/if}}/g, '');
+      }
+      
+      if (variables.invoiceGenerated) {
+        htmlTemplate = htmlTemplate.replace(/{{#if invoiceGenerated}}([\s\S]*?){{/if}}/g, '$1');
+      } else {
+        htmlTemplate = htmlTemplate.replace(/{{#if invoiceGenerated}}[\s\S]*?{{/if}}/g, '');
+      }
+      
+      if (variables.invoiceUrl) {
+        htmlTemplate = htmlTemplate.replace(/{{#if invoiceUrl}}([\s\S]*?){{/if}}/g, '$1');
+      } else {
+        htmlTemplate = htmlTemplate.replace(/{{#if invoiceUrl}}[\s\S]*?{{/if}}/g, '');
+      }
+    
+      const mailOptions = {
+        from: '"Borderless Techno" <payments@borderlesstechno.com>',
+        to: paymentData.client_email || paymentData.email,
+        subject: '✅ Pago Confirmado - Borderless Techno',
+        html: htmlTemplate
+      };
+
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Confirmación de pago enviada:', info.messageId);
+      console.log('✅ Email de pago recibido enviado:', info.messageId);
       
       if (nodemailer.getTestMessageUrl(info)) {
         console.log('🔗 Preview URL:', nodemailer.getTestMessageUrl(info));
@@ -277,9 +308,14 @@ class EmailService {
       
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      console.error('❌ Error enviando confirmación de pago:', error);
+      console.error('❌ Error enviando email de pago recibido:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  async sendPaymentConfirmation(paymentData) {
+    // Mantener compatibilidad con código existente
+    return await this.sendPaymentReceived(paymentData);
   }
 
   async sendInvoiceNotification(invoiceData) {
@@ -345,62 +381,70 @@ class EmailService {
     }
   }
 
-  async sendOverdueInvoiceNotification(invoiceData) {
+  async sendInvoiceReminder(invoiceData) {
     if (!this.transporter) await this.initTransporter();
     
-    const { client_email, numero_factura, total, fecha_vencimiento } = invoiceData;
-    
-    const mailOptions = {
-      from: '"Borderless Techno" <invoices@borderlesstechno.com>',
-      to: client_email,
-      subject: `🚨 URGENTE: Factura Vencida ${numero_factura}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
-            <h2 style="margin: 0;">🚨 Factura Vencida</h2>
-            <p style="margin: 10px 0 0; opacity: 0.9;">Acción Requerida</p>
-          </div>
-          
-          <div style="padding: 30px; background-color: #ffffff;">
-            <p>Estimado cliente,</p>
-            <p>Le informamos que la siguiente factura ha vencido y requiere atención inmediata:</p>
-            
-            <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
-              <p><strong>Número de Factura:</strong> <span style="color: #dc2626;">${numero_factura}</span></p>
-              <p><strong>Total Adeudado:</strong> <span style="font-size: 20px; color: #dc2626; font-weight: bold;">$${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</span></p>
-              <p><strong>Fecha de Vencimiento:</strong> <span style="color: #dc2626;">${new Date(fecha_vencimiento).toLocaleDateString('es-ES')}</span></p>
-              <p><strong>Días de Retraso:</strong> <span style="color: #dc2626; font-weight: bold;">${Math.floor((new Date() - new Date(fecha_vencimiento)) / (1000 * 60 * 60 * 24))} días</span></p>
-            </div>
-            
-            <div style="background-color: #fbbf24; color: #92400e; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center;">
-              <p style="margin: 0; font-weight: bold;">⚠️ IMPORTANTE: Proceda con el pago lo antes posible para evitar la suspensión de servicios.</p>
-            </div>
-            
-            <p><strong>Para realizar el pago:</strong></p>
-            <ul style="color: #4b5563;">
-              <li>Acceda a su portal de cliente</li>
-              <li>Contacte a nuestro equipo de cuentas por cobrar</li>
-              <li>Realice una transferencia bancaria directa</li>
-            </ul>
-            
-            <p>Si ya realizó el pago, por favor ignore este mensaje y envíenos el comprobante.</p>
-            <p>Para cualquier consulta, comuníquese con nosotros inmediatamente.</p>
-            
-            <p>Departamento de Cuentas por Cobrar,<br><strong>Borderless Techno</strong></p>
-          </div>
-          
-          <div style="text-align: center; padding: 20px; background-color: #f8fafc; border-radius: 0 0 8px 8px;">
-            <p style="margin: 0; color: #6b7280; font-size: 12px;">
-              Este es un mensaje automático. Por favor, no responda a este email.
-            </p>
-          </div>
-        </div>
-      `
-    };
-
     try {
+      // Leer el template HTML
+      const templatePath = path.join(__dirname, '../templates/email/invoiceReminder.html');
+      let htmlTemplate = await fs.readFile(templatePath, 'utf8');
+      
+      const dueDate = new Date(invoiceData.fecha_vencimiento);
+      const today = new Date();
+      const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+      const isOverdue = daysOverdue > 0;
+      
+      // Reemplazar variables del template
+      const variables = {
+        clientName: invoiceData.clientName || invoiceData.client_name || 'Cliente',
+        invoiceNumber: invoiceData.numero_factura || invoiceData.invoice_number || 'N/A',
+        issueDate: new Date(invoiceData.fecha_emision || invoiceData.created_at || new Date()).toLocaleDateString('es-ES'),
+        dueDate: dueDate.toLocaleDateString('es-ES'),
+        amount: invoiceData.total || invoiceData.amount || '0.00',
+        currency: invoiceData.currency || 'MXN',
+        daysOverdue: isOverdue ? daysOverdue : '',
+        isOverdue: isOverdue,
+        paymentUrl: `${process.env.CLIENT_AREA_URL || 'https://bo-app-n4uj.vercel.app/client'}/invoices/${invoiceData.id}`,
+        invoiceUrl: `${process.env.CLIENT_AREA_URL || 'https://bo-app-n4uj.vercel.app/client'}/invoices/${invoiceData.id}`,
+        clientAreaUrl: process.env.CLIENT_AREA_URL || 'https://bo-app-n4uj.vercel.app/client',
+        loginUrl: process.env.LOGIN_URL || 'https://bo-app-n4uj.vercel.app/login',
+        clientEmail: invoiceData.client_email || invoiceData.email || '',
+        websiteUrl: process.env.WEBSITE_URL || 'https://bo-app-n4uj.vercel.app',
+        supportUrl: process.env.SUPPORT_URL || 'https://bo-app-n4uj.vercel.app/contact'
+      };
+      
+      // Reemplazar todas las variables en el template
+      for (const [key, value] of Object.entries(variables)) {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        htmlTemplate = htmlTemplate.replace(regex, value);
+      }
+      
+      // Manejar condicionales Handlebars
+      if (variables.daysOverdue) {
+        htmlTemplate = htmlTemplate.replace(/{{#if daysOverdue}}([\s\S]*?){{/if}}/g, '$1');
+      } else {
+        htmlTemplate = htmlTemplate.replace(/{{#if daysOverdue}}[\s\S]*?{{/if}}/g, '');
+      }
+      
+      if (variables.isOverdue) {
+        htmlTemplate = htmlTemplate.replace(/{{#if isOverdue}}([\s\S]*?){{/if}}/g, '$1');
+      } else {
+        htmlTemplate = htmlTemplate.replace(/{{#if isOverdue}}[\s\S]*?{{/if}}/g, '');
+      }
+    
+      const subject = isOverdue ? 
+        `🚨 URGENTE: Factura Vencida ${variables.invoiceNumber}` : 
+        `⏰ Recordatorio: Factura ${variables.invoiceNumber} Pendiente`;
+      
+      const mailOptions = {
+        from: '"Borderless Techno" <invoices@borderlesstechno.com>',
+        to: invoiceData.client_email || invoiceData.email,
+        subject: subject,
+        html: htmlTemplate
+      };
+
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('✅ Notificación de factura vencida enviada:', info.messageId);
+      console.log('✅ Recordatorio de factura enviado:', info.messageId);
       
       if (nodemailer.getTestMessageUrl(info)) {
         console.log('🔗 Preview URL:', nodemailer.getTestMessageUrl(info));
@@ -408,9 +452,28 @@ class EmailService {
       
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      console.error('❌ Error enviando notificación de factura vencida:', error);
+      console.error('❌ Error enviando recordatorio de factura:', error);
       return { success: false, error: error.message };
     }
+  }
+
+  async sendOverdueInvoiceNotification(invoiceData) {
+    // Mantener compatibilidad con código existente
+    return await this.sendInvoiceReminder(invoiceData);
+  }
+
+  // Método helper para formatear métodos de pago
+  formatPaymentMethod(method) {
+    const methods = {
+      'credit_card': 'Tarjeta de Crédito',
+      'debit_card': 'Tarjeta de Débito', 
+      'paypal': 'PayPal',
+      'bank_transfer': 'Transferencia Bancaria',
+      'cash': 'Efectivo',
+      'check': 'Cheque',
+      'other': 'Otro'
+    };
+    return methods[method] || method || 'No especificado';
   }
 
   // Método para probar la conexión del email
