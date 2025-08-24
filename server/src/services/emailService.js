@@ -268,28 +268,28 @@ class EmailService {
       };
       
       // Reemplazar todas las variables en el template
-      for (const [key, value] = Object.entries(variables)) {
+      for (const [key, value] of Object.entries(variables)) {
         const regex = new RegExp(`{{${key}}}`, 'g');
         htmlTemplate = htmlTemplate.replace(regex, value);
       }
       
       // Manejar condicionales Handlebars básicos
       if (variables.reference) {
-        htmlTemplate = htmlTemplate.replace(/{{#if reference}}([\s\S]*?){{/if}}/g, '$1');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if reference\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1');
       } else {
-        htmlTemplate = htmlTemplate.replace(/{{#if reference}}[\s\S]*?{{/if}}/g, '');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if reference\}\}[\s\S]*?\{\{\/if\}\}/g, '');
       }
       
       if (variables.invoiceGenerated) {
-        htmlTemplate = htmlTemplate.replace(/{{#if invoiceGenerated}}([\s\S]*?){{/if}}/g, '$1');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if invoiceGenerated\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1');
       } else {
-        htmlTemplate = htmlTemplate.replace(/{{#if invoiceGenerated}}[\s\S]*?{{/if}}/g, '');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if invoiceGenerated\}\}[\s\S]*?\{\{\/if\}\}/g, '');
       }
       
       if (variables.invoiceUrl) {
-        htmlTemplate = htmlTemplate.replace(/{{#if invoiceUrl}}([\s\S]*?){{/if}}/g, '$1');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if invoiceUrl\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1');
       } else {
-        htmlTemplate = htmlTemplate.replace(/{{#if invoiceUrl}}[\s\S]*?{{/if}}/g, '');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if invoiceUrl\}\}[\s\S]*?\{\{\/if\}\}/g, '');
       }
     
       const mailOptions = {
@@ -421,15 +421,15 @@ class EmailService {
       
       // Manejar condicionales Handlebars
       if (variables.daysOverdue) {
-        htmlTemplate = htmlTemplate.replace(/{{#if daysOverdue}}([\s\S]*?){{/if}}/g, '$1');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if daysOverdue\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1');
       } else {
-        htmlTemplate = htmlTemplate.replace(/{{#if daysOverdue}}[\s\S]*?{{/if}}/g, '');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if daysOverdue\}\}[\s\S]*?\{\{\/if\}\}/g, '');
       }
       
       if (variables.isOverdue) {
-        htmlTemplate = htmlTemplate.replace(/{{#if isOverdue}}([\s\S]*?){{/if}}/g, '$1');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if isOverdue\}\}([\s\S]*?)\{\{\/if\}\}/g, '$1');
       } else {
-        htmlTemplate = htmlTemplate.replace(/{{#if isOverdue}}[\s\S]*?{{/if}}/g, '');
+        htmlTemplate = htmlTemplate.replace(/\{\{#if isOverdue\}\}[\s\S]*?\{\{\/if\}\}/g, '');
       }
     
       const subject = isOverdue ? 
