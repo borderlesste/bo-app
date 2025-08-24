@@ -49,16 +49,16 @@ const ClientPayments = () => {
         // Process pedidos data to ensure consistent structure
         const processedPedidos = (pedidosData || []).map(pedido => ({
           ...pedido,
-          estado: pedido.status || pedido.estado || 'nuevo', // Priorizar status ya que viene del backend
+          estado: pedido?.status || pedido?.estado || 'nuevo', // Priorizar status ya que viene del backend
           id: pedido.id,
-          numero_pedido: pedido.numero_pedido,
-          value: parseFloat(pedido.presupuesto_estimado) || parseFloat(pedido.value) || parseFloat(pedido.total) || 0,
-          descripcion: pedido.descripcion || pedido.description || pedido.name || '',
-          servicio: pedido.servicio || '',
-          fecha_entrega_deseada: pedido.fecha_entrega_deseada,
-          fecha_entrega_estimada: pedido.fecha_entrega_estimada,
+          numero_pedido: pedido?.numero_pedido,
+          value: parseFloat(pedido?.presupuesto_estimado) || parseFloat(pedido?.value) || parseFloat(pedido?.total) || 0,
+          descripcion: pedido?.descripcion || pedido?.description || pedido?.name || '',
+          servicio: pedido?.servicio || '',
+          fecha_entrega_deseada: pedido?.fecha_entrega_deseada,
+          fecha_entrega_estimada: pedido?.fecha_entrega_estimada,
           created_at: pedido.created_at
-        }));
+        })).filter(pedido => pedido && pedido.id); // Filter out any invalid pedidos
         
         console.log('Processed pedidos:', processedPedidos); // Debug log
         setPedidos(processedPedidos);
@@ -189,7 +189,8 @@ const ClientPayments = () => {
   );
 
   // Filter pedidos that need payment (only confirmed projects without completed payments)
-  const pendingPedidos = pedidos.filter(pedido => {
+  const pendingPedidos = (pedidos || []).filter(pedido => {
+    if (!pedido || !pedido.id) return false; // Validación defensiva
     // Only show projects that are confirmed by admin and need payment
     const isConfirmedByAdmin = pedido.estado === 'confirmado' || pedido.estado === 'en_proceso';
     const needsPayment = pedido.estado !== 'completado' && (pedido.value > 0);
@@ -201,7 +202,8 @@ const ClientPayments = () => {
   });
 
   // Filter pedidos waiting for admin approval (nuevo status)
-    const pedidosWaitingApproval = pedidos.filter(pedido => {
+    const pedidosWaitingApproval = (pedidos || []).filter(pedido => {
+    if (!pedido || !pedido.id) return false; // Validación defensiva
     // Only show projects waiting for admin approval (value is > 0 and there's no completed payment)
     const isWaitingApproval = pedido.estado === 'nuevo' || pedido.estado === 'revision';
     const hasValue = pedido.value > 0;
@@ -423,20 +425,20 @@ const ClientPayments = () => {
                   </p>
                 </div>
               ) : (
-                pendingPedidos.map((pedido) => (
+                pendingPedidos.filter(pedido => pedido && pedido.id).map((pedido) => (
                   <div key={pedido.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         {getStatusIcon(pedido.estado)}
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">
-                            Proyecto #{pedido.numero_pedido || pedido.id}
+                            Proyecto #{pedido?.numero_pedido || pedido?.id || 'N/A'}
                           </h3>
-                          <p className="text-sm text-gray-500">{pedido.descripcion}</p>
+                          <p className="text-sm text-gray-500">{pedido?.descripcion || 'Sin descripción'}</p>
                           <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                            <span>Estado: {getStatusText(pedido.estado)}</span>
-                            <span>Servicio: {pedido.servicio}</span>
-                            {pedido.fecha_entrega_deseada && (
+                            <span>Estado: {getStatusText(pedido?.estado)}</span>
+                            <span>Servicio: {pedido?.servicio || 'No especificado'}</span>
+                            {pedido?.fecha_entrega_deseada && (
                               <span>Entrega: {new Date(pedido.fecha_entrega_deseada).toLocaleDateString()}</span>
                             )}
                           </div>
@@ -445,7 +447,7 @@ const ClientPayments = () => {
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
                           <p className="text-2xl font-bold text-blue-600">
-                            ${parseFloat(pedido.value || 0).toFixed(2)}
+                            ${parseFloat(pedido?.value || 0).toFixed(2)}
                           </p>
                           <p className="text-sm text-gray-500">
                             {pedido.tipo_presupuesto === 'estimado' ? 'Presupuesto Estimado' : 'Total a Pagar'}
@@ -482,7 +484,7 @@ const ClientPayments = () => {
                   </p>
                 </div>
               ) : (
-                pedidosWaitingApproval.map((pedido) => (
+                pedidosWaitingApproval.filter(pedido => pedido && pedido.id).map((pedido) => (
                   <div key={pedido.id} className="border border-orange-200 rounded-lg p-6 bg-orange-50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
@@ -491,13 +493,13 @@ const ClientPayments = () => {
                         </div>
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">
-                            Proyecto #{pedido.numero_pedido || pedido.id}
+                            Proyecto #{pedido?.numero_pedido || pedido?.id || 'N/A'}
                           </h3>
-                          <p className="text-sm text-gray-600">{pedido.descripcion}</p>
+                          <p className="text-sm text-gray-600">{pedido?.descripcion || 'Sin descripción'}</p>
                           <div className="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                            <span>Estado: {getStatusText(pedido.estado)}</span>
-                            <span>Servicio: {pedido.servicio}</span>
-                            {pedido.fecha_entrega_deseada && (
+                            <span>Estado: {getStatusText(pedido?.estado)}</span>
+                            <span>Servicio: {pedido?.servicio || 'No especificado'}</span>
+                            {pedido?.fecha_entrega_deseada && (
                               <span>Entrega: {new Date(pedido.fecha_entrega_deseada).toLocaleDateString()}</span>
                             )}
                           </div>
@@ -506,7 +508,7 @@ const ClientPayments = () => {
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
                           <p className="text-2xl font-bold text-orange-600">
-                            ${parseFloat(pedido.value || 0).toFixed(2)}
+                            ${parseFloat(pedido?.value || 0).toFixed(2)}
                           </p>
                           <p className="text-sm text-gray-500">
                             Esperando Aprobación

@@ -1,17 +1,45 @@
 const { validationResult } = require('express-validator');
-const { pedidoService } = require('../services/pedidoService.js');
+const pedidoService = require('../services/pedidoService.js');
 const notificationService = require('../services/notificationService.js');
 
 // Obtener todos los pedidos (admin) o los pedidos de un usuario (cliente)
 exports.getPedidos = async (req, res) => {
+  console.log('📋 Starting getPedidos request for user:', req.user.id, 'role:', req.user.rol);
+  
   try {
+    console.log('📋 Calling pedidoService.getPedidos...');
+    const startTime = Date.now();
+    
     const pedidos = await pedidoService.getPedidos(req.user.id, req.user.rol);
+    
+    const endTime = Date.now();
+    console.log(`📋 getPedidos completed in ${endTime - startTime}ms, found ${pedidos.length} pedidos`);
+    
     res.json({
       success: true,
       data: pedidos
     });
   } catch (err) {
-    console.error('Error fetching pedidos:', err);
+    console.error('❌ Error fetching pedidos:', err);
+    
+    // Handle specific database timeout errors
+    if (err.code === 'ETIMEDOUT' || err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
+      console.error('🔄 Database connection timeout detected');
+      return res.status(503).json({ 
+        success: false,
+        message: 'Servicio temporalmente no disponible. Reintentando conexión...'
+      });
+    }
+    
+    // Handle network unreachable errors
+    if (err.code === 'ENETUNREACH') {
+      console.error('🌐 Network unreachable to database server');
+      return res.status(503).json({ 
+        success: false,
+        message: 'Servidor de base de datos temporalmente no accesible. Intente nuevamente en unos momentos.'
+      });
+    }
+    
     res.status(500).json({ 
       success: false,
       message: 'Error al obtener los pedidos.' 

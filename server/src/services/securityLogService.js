@@ -1,4 +1,4 @@
-const { pool } = require('../config/db.js');
+const { pool, executeWithRetry } = require('../config/db.js');
 
 class SecurityLogService {
   
@@ -32,18 +32,25 @@ class SecurityLogService {
       // Preparar detalles como JSON si es un objeto
       const detallesJson = typeof detalles === 'object' ? JSON.stringify(detalles) : detalles;
 
-      const [result] = await pool.execute(
-        `INSERT INTO seguridad_log 
-         (usuario_id, tipo, email_intento, ip, user_agent, dispositivo, ubicacion, detalles)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [usuarioId, tipo, emailIntento, ip, userAgent, deviceInfo, ubicacion, detallesJson]
-      );
+      try {
+        const [result] = await executeWithRetry(
+          `INSERT INTO seguridad_log 
+           (usuario_id, tipo, email_intento, ip, user_agent, dispositivo, ubicacion, detalles)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [usuarioId, tipo, emailIntento, ip, userAgent, deviceInfo, ubicacion, detallesJson]
+        );
 
-      console.log(`🔒 Evento de seguridad registrado: ${tipo} - IP: ${ip} - Usuario: ${usuarioId || emailIntento}`);
-      return result.insertId;
+        console.log(`🔒 Evento de seguridad registrado: ${tipo} - IP: ${ip} - Usuario: ${usuarioId || emailIntento}`);
+        return result && result.insertId ? result.insertId : null;
+      } catch (insertError) {
+        // No dejar que un fallo en el logging de seguridad rompa la petición
+        console.error('⚠️ Error registrando evento de seguridad (no crítico):', insertError.code || insertError.message);
+        return null;
+      }
     } catch (error) {
-      console.error('❌ Error registrando evento de seguridad:', error);
-      throw error;
+      // Catch at top-level in case of unexpected issues; do not throw to avoid breaking requests
+      console.error('❌ Error interno registrando evento de seguridad (no crítico):', error);
+      return null;
     }
   }
 
@@ -181,16 +188,20 @@ class SecurityLogService {
   // Obtener intentos fallidos recientes para un email
   async getRecentFailedAttempts(email, minutosAtras = 15) {
     try {
-      const [rows] = await pool.execute(
-        `SELECT COUNT(*) as intentos 
-         FROM seguridad_log 
-         WHERE email_intento = ? 
-         AND tipo = 'login_fallido' 
-         AND created_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
-        [email, minutosAtras]
-      );
-      
-      return rows[0].intentos;
+      try {
+        const [rows] = await executeWithRetry(
+          `SELECT COUNT(*) as intentos 
+           FROM seguridad_log 
+           WHERE email_intento = ? 
+           AND tipo = 'login_fallido' 
+           AND created_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+          [email, minutosAtras]
+        );
+        return rows[0].intentos;
+      } catch (error) {
+        console.error('Error obteniendo intentos fallidos (no-crítico):', error && error.code ? error.code : error.message);
+        return 0;
+      }
     } catch (error) {
       console.error('Error obteniendo intentos fallidos:', error);
       return 0;
@@ -221,19 +232,47 @@ class SecurityLogService {
       }
       
       // 2. Verificar bloqueos en el log de seguridad
-      const [logRows] = await pool.execute(
-        `SELECT * FROM seguridad_log 
-         WHERE email_intento = ? 
-         AND tipo IN ('bloqueo_cuenta', 'desbloqueo_cuenta')
-         order BY created_at DESC 
-         LIMIT 1`,
-        [email]
-      );
-      
-      if (logRows.length === 0) return false;
-      
-      const lastLogEvent = logRows[0];
-      
+      try {
+        const [logRows] = await executeWithRetry(
+          `SELECT * FROM seguridad_log 
+           WHERE email_intento = ? 
+           AND tipo IN ('bloqueo_cuenta', 'desbloqueo_cuenta')
+           order BY created_at DESC 
+           LIMIT 1`,
+          [email]
+        );
+        
+        if (!logRows || logRows.length === 0) return false;
+        
+        const lastLogEvent = logRows[0];
+        
+        // If the last event is an unlock, no lock exists
+        if (lastLogEvent.tipo === 'desbloqueo_cuenta') {
+          return false;
+        }
+        
+        // If it's a lock event, check expiry
+        if (lastLogEvent.tipo === 'bloqueo_cuenta') {
+          const detalles = JSON.parse(lastLogEvent.detalles || '{}');
+          if (detalles.automatico) {
+            const tiempoBloqueo = new Date(lastLogEvent.created_at);
+            const tiempoExpiracion = new Date(tiempoBloqueo.getTime() + 30 * 60 * 1000); // 30 minutos
+            
+            // If expired, auto-unlock
+            if (new Date() > tiempoExpiracion) {
+              await this.logAccountUnlock(null, email, '127.0.0.1', 'Sistema', 'Bloqueo automatico expirado');
+              return false;
+            }
+          }
+          
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.error('Error verificando bloqueo de cuenta (no-crítico):', error && error.code ? error.code : error.message);
+        return false;
+      }      
       // Si el último evento es un desbloqueo, no está bloqueado
       if (lastLogEvent.tipo === 'desbloqueo_cuenta') {
         return false;

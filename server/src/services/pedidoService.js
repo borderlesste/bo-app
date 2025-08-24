@@ -1,7 +1,9 @@
-const { pool, beginTransaction, commitTransaction, rollbackTransaction } = require('../config/db.js');
+const { pool, executeWithRetry, beginTransaction, commitTransaction, rollbackTransaction } = require('../config/db.js');
 
 const pedidoService = {
   async getPedidos(userId, role) {
+    console.log('🔍 pedidoService.getPedidos called with userId:', userId, 'role:', role);
+    
     let query = `
       SELECT p.id, p.numero_pedido, p.usuario_id, c.nombre as cliente_nombre, c.email as cliente_email,
              p.descripcion, p.servicio, p.estado, p.prioridad, 
@@ -18,11 +20,14 @@ const pedidoService = {
     if (role !== 'admin') {
       query += ' WHERE p.usuario_id = ?';
       params.push(userId);
+      console.log('🔍 Adding WHERE clause for non-admin user');
     }
     
     query += ' ORDER BY p.created_at DESC';
+    console.log('🔍 Executing query with params:', params);
 
-    const [rows] = await pool.execute(query, params);
+    const [rows] = await executeWithRetry(query, params);
+    console.log('🔍 Database query returned', rows.length, 'rows');
     
     // Procesar los resultados para mostrar mejor información al admin
     const processedpedidos = rows.map(pedido => ({
@@ -53,6 +58,7 @@ const pedidoService = {
       }
     }));
     
+    console.log('🔍 Processed', processedpedidos.length, 'pedidos');
     return processedpedidos;
   },
 
