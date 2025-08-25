@@ -38,6 +38,14 @@ function Home() {
       newErrors.email = t('home.form.validation.emailInvalid');
     }
     
+    if (!formData.telefono.trim()) {
+      newErrors.telefono = t('home.form.validation.phoneRequired');
+    }
+    
+    if (!formData.empresa.trim()) {
+      newErrors.empresa = t('home.form.validation.companyRequired');
+    }
+    
     if (!formData.servicio) {
       newErrors.servicio = t('home.form.validation.serviceRequired');
     }
@@ -62,12 +70,12 @@ function Home() {
     
     // Prepare quote data for API
     const quoteData = {
-      nombre: formData.nombre,
-      email: formData.email,
-      telefono: formData.telefono || '',
-      empresa: formData.empresa || '',
+      nombre: formData.nombre.trim(),
+      email: formData.email.trim(),
+      telefono: formData.telefono.trim(),
+      empresa: formData.empresa.trim(),
       servicio: formData.servicio,
-      mensaje: formData.mensaje
+      mensaje: formData.mensaje.trim()
     };
     
     try {
@@ -78,7 +86,7 @@ function Home() {
       const response = await api.post('/api/public/quotes', quoteData);
       const result = response.data;
       
-      if (response.ok && result.success) {
+      if (result.success) {
         setShowSuccess(true);
         setFormData({
           nombre: '',

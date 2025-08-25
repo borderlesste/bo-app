@@ -16,7 +16,7 @@ if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
     const checkoutSDK = require('@paypal/checkout-server-sdk');
     
     // Create PayPal environment
-    const environment = process.env.PAYPAL_ENVIRONMENT === 'production' 
+    const environment = (process.env.PAYPAL_ENVIRONMENT === 'production' || process.env.PAYPAL_ENVIRONMENT === 'live')
       ? new checkoutSDK.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
       : new checkoutSDK.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
     
@@ -227,11 +227,16 @@ class PaymentGatewayService {
     if (!paypalClient || !pedidosController) {
       console.log('🔧 No PayPal credentials: Simulating PayPal order creation');
       console.log('⚠️ Configure PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in .env to use real PayPal');
+      // Usar URL correcta según el environment
+      const checkoutUrl = (process.env.PAYPAL_ENVIRONMENT === 'live' || process.env.PAYPAL_ENVIRONMENT === 'production')
+        ? 'https://www.paypal.com/checkoutnow'
+        : 'https://www.sandbox.paypal.com/checkoutnow';
+      
       return {
         success: true,
         data: {
           pedido_id: 'DEMO_order_' + Date.now(),
-          approve_url: `https://www.sandbox.paypal.com/checkoutnow?token=DEMO_TOKEN_${Date.now()}`,
+          approve_url: `${checkoutUrl}?token=DEMO_TOKEN_${Date.now()}`,
           amount,
           currency,
           status: 'CREATED',
@@ -367,6 +372,17 @@ class PaymentGatewayService {
          VALUES (?, ?, 'confirmado', 'Pago completado via PayPal', NOW())`,
         [pedido.id, pedido.estado]
       );
+      
+      // 6. GENERAR FACTURA Y PAGO_APLICACIONES AUTOMÁTICAMENTE
+      try {
+        const invoiceService = require('./invoiceService.js');
+        const invoice = await invoiceService.generateInvoiceFromPayment(pagoResult.insertId);
+        console.log(`✓ Factura generada automáticamente: ${invoice.numero_factura} para pago ${pagoResult.insertId}`);
+      } catch (invoiceError) {
+        console.error('❌ Error generando factura automática:', invoiceError);
+        console.log('⚠️ El pago se registrará sin factura automática. Deberá generarse manualmente.');
+        // No crear pago_aplicaciones sin factura para mantener integridad referencial
+      }
       
       await connection.commit();
       

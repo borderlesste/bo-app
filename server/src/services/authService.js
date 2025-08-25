@@ -22,7 +22,7 @@ const authService = {
 
     // Check if this is the first user (should be admin)
     const allUsers = await User.findAll({ limit: 1 });
-    const rol = allUsers.length === 0 ? 'admin' : 'usuario';
+    const rol = allUsers.length === 0 ? 'admin' : 'cliente';
 
     const userId = await User.create({
       nombre: nombre.trim(), 

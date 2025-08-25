@@ -11,10 +11,54 @@ const publicController = {
       const { nombre, email, telefono, empresa, servicio, mensaje } = req.body;
       
       // Validate required fields
-      if (!nombre || !email || !servicio) {
+      if (!nombre || !nombre.trim()) {
         return res.status(400).json({
           success: false,
-          message: 'Nombre, email y servicio son requeridos'
+          message: 'El nombre es requerido'
+        });
+      }
+      
+      if (!email || !email.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'El email es requerido'
+        });
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'El formato del email no es válido'
+        });
+      }
+      
+      if (!servicio || !servicio.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'El tipo de servicio es requerido'
+        });
+      }
+      
+      if (!telefono || !telefono.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'El teléfono es requerido'
+        });
+      }
+      
+      if (!empresa || !empresa.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'La empresa es requerida'
+        });
+      }
+      
+      if (!mensaje || !mensaje.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'El mensaje es requerido'
         });
       }
       
@@ -35,23 +79,25 @@ const publicController = {
           usuario_id, 
           nombre,
           email,
+          telefono,
+          empresa,
           titulo, 
           descripcion, 
           estado, 
           prioridad,
           notas_internas
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         usuarioId,
         nombre,
         email,
+        telefono, // Now required field
+        empresa, // Now required field
         `Solicitud de ${servicio}${empresa ? ` - ${empresa}` : ''}`,
         mensaje || 'Solicitud de cotización desde la página web',
         'Pendiente',
         'media',
         JSON.stringify({
-          telefono,
-          empresa,
           servicio_solicitado: servicio,
           origen: 'web_publica'
         })

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getInvoices, getInvoice } from '../../api/axios';
+import { getInvoices, getInvoice, downloadClientInvoice } from '../../api/axios';
 import { 
   CreditCard,
   Calendar,

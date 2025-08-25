@@ -1,7 +1,7 @@
 const securityLogService = require('../services/securityLogService.js');
 const { User } = require('../models');
 
-const isAuthenticated = (req, res, next) => {
+const isAuthenticated = async (req, res, next) => {
   console.log('Verificando sesión. SessionID:', req.session?.id);
   console.log('Usuario en sesión:', req.session?.userId);
   console.log('Session object:', req.session);
@@ -27,6 +27,23 @@ const isAuthenticated = (req, res, next) => {
     })();
 
     return res.status(401).json({ message: 'No autorizado - Sesión requerida' });
+  }
+
+  // Sincronizar rol de la sesión con la base de datos si está vacío o es null
+  if (!req.session.userRole || req.session.userRole === '' || req.session.userRole === null) {
+    try {
+      const user = await User.findById(req.session.userId);
+      if (user && user.rol) {
+        req.session.userRole = user.rol;
+        console.log(`🔄 Rol sincronizado desde DB: ${user.rol} para usuario ${user.id}`);
+        
+        // También actualizar otros datos de la sesión si están desactualizados
+        if (!req.session.userEmail) req.session.userEmail = user.email;
+        if (!req.session.userName) req.session.userName = user.nombre;
+      }
+    } catch (error) {
+      console.error('⚠️ Error sincronizando rol desde DB:', error);
+    }
   }
 
   // Agregar información del usuario a req.user para compatibilidad

@@ -136,7 +136,7 @@ exports.login = async (req, res) => {
             nombre: email.split('@')[0].replace('.', ' ').replace(/\\b\\w/g, l => l.toUpperCase()),
             email: email,
             password: req.body.password || 'usuarios123',
-            rol: 'usuarios',
+            rol: 'cliente',
             telefono: '+52 55 0000 0000',
             direccion: 'Dirección por definir',
             empresa: 'Empresa del Cliente',

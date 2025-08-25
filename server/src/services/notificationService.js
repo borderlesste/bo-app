@@ -52,6 +52,13 @@ class NotificationService {
     return await this.createAdminNotification('nuevo_usuario', titulo, mensaje);
   }
 
+  // Notificación para nuevo cliente registrado
+  async notifyNewClient(userData) {
+    const titulo = 'Nuevo Cliente';
+    const mensaje = `Nuevo cliente registrado: ${userData.nombre} (${userData.email})`;
+    return await this.createAdminNotification('nuevo_cliente', titulo, mensaje);
+  }
+
   // Notificación para nuevo contacto
   async notifyNewContact(contactData) {
     const titulo = 'Nuevo Contacto';

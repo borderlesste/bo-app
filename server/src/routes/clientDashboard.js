@@ -15,7 +15,7 @@ const clientOnly = (req, res, next) => {
     return res.status(403).json({ message: 'Acceso denegado. Usuario no autenticado.' });
   }
   
-  if (req.user.rol !== 'client' && req.user.rol !== 'cliente' && req.user.rol !== 'usuarios') {
+  if (req.user.rol !== 'client' && req.user.rol !== 'cliente') {
     console.log('❌ ACCESO DENEGADO: Rol incorrecto:', req.user.rol);
     return res.status(403).json({ message: 'Acceso denegado. Solo para clientes.' });
   }
