@@ -123,7 +123,7 @@ class NotificationService {
   async getUserNotifications(userId, limit = 50) {
     try {
       const [notifications] = await pool.execute(
-        'SELECT * FROM notificaciones WHERE usuario_id = ? order BY created_at DESC LIMIT ?',
+        'SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY created_at DESC LIMIT ?',
         [userId, limit]
       );
 

@@ -112,7 +112,7 @@ class Pago {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' order BY p.fecha_pago DESC';
+        sql += ' ORDER BY p.fecha_pago DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -169,7 +169,7 @@ class Pago {
             LEFT JOIN facturas f ON pa.factura_id = f.id
             LEFT JOIN usuarios u ON pa.applied_by = u.id
             WHERE pa.pago_id = ?
-            order BY pa.fecha_aplicacion DESC
+            ORDER BY pa.fecha_aplicacion DESC
         `, [pagoId]);
     }
 
@@ -181,7 +181,7 @@ class Pago {
         const [lastPayment] = await pool.execute(`
             SELECT numero_pago FROM pagos 
             WHERE numero_pago LIKE ? 
-            order BY numero_pago DESC LIMIT 1
+            ORDER BY numero_pago DESC LIMIT 1
         `, [`PAG-${year}${month}-%`]);
 
         let nextNumber = 1;
@@ -207,7 +207,7 @@ class Pago {
             values.push(filters.fecha_hasta);
         }
 
-        sql += ' order BY fecha DESC';
+        sql += ' ORDER BY fecha DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';

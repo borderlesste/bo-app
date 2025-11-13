@@ -49,7 +49,7 @@ class EstadisticasMensuales {
             SELECT * FROM estadisticas_mensuales
             WHERE (anio > ? OR (anio = ? AND mes >= ?))
             AND (anio < ? OR (anio = ? AND mes <= ?))
-            order BY anio ASC, mes ASC
+            ORDER BY anio ASC, mes ASC
         `, [anioInicio, anioInicio, mesInicio, anioFin, anioFin, mesFin]);
     }
 
@@ -60,7 +60,7 @@ class EstadisticasMensuales {
         const [result] = await pool.execute(`
             SELECT * FROM estadisticas_mensuales
             WHERE anio = ?
-            order BY mes ASC
+            ORDER BY mes ASC
         `, [lastYear]);
     }
 
@@ -70,7 +70,7 @@ class EstadisticasMensuales {
         const [result] = await pool.execute(`
             SELECT * FROM estadisticas_mensuales
             WHERE anio = ?
-            order BY mes ASC
+            ORDER BY mes ASC
         `, [currentYear]);
     }
 

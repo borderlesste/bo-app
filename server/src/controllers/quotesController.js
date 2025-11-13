@@ -13,7 +13,7 @@ const getQuotes = async (req, res) => {
               q.created_at, u.nombre as usuarios_nombre 
        FROM cotizaciones q 
        LEFT JOIN usuarios u ON q.usuario_id = u.id 
-       order BY q.created_at DESC`
+       ORDER BY q.created_at DESC`
     );
     
     res.json({

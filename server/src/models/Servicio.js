@@ -68,7 +68,7 @@ class Servicio {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' order BY categoria ASC, nombre ASC';
+        sql += ' ORDER BY categoria ASC, nombre ASC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -82,7 +82,7 @@ class Servicio {
         const [result] = await pool.execute(`
             SELECT * FROM servicios 
             WHERE estado = 'activo' 
-            order BY categoria ASC, nombre ASC
+            ORDER BY categoria ASC, nombre ASC
         `);
     }
 
@@ -90,7 +90,7 @@ class Servicio {
         const [result] = await pool.execute(`
             SELECT * FROM servicios 
             WHERE categoria = ? AND estado = 'activo'
-            order BY nombre ASC
+            ORDER BY nombre ASC
         `, [categoria]);
     }
 
@@ -100,7 +100,7 @@ class Servicio {
             FROM servicios 
             WHERE estado = 'activo'
             GROUP BY categoria
-            order BY categoria ASC
+            ORDER BY categoria ASC
         `);
     }
 
@@ -133,7 +133,7 @@ class Servicio {
             LEFT JOIN order_items pi ON s.id = pi.servicio_id
             WHERE s.estado = 'activo'
             GROUP BY s.id
-            order BY orders_count DESC, revenue_total DESC
+            ORDER BY orders_count DESC, revenue_total DESC
             LIMIT ?
         `, [limit]);
     }

@@ -27,7 +27,7 @@ const getMonthlyStats = async (req, res) => {
       params.push(parseInt(year));
     }
     
-    query += ' order BY anio DESC, mes DESC';
+    query += ' ORDER BY anio DESC, mes DESC';
     
     if (months && !year) {
       query += ' LIMIT ?';
@@ -90,7 +90,7 @@ const getGrowthStats = async (req, res) => {
           WHERE ms3.anio = ms1.anio AND ms3.mes <= ms1.mes
         ) as yearly_revenue
       FROM estadisticas_mensuales ms1
-      order BY anio DESC, mes DESC
+      ORDER BY anio DESC, mes DESC
       LIMIT ?
     `, [parseInt(months)]);
     
@@ -136,7 +136,7 @@ const getYearlyStats = async (req, res) => {
         COUNT(*) as months_recorded
       FROM estadisticas_mensuales
       GROUP BY anio
-      order BY anio DESC
+      ORDER BY anio DESC
     `);
     
     const formattedData = rows.map(row => ({
@@ -148,7 +148,7 @@ const getYearlyStats = async (req, res) => {
       totalPendingQuotes: row.total_pending_quotes,
       totalorders: row.total_orders,
       monthsRecorded: row.months_recorded,
-      avgMonthlyRevenue: parseFloat(row.total_revenue) / row.months_recorded
+      avgMonthlyRevenue: row.months_recorded > 0 ? parseFloat(row.total_revenue) / row.months_recorded : 0
     }));
     
     res.json({
@@ -273,11 +273,11 @@ const getComparison = async (req, res) => {
       },
       changes: {
         revenueChange: parseFloat(current.total_ingresos) - parseFloat(compare.total_ingresos),
-        revenuePercentage: ((parseFloat(current.total_ingresos) - parseFloat(compare.total_ingresos)) / parseFloat(compare.total_ingresos) * 100).toFixed(2),
+        revenuePercentage: parseFloat(compare.total_ingresos) !== 0 ? ((parseFloat(current.total_ingresos) - parseFloat(compare.total_ingresos)) / parseFloat(compare.total_ingresos) * 100).toFixed(2) : '0.00',
         clientsChange: current.nuevos_usuarios - compare.nuevos_usuarios,
-        clientsPercentage: ((current.nuevos_usuarios - compare.nuevos_usuarios) / compare.nuevos_usuarios * 100).toFixed(2),
+        clientsPercentage: compare.nuevos_usuarios !== 0 ? ((current.nuevos_usuarios - compare.nuevos_usuarios) / compare.nuevos_usuarios * 100).toFixed(2) : '0.00',
         projectsChange: current.proyectos_iniciados - compare.proyectos_iniciados,
-        projectsPercentage: ((current.proyectos_iniciados - compare.proyectos_iniciados) / compare.proyectos_iniciados * 100).toFixed(2)
+        projectsPercentage: compare.proyectos_iniciados !== 0 ? ((current.proyectos_iniciados - compare.proyectos_iniciados) / compare.proyectos_iniciados * 100).toFixed(2) : '0.00'
       }
     };
     

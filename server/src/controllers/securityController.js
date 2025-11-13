@@ -75,7 +75,7 @@ exports.getSecuritySummary = async (req, res) => {
       FROM seguridad_log 
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
       GROUP BY tipo, DATE(created_at)
-      order BY fecha DESC
+      ORDER BY fecha DESC
     `);
 
     // Top IPs con más actividad sospechosa
@@ -89,7 +89,7 @@ exports.getSecuritySummary = async (req, res) => {
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
       GROUP BY ip
       HAVING login_fallidos > 0 OR accesos_denegados > 0
-      order BY total_eventos DESC
+      ORDER BY total_eventos DESC
       LIMIT 10
     `);
 
@@ -109,7 +109,7 @@ exports.getSecuritySummary = async (req, res) => {
         AND sl2.tipo = 'desbloqueo_cuenta' 
         AND sl2.created_at > sl.created_at
       )
-      order BY sl.created_at DESC
+      ORDER BY sl.created_at DESC
     `);
 
     // Alertas de seguridad (actividad sospechosa reciente)
@@ -138,7 +138,7 @@ exports.getSecuritySummary = async (req, res) => {
       GROUP BY ip, email_intento
       HAVING count >= 5
       
-      order BY ultimo_evento DESC
+      ORDER BY ultimo_evento DESC
     `);
 
     res.json({

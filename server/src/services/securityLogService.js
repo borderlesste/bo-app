@@ -237,7 +237,7 @@ class SecurityLogService {
           `SELECT * FROM seguridad_log 
            WHERE email_intento = ? 
            AND tipo IN ('bloqueo_cuenta', 'desbloqueo_cuenta')
-           order BY created_at DESC 
+           ORDER BY created_at DESC 
            LIMIT 1`,
           [email]
         );
@@ -355,7 +355,7 @@ class SecurityLogService {
         params.push(fechaHasta);
       }
 
-      query += ' order BY sl.created_at DESC LIMIT ? OFFSET ?';
+      query += ' ORDER BY sl.created_at DESC LIMIT ? OFFSET ?';
       params.push(limite, offset);
 
       const [rows] = await pool.execute(query, params);
@@ -377,7 +377,7 @@ class SecurityLogService {
          FROM seguridad_log 
          WHERE created_at > DATE_SUB(NOW(), INTERVAL ? DAY)
          GROUP BY tipo, DATE(created_at)
-         order BY fecha DESC, tipo`,
+         ORDER BY fecha DESC, tipo`,
         [diasAtras]
       );
 

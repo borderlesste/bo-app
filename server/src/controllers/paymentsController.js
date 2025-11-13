@@ -39,7 +39,7 @@ exports.getPayments = async (req, res) => {
     };
 
     // Si es usuario, solo mostrar sus pagos
-    if (req.user.rol === 'usuario') {
+    if (req.user.rol === 'usuarios') {
       filters.usuario_id = req.user.id;
     }
 
@@ -61,7 +61,7 @@ exports.getPaymentById = async (req, res) => {
     }
 
     // Verificar permisos: solo admins o el dueño del pago
-    if (req.user.rol === 'usuario' && payment.usuario_id !== req.user.id) {
+    if (req.user.rol === 'usuarios' && payment.usuario_id !== req.user.id) {
       return res.status(403).json({ success: false, message: 'No tienes permisos para ver este pago' });
     }
 
@@ -269,6 +269,14 @@ exports.createStripePayment = async (req, res) => {
 exports.confirmStripePayment = async (req, res) => {
   const { payment_intent_id, client_email } = req.body;
 
+  // Validar que el usuario esté autenticado
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({
+      success: false,
+      message: 'Usuario no autenticado'
+    });
+  }
+
   try {
     const result = await paymentGatewayService.processPayment(
       { 
@@ -361,6 +369,14 @@ exports.createPayPalorder = async (req, res) => {
 // Capturar pago de PayPal
 exports.capturePayPalPayment = async (req, res) => {
   const { pedido_id, client_email } = req.body;
+
+  // Validar que el usuario esté autenticado
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({
+      success: false,
+      message: 'Usuario no autenticado'
+    });
+  }
 
   try {
     const result = await paymentGatewayService.processPayment(

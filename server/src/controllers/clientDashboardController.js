@@ -156,7 +156,7 @@ const getClientProjects = async (req, res) => {
         notas_adicionales
       FROM pedidos 
       WHERE usuario_id = ?
-      order BY created_at DESC
+      ORDER BY created_at DESC
       LIMIT 20
     `, [usuarioId]);
 
@@ -223,7 +223,7 @@ const getClientPayments = async (req, res) => {
       FROM pagos p
       LEFT JOIN pedidos ped ON p.pedido_id = ped.id
       WHERE p.usuario_id = ?
-      order BY p.created_at DESC
+      ORDER BY p.created_at DESC
       LIMIT 50
     `, [usuarioId]);
 
@@ -278,7 +278,7 @@ const getClientActivity = async (req, res) => {
         'normal' as priority
       FROM actividades 
       WHERE usuario_id = ?
-      order BY created_at DESC
+      ORDER BY created_at DESC
       LIMIT 10
     `, [usuarioId]);
 
@@ -291,7 +291,7 @@ const getClientActivity = async (req, res) => {
         'normal' as priority
       FROM pedidos 
       WHERE usuario_id = ?
-      order BY created_at DESC
+      ORDER BY created_at DESC
       LIMIT 5
     `, [usuarioId]);
 
@@ -308,7 +308,7 @@ const getClientActivity = async (req, res) => {
         END as priority
       FROM pagos 
       WHERE usuario_id = ?
-      order BY created_at DESC
+      ORDER BY created_at DESC
       LIMIT 5
     `, [usuarioId]);
 
@@ -384,7 +384,7 @@ const getClientQuotes = async (req, res) => {
     }
     
     // Ordenar por fecha de creación descendente
-    query += ' order BY created_at DESC';
+    query += ' ORDER BY created_at DESC';
     
     // Agregar límite y offset para paginación
     query += ' LIMIT ? OFFSET ?';
@@ -435,7 +435,7 @@ const getClientQuotes = async (req, res) => {
         total: totalQuotes,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        pages: Math.ceil(totalQuotes / limit)
+        pages: Math.ceil(totalQuotes / parseInt(limit))
       }
     });
   } catch (error) {
@@ -762,7 +762,7 @@ const getClientpedidos = async (req, res) => {
     }
     
     // Ordenar por fecha de creación descendente
-    query += ' order BY created_at DESC';
+    query += ' ORDER BY created_at DESC';
     
     // Agregar límite y offset para paginación
     query += ' LIMIT ? OFFSET ?';
@@ -802,7 +802,7 @@ const getClientpedidos = async (req, res) => {
         total: totalpedidos,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        pages: Math.ceil(totalpedidos / limit)
+        pages: Math.ceil(totalpedidos / parseInt(limit))
       }
     });
   } catch (error) {
@@ -925,7 +925,7 @@ const getClientConversations = async (req, res) => {
       FROM mensajes m
       LEFT JOIN usuarios u ON u.id = m.remitente_id
       WHERE m.destinatario_id = ? OR m.remitente_id = ?
-      order BY m.updated_at DESC
+      ORDER BY m.updated_at DESC
       LIMIT 20
     `, [usuarioId, usuarioId]);
 
@@ -1098,7 +1098,7 @@ const getClientInvoices = async (req, res) => {
         total: totalFacturas,
         limit: parseInt(limit),
         offset: parseInt(offset),
-        pages: Math.ceil(totalFacturas / limit)
+        pages: Math.ceil(totalFacturas / parseInt(limit))
       }
     });
   } catch (error) {

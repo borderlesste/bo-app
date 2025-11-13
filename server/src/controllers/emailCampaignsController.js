@@ -140,7 +140,7 @@ const emailCampaignsController = {
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
       `, [
         nombre, asunto, contenido, tipo, segmento_audiencia,
-        fecha_programada || null, req.user?.id || 1
+        fecha_programada || null, req.user?.id || null
       ]);
 
       res.status(201).json({

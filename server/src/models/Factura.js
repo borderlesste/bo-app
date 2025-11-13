@@ -93,7 +93,7 @@ class Factura {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' order BY f.fecha_emision DESC';
+        sql += ' ORDER BY f.fecha_emision DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -109,7 +109,7 @@ class Factura {
             FROM factura_items fi
             LEFT JOIN pedido_items pi ON fi.pedido_item_id = pi.id
             WHERE fi.factura_id = ?
-            order BY fi.orden ASC
+            ORDER BY fi.orden ASC
         `, [facturaId]);
     }
 
@@ -173,7 +173,7 @@ class Factura {
         const [lastInvoice] = await pool.execute(`
             SELECT folio FROM facturas 
             WHERE serie = ? 
-            order BY folio DESC LIMIT 1
+            ORDER BY folio DESC LIMIT 1
         `, [serie]);
 
         let nextFolio = 1;
@@ -196,7 +196,7 @@ class Factura {
             WHERE f.estado IN ('emitida', 'timbrada') 
             AND f.saldo_pendiente > 0 
             AND f.fecha_vencimiento < CURDATE()
-            order BY f.fecha_vencimiento ASC
+            ORDER BY f.fecha_vencimiento ASC
         `);
     }
 }
