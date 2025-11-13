@@ -107,7 +107,7 @@ router.post('/paypal/capture-order',
         if (paymentID) {
           await pool.execute(
             'UPDATE pagos SET estado = ?, referencia = ?, fecha_aplicacion = NOW() WHERE id = ?',
-            ['aplicado', orderID, paymentID]
+            ['aplicado', pedidoID, paymentID]
           );
         }
 

@@ -55,7 +55,7 @@ exports.getPayments = async (req, res) => {
 exports.getPaymentById = async (req, res) => {
   const { id } = req.params;
   try {
-    const payment = await Pago.findByPk(id);
+    const payment = await Pago.findById(id);
     if (!payment) {
       return res.status(404).json({ success: false, message: 'Pago no encontrado' });
     }
@@ -206,7 +206,7 @@ exports.updateClientPayment = async (req, res) => {
   const { pedido_id, concepto, monto, metodo_pago, estado, referencia_transferencia, banco_origen } = req.body;
 
   try {
-    const payment = await Pago.findByPk(id);
+    const payment = await Pago.findById(id);
     if (!payment) return res.status(404).json({ success: false, message: 'Pago no encontrado' });
     if (payment.usuario_id !== usuario_id) return res.status(403).json({ success: false, message: 'No tienes permisos para actualizar este pago' });
 

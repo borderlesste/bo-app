@@ -22,7 +22,7 @@ if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
     
     // Create PayPal client
     paypalClient = new checkoutSDK.core.PayPalHttpClient(environment);
-    pedidosController = checkoutSDK.pedidos;
+    pedidosController = checkoutSDK.orders;
     PaymentsController = checkoutSDK.payments;
     
     console.log('✅ PayPal SDK initialized successfully');
@@ -272,7 +272,7 @@ class PaymentGatewayService {
 
       console.log('🔄 Creating PayPal order (remote):', JSON.stringify(request.body, null, 2));
 
-      const orderRequest = new pedidosController.pedidosCreateRequest();
+      const orderRequest = new pedidosController.OrdersCreateRequest();
       orderRequest.requestBody(request.body);
       const response = await paypalClient.execute(orderRequest);
 
@@ -445,10 +445,10 @@ class PaymentGatewayService {
 
     try {
       console.log('🔄 Capturing PayPal order (remote):', orderId);
-      
-      const request = new pedidosController.pedidosCaptureRequest(orderId);
+
+      const request = new pedidosController.OrdersCaptureRequest(orderId);
       request.requestBody({});
-      
+
       const response = await paypalClient.execute(request);
       
       console.log('📦 PayPal capture response (remote):', JSON.stringify(response.body, null, 2));
