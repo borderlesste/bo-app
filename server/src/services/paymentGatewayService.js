@@ -340,20 +340,21 @@ class PaymentGatewayService {
       
       // 3. Insertar registro en tabla pagos
       const [pagoResult] = await connection.execute(
-        `INSERT INTO pagos 
-         (numero_pago, usuario_id, tipo, estado, monto, moneda, metodo_pago, 
-          referencia, paypal_pedido_id, paypal_capture_id, paypal_payer_email, 
-          payment_gateway, fecha_pago, fecha_aplicacion, concepto, created_at, updated_at) 
+        `INSERT INTO pagos
+         (numero_pago, usuario_id, tipo, estado, monto, moneda, metodo_pago,
+          referencia, paypal_pedido_id, paypal_capture_id, paypal_payer_email,
+          payment_gateway, fecha_pago, fecha_aplicacion, concepto, created_at, updated_at)
          VALUES (?, ?, 'total', 'aplicado', ?, ?, 'paypal', ?, ?, ?, ?, 'paypal', NOW(), NOW(), ?, NOW(), NOW())`,
         [
           `PAY-${Date.now()}`,
           pedido.usuario_id,
           capture.amount,
           capture.currency,
-          `Pago PayPal para pedido ${pedido.numero_pedido}`,
-          paypalorderId,
-          capture.capture_id,
-          capture.payer_email
+          `Pago PayPal para pedido ${pedido.numero_pedido}`, // referencia
+          paypalorderId,                                      // paypal_pedido_id
+          capture.capture_id,                                 // paypal_capture_id
+          capture.payer_email,                                // paypal_payer_email
+          `Pago PayPal para pedido ${pedido.numero_pedido}`   // concepto
         ]
       );
 
@@ -419,12 +420,13 @@ class PaymentGatewayService {
     // Para desarrollo, simular captura de órdenes demo
     if ((orderId || '').startsWith('DEMO_order_') || process.env.NODE_ENV === 'development') {
       console.log('🔧 Development mode: Simulating PayPal payment capture (remote)');
+      const randomAmount = (Math.random() * 1000 + 100).toFixed(2);
       return {
         success: true,
         data: {
           id: orderId,
           status: 'COMPLETED',
-          amount: parseFloat(Math.random() * 1000 + 100),
+          amount: parseFloat(randomAmount),
           currency: 'USD',
           capture_id: 'DEMO_CAPTURE_' + Date.now(),
           payer_email: 'test@sandbox.paypal.com',
@@ -452,17 +454,23 @@ class PaymentGatewayService {
       const response = await paypalClient.execute(request);
       
       console.log('📦 PayPal capture response (remote):', JSON.stringify(response.body, null, 2));
-      
+
       if (response.body && response.body.status === 'COMPLETED') {
-        const capture = response.body.purchase_units[0].payments.captures[0];
-        
+        // Validar estructura de respuesta
+        const captures = response.body.purchase_units?.[0]?.payments?.captures;
+        if (!captures || captures.length === 0) {
+          throw new Error('No capture data in PayPal response');
+        }
+
+        const capture = captures[0];
+
         return {
           success: true,
           data: {
             id: response.body.id,
             status: response.body.status,
-            amount: parseFloat(capture.amount.value),
-            currency: capture.amount.currency_code,
+            amount: parseFloat(capture.amount?.value || '0'),
+            currency: capture.amount?.currency_code || 'USD',
             capture_id: capture.id,
             payer_email: response.body.payer?.email_address,
             payer_id: response.body.payer?.payer_id,
@@ -612,14 +620,19 @@ class PaymentGatewayService {
           payment_method: paymentIntent.payment_method
         };
       } else if (paymentMethod === 'paypal') {
-        const response = await this.paypalClient.pedidos.pedidosGet({ id: paymentId });
-        const orderData = response.body;
-        
+        if (!this.paypalClient || !this.pedidosController) {
+          throw new Error('PayPal no está configurado correctamente');
+        }
+
+        const ordersGetRequest = new this.pedidosController.OrdersGetRequest(paymentId);
+        const response = await this.paypalClient.execute(ordersGetRequest);
+        const orderData = response.result;
+
         paymentInfo = {
           id: orderData.id,
           status: orderData.status,
-          amount: orderData.purchase_units[0].amount.value,
-          currency: orderData.purchase_units[0].amount.currency_code,
+          amount: orderData.purchase_units?.[0]?.amount?.value || '0.00',
+          currency: orderData.purchase_units?.[0]?.amount?.currency_code || 'USD',
           created: orderData.create_time
         };
       } else {
@@ -855,8 +868,29 @@ class PaymentGatewayService {
 
   // Verificar firma del webhook (implementar según documentación de PayPal)
   async verifyWebhookSignature(payload, headers) {
+    // ⚠️ CRITICAL SECURITY WARNING ⚠️
     // TODO: Implementar verificación de firma usando PayPal SDK
-    // Por ahora, aceptamos todos los webhooks (solo para desarrollo)
+    // NUNCA USAR EN PRODUCCIÓN SIN VERIFICACIÓN
+    //
+    // Para implementar verificación correcta:
+    // 1. Crear webhook en PayPal Dashboard y obtener WEBHOOK_ID
+    // 2. Agregar PAYPAL_WEBHOOK_ID a variables de entorno
+    // 3. Usar PayPal SDK para verificar firma con:
+    //    - PAYPAL-TRANSMISSION-ID
+    //    - PAYPAL-TRANSMISSION-TIME
+    //    - PAYPAL-TRANSMISSION-SIG
+    //    - PAYPAL-CERT-URL
+    //    - PAYPAL-AUTH-ALGO
+    //
+    // Sin verificación, cualquiera puede enviar webhooks falsos y manipular pagos
+
+    if (process.env.NODE_ENV === 'production') {
+      console.error('🚨 CRITICAL: Webhook signature verification not implemented in PRODUCTION!');
+      console.error('🚨 This is a SECURITY VULNERABILITY - webhooks can be forged!');
+    } else {
+      console.warn('⚠️ Development mode: Accepting webhook without signature verification');
+    }
+
     return true;
   }
 }
