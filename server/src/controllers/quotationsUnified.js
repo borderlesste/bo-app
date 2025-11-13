@@ -64,14 +64,14 @@ const getAllQuotations = async (req, res) => {
       FROM cotizaciones q 
       LEFT JOIN usuarios u ON q.usuario_id = u.id 
       WHERE ${whereClause}
-      order BY q.${sort_by} ${sort_order}
+      ORDER BY q.${sort_by} ${sort_order}
       LIMIT ? OFFSET ?
     `, [...params, parseInt(limit), offset]);
 
     // Get items for each quotation
     for (let quotation of quotations) {
       const [items] = await pool.execute(
-        'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? order BY orden',
+        'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? ORDER BY orden',
         [quotation.id]
       );
       quotation.items = items;
@@ -128,7 +128,7 @@ const getQuotationById = async (req, res) => {
 
     // Get quotation items
     const [items] = await pool.execute(
-      'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? order BY orden',
+      'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? ORDER BY orden',
       [id]
     );
 
@@ -543,7 +543,7 @@ const getQuotationStats = async (req, res) => {
       FROM cotizaciones 
       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
       GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-      order BY mes DESC
+      ORDER BY mes DESC
     `);
 
     res.json({

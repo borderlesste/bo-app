@@ -107,7 +107,7 @@ router.post('/paypal/capture-order',
         if (paymentID) {
           await pool.execute(
             'UPDATE pagos SET estado = ?, referencia = ?, fecha_aplicacion = NOW() WHERE id = ?',
-            ['aplicado', orderID, paymentID]
+            ['aplicado', pedidoID, paymentID]
           );
         }
 
@@ -342,7 +342,7 @@ router.get('/bank-transfers/pending',
         LEFT JOIN pedidos ped ON p.pedido_id = ped.id
         WHERE p.metodo_pago = 'Transferencia Bancaria' 
         AND p.estado = 'pendiente'
-        order BY p.created_at DESC
+        ORDER BY p.created_at DESC
       `);
 
       res.json({

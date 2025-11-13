@@ -230,26 +230,11 @@ app.use('/api/email-campaigns', emailCampaignsRoutes);
 app.use('/api/email', emailRoutes);
 
 // LEGACY ROUTES (deprecated - show migration notices)
-app.use('/api/config', (req, res, next) => {
-  console.warn(`[DEPRECATION] /api/config accessed from ${req.ip}. Use /api/configuration-unified instead`);
-  configRoutes(req, res, next);
-});
-app.use('/api/quotes', (req, res, next) => {
-  console.warn(`[DEPRECATION] /api/quotes accessed from ${req.ip}. Use /api/quotations-unified instead`);
-  quotesRoutes(req, res, next);
-});
-app.use('/api/quotations', (req, res, next) => {
-  console.warn(`[DEPRECATION] /api/quotations accessed from ${req.ip}. Use /api/quotations-unified instead`);
-  quotationsRoutes(req, res, next);
-});
-app.use('/api/configuration', (req, res, next) => {
-  console.warn(`[DEPRECATION] /api/configuration accessed from ${req.ip}. Use /api/configuration-unified instead`);
-  configurationRoutes(req, res, next);
-});
-app.use('/api/config-advanced', (req, res, next) => {
-  console.warn(`[DEPRECATION] /api/config-advanced accessed from ${req.ip}. Use /api/configuration-unified instead`);
-  configurationAdvancedRoutes(req, res, next);
-});
+app.use('/api/config', configRoutes);
+app.use('/api/quotes', quotesRoutes);
+app.use('/api/quotations', quotationsRoutes);
+app.use('/api/configuration', configurationRoutes);
+app.use('/api/config-advanced', configurationAdvancedRoutes);
 
 // Health check routes
 app.use('/api/health-check', healthRoutes);

@@ -118,7 +118,7 @@ const getRecentActivity = async (req, res) => {
         'normal' as priority,
         a.created_at as time
       FROM actividades a
-      order BY a.created_at DESC
+      ORDER BY a.created_at DESC
       LIMIT 10
     `);
 
@@ -156,7 +156,7 @@ const getTopClients = async (req, res) => {
       WHERE c.rol != 'admin'
       GROUP BY c.id, c.nombre, c.email
       HAVING COUNT(DISTINCT pe.id) > 0 OR SUM(p.monto) > 0
-      order BY totalSpent DESC, projectsCount DESC
+      ORDER BY totalSpent DESC, projectsCount DESC
       LIMIT 10
     `);
 
@@ -195,7 +195,7 @@ const getChartsData = async (req, res) => {
       WHERE estado = 'aplicado' 
         AND fecha_pago >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
       GROUP BY DATE_FORMAT(fecha_pago, '%Y-%m'), MONTHNAME(fecha_pago)
-      order BY month ASC
+      ORDER BY month ASC
     `);
 
     // Distribución de proyectos por estado
@@ -206,7 +206,7 @@ const getChartsData = async (req, res) => {
       FROM proyectos 
       WHERE es_publico = 1
       GROUP BY estado
-      order BY count DESC
+      ORDER BY count DESC
     `);
 
     // Crecimiento de usuarioss por mes (últimos 6 meses)
@@ -219,7 +219,7 @@ const getChartsData = async (req, res) => {
       WHERE rol != 'admin' 
         AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
       GROUP BY DATE_FORMAT(created_at, '%Y-%m'), MONTHNAME(created_at)
-      order BY month ASC
+      ORDER BY month ASC
     `);
 
     // Distribución de proyectos por categoría
@@ -230,7 +230,7 @@ const getChartsData = async (req, res) => {
       FROM proyectos 
       WHERE es_publico = 1
       GROUP BY categoria
-      order BY count DESC
+      ORDER BY count DESC
     `);
 
     // Top servicios más cotizados
@@ -244,7 +244,7 @@ const getChartsData = async (req, res) => {
       LEFT JOIN cotizacion_items ci ON s.id = ci.servicio_id
       GROUP BY s.id, s.nombre, s.categoria
       HAVING quotes_count > 0
-      order BY quotes_count DESC
+      ORDER BY quotes_count DESC
       LIMIT 10
     `);
 

@@ -107,7 +107,7 @@ class Mensaje {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' order BY m.created_at DESC';
+        sql += ' ORDER BY m.created_at DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -154,7 +154,7 @@ class Mensaje {
             LEFT JOIN usuarios remitente ON m.remitente_id = remitente.id
             LEFT JOIN usuarios destinatario ON m.destinatario_id = destinatario.id
             WHERE m.id = ? OR m.parent_message_id = ?
-            order BY m.created_at ASC
+            ORDER BY m.created_at ASC
         `, [rootId, rootId]);
     }
 
@@ -188,7 +188,7 @@ class Mensaje {
             values.push(filters.estado);
         }
 
-        sql += ' order BY m.created_at DESC';
+        sql += ' ORDER BY m.created_at DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';

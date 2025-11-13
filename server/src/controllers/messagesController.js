@@ -17,15 +17,15 @@ const messagesController = {
           (SELECT m2.mensaje FROM mensajes m2 
            WHERE m2.asunto = m.asunto 
            AND (m2.remitente_id = ? OR m2.destinatario_id = ? OR m2.remitente_id IN (SELECT id FROM usuarios WHERE rol = 'admin') OR m2.destinatario_id IN (SELECT id FROM usuarios WHERE rol = 'admin'))
-           order BY m2.created_at DESC LIMIT 1) as ultimo_mensaje,
+           ORDER BY m2.created_at DESC LIMIT 1) as ultimo_mensaje,
           u.nombre as admin_nombre
         FROM mensajes m
         LEFT JOIN usuarios u ON u.rol = 'admin' AND u.id = (
-          SELECT id FROM usuarios WHERE rol = 'admin' order BY id ASC LIMIT 1
+          SELECT id FROM usuarios WHERE rol = 'admin' ORDER BY id ASC LIMIT 1
         )
         WHERE (m.remitente_id = ? OR m.destinatario_id = ?)
         GROUP BY m.asunto, u.nombre
-        order BY ultima_actividad DESC
+        ORDER BY ultima_actividad DESC
         LIMIT 20
       `, [usuarioId, usuarioId, usuarioId, usuarioId, usuarioId]);
 
@@ -96,7 +96,7 @@ const messagesController = {
         AND (m.remitente_id = ? OR m.destinatario_id = ? 
              OR m.remitente_id IN (SELECT id FROM usuarios WHERE rol = 'admin') 
              OR m.destinatario_id IN (SELECT id FROM usuarios WHERE rol = 'admin'))
-        order BY m.created_at ASC
+        ORDER BY m.created_at ASC
       `, [asunto, usuarioId, usuarioId]);
 
       // Marcar mensajes como leídos para el usuarios
@@ -143,7 +143,7 @@ const messagesController = {
       
       // Obtener ID del admin (primer usuario con rol admin)
       const [adminUser] = await connection.execute(
-        'SELECT id FROM usuarios WHERE rol = "admin" order BY id ASC LIMIT 1'
+        'SELECT id FROM usuarios WHERE rol = "admin" ORDER BY id ASC LIMIT 1'
       );
       
       if (adminUser.length === 0) {
@@ -237,7 +237,7 @@ const messagesController = {
 
       // Obtener ID del admin
       const [adminUser] = await connection.execute(
-        'SELECT id FROM usuarios WHERE rol = "admin" order BY id ASC LIMIT 1'
+        'SELECT id FROM usuarios WHERE rol = "admin" ORDER BY id ASC LIMIT 1'
       );
       
       const adminId = adminUser[0]?.id || 1;
@@ -302,7 +302,7 @@ const messagesController = {
       
       // Obtener ID del admin
       const [adminUser] = await pool.execute(
-        'SELECT id FROM usuarios WHERE rol = "admin" order BY id ASC LIMIT 1'
+        'SELECT id FROM usuarios WHERE rol = "admin" ORDER BY id ASC LIMIT 1'
       );
       const adminId = adminUser[0]?.id || 1;
       
@@ -318,17 +318,17 @@ const messagesController = {
           COUNT(CASE WHEN m.estado = 'no_leido' AND m.destinatario_id = ? THEN 1 END) as mensajes_no_leidos,
           (SELECT m2.mensaje FROM mensajes m2 
            WHERE m2.asunto = m.asunto 
-           order BY m2.created_at DESC LIMIT 1) as ultimo_mensaje,
+           ORDER BY m2.created_at DESC LIMIT 1) as ultimo_mensaje,
           (SELECT u.nombre FROM mensajes m3 
            JOIN usuarios u ON m3.remitente_id = u.id
            WHERE m3.asunto = m.asunto 
            AND u.rol = 'usuarios'
-           order BY m3.created_at ASC LIMIT 1) as usuarios_nombre,
+           ORDER BY m3.created_at ASC LIMIT 1) as usuarios_nombre,
           (SELECT u.email FROM mensajes m4 
            JOIN usuarios u ON m4.remitente_id = u.id
            WHERE m4.asunto = m.asunto 
            AND u.rol = 'usuarios'
-           order BY m4.created_at ASC LIMIT 1) as usuarios_email
+           ORDER BY m4.created_at ASC LIMIT 1) as usuarios_email
         FROM mensajes m
         WHERE EXISTS (
           SELECT 1 FROM mensajes m_check 
@@ -337,7 +337,7 @@ const messagesController = {
         )
         GROUP BY m.asunto
         ${whereClause}
-        order BY ultima_actividad DESC
+        ORDER BY ultima_actividad DESC
         LIMIT ? OFFSET ?
       `, [adminId, adminId, adminId, parseInt(limit), parseInt(offset)]);
 

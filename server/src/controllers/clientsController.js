@@ -57,7 +57,7 @@ const getAllClients = async (req, res) => {
     const allowedSortFields = ['nombre', 'email', 'empresa', 'estado', 'created_at', 'total_proyectos'];
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
     const order = sortorder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-    query += ` order BY ${sortField} ${order}`;
+    query += ` ORDER BY ${sortField} ${order}`;
 
     // Add pagination
     const offset = (page - 1) * limit;
@@ -135,14 +135,14 @@ const getClientById = async (req, res) => {
     // Get client projects
     const [projects] = await pool.execute(
       `SELECT id, codigo, nombre, descripcion, estado, categoria, created_at, updated_at
-       FROM proyectos WHERE usuario_id = ? order BY created_at DESC`,
+       FROM proyectos WHERE usuario_id = ? ORDER BY created_at DESC`,
       [id]
     );
 
     // Get client activity history
     const [activities] = await pool.execute(
       `SELECT tipo, descripcion, entidad_tipo, entidad_id, created_at
-       FROM actividades WHERE usuario_id = ? order BY created_at DESC LIMIT 20`,
+       FROM actividades WHERE usuario_id = ? ORDER BY created_at DESC LIMIT 20`,
       [id]
     );
 
@@ -436,7 +436,7 @@ const getClientStats = async (req, res) => {
        LEFT JOIN proyectos p ON p.usuario_id = u.id
        WHERE u.rol = "usuarios" AND u.estado = "activo"
        GROUP BY u.id
-       order BY total_proyectos DESC
+       ORDER BY total_proyectos DESC
        LIMIT 10`
     );
 

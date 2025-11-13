@@ -16,7 +16,10 @@ const invoicesController = {
         sortorder = 'DESC'
       } = req.query;
 
-      const offset = (parseInt(page) - 1) * parseInt(limit);
+      // Validar y sanitizar parámetros de paginación
+      const validatedLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+      const validatedPage = Math.max(parseInt(page) || 1, 1);
+      const offset = (validatedPage - 1) * validatedLimit;
       
       // Build WHERE clause
       let whereConditions = [];
@@ -70,7 +73,7 @@ const invoicesController = {
         LIMIT ? OFFSET ?
       `;
 
-      const [invoices] = await pool.execute(query, [...queryParams, parseInt(limit), offset]);
+      const [invoices] = await pool.execute(query, [...queryParams, validatedLimit, offset]);
 
       // Get total count for pagination
       const countQuery = `
@@ -82,17 +85,17 @@ const invoicesController = {
 
       const [countResult] = await pool.execute(countQuery, queryParams);
       const total = countResult[0].total;
-      const totalPages = Math.ceil(total / parseInt(limit));
+      const totalPages = Math.ceil(total / validatedLimit);
 
       res.json({
         success: true,
         data: {
           invoices,
           pagination: {
-            current_page: parseInt(page),
+            current_page: validatedPage,
             total_pages: totalPages,
             total_items: total,
-            per_page: parseInt(limit)
+            per_page: validatedLimit
           }
         }
       });
@@ -152,7 +155,7 @@ const invoicesController = {
       const [items] = await pool.execute(`
         SELECT * FROM factura_items 
         WHERE factura_id = ? 
-        order BY orden ASC, id ASC
+        ORDER BY orden ASC, id ASC
       `, [id]);
 
       // Get applied payments
@@ -161,7 +164,7 @@ const invoicesController = {
         FROM pagos p
         INNER JOIN pago_aplicaciones pa ON p.id = pa.pago_id
         WHERE pa.factura_id = ? 
-        order BY pa.fecha_aplicacion DESC
+        ORDER BY pa.fecha_aplicacion DESC
       `, [id]);
 
       const invoice = {
@@ -218,7 +221,7 @@ const invoicesController = {
           telefono LIKE ? OR 
           empresa LIKE ?
         )
-        order BY nombre ASC
+        ORDER BY nombre ASC
         LIMIT ? OFFSET ?
       `;
 
@@ -230,12 +233,12 @@ const invoicesController = {
 
       const countQuery = `
         SELECT COUNT(*) as total
-        FROM usuarios 
-        WHERE rol = 'cliente' 
+        FROM usuarios
+        WHERE rol = 'usuarios'
         AND estado = 'activo'
         AND (
-          nombre LIKE ? OR 
-          email LIKE ? OR 
+          nombre LIKE ? OR
+          email LIKE ? OR
           telefono LIKE ? OR 
           empresa LIKE ?
         )
@@ -307,7 +310,7 @@ const invoicesController = {
       // Generate invoice number
       const currentYear = new Date().getFullYear();
       const [lastInvoice] = await connection.execute(
-        'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? order BY id DESC LIMIT 1',
+        'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? ORDER BY id DESC LIMIT 1',
         [`FAC-${currentYear}-%`]
       );
 
@@ -364,9 +367,9 @@ const invoicesController = {
           notas, saldo_pendiente, created_by
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
-        invoiceNumber, usuario_id, pedido_id || null, subtotal, totalDescuento, 
-        totalIva, total, moneda, fechaEmision, fechaVencimiento, metodo_pago, 
-        forma_pago, notas, total, req.user?.id || 1
+        invoiceNumber, usuario_id, pedido_id || null, subtotal, totalDescuento,
+        totalIva, total, moneda, fechaEmision, fechaVencimiento, metodo_pago,
+        forma_pago, notas, total, req.user?.id || null
       ]);
 
       const invoiceId = invoiceResult.insertId;
@@ -487,7 +490,7 @@ const invoicesController = {
       await pool.execute(`
         INSERT INTO actividades (usuario_id, tipo, descripcion, entidad_tipo, entidad_id)
         VALUES (?, 'factura_actualizada', ?, 'factura', ?)
-      `, [req.user?.id || 1, `Estado de factura actualizado a: ${estado}`, id]);
+      `, [req.user?.id || null, `Estado de factura actualizado a: ${estado}`, id]);
 
       res.json({
         success: true,
@@ -540,7 +543,7 @@ const invoicesController = {
 
       // Get quotation items
       const [quotationItems] = await connection.execute(
-        'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? order BY orden ASC',
+        'SELECT * FROM cotizacion_items WHERE cotizacion_id = ? ORDER BY orden ASC',
         [cotizacion_id]
       );
 
@@ -556,7 +559,7 @@ const invoicesController = {
       // Generate invoice number
       const currentYear = new Date().getFullYear();
       const [lastInvoice] = await connection.execute(
-        'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? order BY id DESC LIMIT 1',
+        'SELECT numero_factura FROM facturas WHERE numero_factura LIKE ? ORDER BY id DESC LIMIT 1',
         [`FAC-${currentYear}-%`]
       );
 
@@ -672,7 +675,7 @@ const invoicesController = {
         INNER JOIN usuarios u ON f.usuario_id = u.id
         WHERE f.fecha_vencimiento < CURDATE() 
         AND f.estado NOT IN ('pagada', 'cancelada')
-        order BY f.fecha_vencimiento ASC
+        ORDER BY f.fecha_vencimiento ASC
         LIMIT 10
       `);
 
@@ -686,7 +689,7 @@ const invoicesController = {
         WHERE fecha_emision >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
         AND estado = 'pagada'
         GROUP BY DATE_FORMAT(fecha_emision, '%Y-%m')
-        order BY mes DESC
+        ORDER BY mes DESC
       `);
 
       res.json({

@@ -111,7 +111,7 @@ class Cotizacion {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' order BY c.created_at DESC';
+        sql += ' ORDER BY c.created_at DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -147,7 +147,7 @@ class Cotizacion {
             FROM cotizacion_items ci
             LEFT JOIN servicios s ON ci.servicio_id = s.id
             WHERE ci.cotizacion_id = ?
-            order BY ci.orden ASC
+            ORDER BY ci.orden ASC
         `, [cotizacionId]);
         return result;
     }

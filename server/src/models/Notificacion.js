@@ -68,7 +68,7 @@ class Notificacion {
             values.push(filters.prioridad);
         }
 
-        sql += ' order BY created_at DESC';
+        sql += ' ORDER BY created_at DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -90,7 +90,7 @@ class Notificacion {
         const [result] = await pool.execute(`
             SELECT * FROM notificaciones 
             WHERE usuario_id = ? AND prioridad = ? AND leida = 0
-            order BY created_at DESC
+            ORDER BY created_at DESC
         `, [userId, prioridad]);
     }
 
@@ -123,7 +123,7 @@ class Notificacion {
         const [result] = await pool.execute(`
             SELECT * FROM notificaciones 
             WHERE usuario_id = ?
-            order BY created_at DESC
+            ORDER BY created_at DESC
             LIMIT ?
         `, [userId, limit]);
     }

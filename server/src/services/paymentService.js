@@ -16,7 +16,7 @@ const paymentService = {
       params.push(userId);
     }
     
-    query += ' order BY p.fecha_pago DESC';
+    query += ' ORDER BY p.fecha_pago DESC';
 
     const [rows] = await pool.execute(query, params);
     return rows;

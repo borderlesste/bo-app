@@ -97,9 +97,9 @@ class Proyecto {
         }
 
         if (filters.portfolio) {
-            sql += ' AND p.es_publico = 1 order BY p.orden_portfolio ASC, p.created_at DESC';
+            sql += ' AND p.es_publico = 1 ORDER BY p.orden_portfolio ASC, p.created_at DESC';
         } else {
-            sql += ' order BY p.created_at DESC';
+            sql += ' ORDER BY p.created_at DESC';
         }
 
         if (filters.limit) {
@@ -114,7 +114,7 @@ class Proyecto {
         const [result] = await pool.execute(`
             SELECT * FROM proyecto_imagenes
             WHERE proyecto_id = ?
-            order BY orden ASC, created_at ASC
+            ORDER BY orden ASC, created_at ASC
         `, [proyectoId]);
     }
 
@@ -162,7 +162,7 @@ class Proyecto {
         const lastProject = await pool.execute(`
             SELECT codigo FROM proyectos 
             WHERE codigo LIKE ? 
-            order BY codigo DESC LIMIT 1
+            ORDER BY codigo DESC LIMIT 1
         `, [`${categoria}-${year}-%`]);
 
         let nextNumber = 1;
@@ -179,10 +179,10 @@ class Proyecto {
             SELECT p.*, 
                    (SELECT url FROM proyecto_imagenes pi 
                     WHERE pi.proyecto_id = p.id 
-                    order BY pi.orden ASC LIMIT 1) as imagen_principal_url
+                    ORDER BY pi.orden ASC LIMIT 1) as imagen_principal_url
             FROM proyectos p
             WHERE p.es_publico = 1
-            order BY p.es_destacado DESC, p.orden_portfolio ASC, p.fecha_fin DESC
+            ORDER BY p.es_destacado DESC, p.orden_portfolio ASC, p.fecha_fin DESC
         `;
         
         const values = [];
@@ -199,10 +199,10 @@ class Proyecto {
             SELECT p.*, 
                    (SELECT url FROM proyecto_imagenes pi 
                     WHERE pi.proyecto_id = p.id 
-                    order BY pi.orden ASC LIMIT 1) as imagen_principal_url
+                    ORDER BY pi.orden ASC LIMIT 1) as imagen_principal_url
             FROM proyectos p
             WHERE p.es_publico = 1 AND p.es_destacado = 1
-            order BY p.orden_portfolio ASC, p.fecha_fin DESC
+            ORDER BY p.orden_portfolio ASC, p.fecha_fin DESC
         `);
     }
 }

@@ -143,7 +143,7 @@ router.get('/pedidos/:orderId/status',
                 COUNT(pi.id) as total_items,
                 SUM(CASE WHEN pi.estado = 'completado' THEN 1 ELSE 0 END) as items_completados
          FROM pedidos p 
-         LEFT JOIN order_items pi ON p.id = pi.pedido_id
+         LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
          WHERE p.id = ? AND p.usuario_id = ?
          GROUP BY p.id`,
         [orderId, userId]
@@ -160,16 +160,16 @@ router.get('/pedidos/:orderId/status',
       
       // Obtener items del order
       const [items] = await pool.execute(
-        'SELECT * FROM order_items WHERE pedido_id = ? order BY orden',
+        'SELECT * FROM pedido_items WHERE pedido_id = ? ORDER BY orden',
         [orderId]
       );
       
       // Obtener pagos relacionados
       const [pagos] = await pool.execute(
-        `SELECT * FROM pagos 
+        `SELECT * FROM pagos
          WHERE paypal_pedido_id = ? OR referencia LIKE ?
-         order BY created_at DESC`,
-        [order.paypal_pedido_id, `%${order.numero_order}%`]
+         ORDER BY created_at DESC`,
+        [order.paypal_pedido_id, `%${order.numero_pedido}%`]
       );
 
       res.json({
@@ -218,10 +218,10 @@ router.get('/pedidos',
                 COUNT(pi.id) as total_items,
                 SUM(CASE WHEN pi.estado = 'completado' THEN 1 ELSE 0 END) as items_completados
          FROM pedidos p 
-         LEFT JOIN order_items pi ON p.id = pi.pedido_id
+         LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
          ${whereClause}
          GROUP BY p.id
-         order BY p.created_at DESC
+         ORDER BY p.created_at DESC
          LIMIT ? OFFSET ?`,
         [...params, parseInt(limit), parseInt(offset)]
       );
@@ -313,7 +313,7 @@ router.get('/admin/payment-summary',
         FROM webhooks_paypal 
         WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         GROUP BY event_type, status
-        order BY count DESC
+        ORDER BY count DESC
       `);
 
       res.json({

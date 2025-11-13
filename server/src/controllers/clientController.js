@@ -101,7 +101,7 @@ const getClientProjects = async (req, res) => {
       countParams.push(searchParam, searchParam);
     }
 
-    query += ' order BY p.created_at DESC LIMIT ? OFFSET ?';
+    query += ' ORDER BY p.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [projects] = await pool.execute(query, params);
@@ -309,7 +309,7 @@ const getClientInvoices = async (req, res) => {
       countParams.push(fechaHasta);
     }
 
-    query += ' order BY f.created_at DESC LIMIT ? OFFSET ?';
+    query += ' ORDER BY f.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
     const [invoices] = await pool.execute(query, params);

@@ -86,7 +86,7 @@ class Pedido {
             values.push(searchTerm, searchTerm, searchTerm);
         }
 
-        sql += ' order BY p.created_at DESC';
+        sql += ' ORDER BY p.created_at DESC';
 
         if (filters.limit) {
             sql += ' LIMIT ?';
@@ -103,7 +103,7 @@ class Pedido {
             FROM pedido_items pi
             LEFT JOIN servicios s ON pi.servicio_id = s.id
             WHERE pi.pedido_id = ?
-            order BY pi.orden ASC
+            ORDER BY pi.orden ASC
         `, [pedidoId]);
         return result;
     }
@@ -160,7 +160,7 @@ class Pedido {
             FROM historial_estado_pedidos h
             LEFT JOIN usuarios u ON h.changed_by = u.id
             WHERE h.pedido_id = ?
-            order BY h.created_at DESC
+            ORDER BY h.created_at DESC
         `, [pedidoId]);
         return result;
     }
@@ -178,7 +178,7 @@ class Pedido {
         const [lastPedido] = await pool.execute(`
             SELECT numero_pedido FROM pedidos 
             WHERE numero_pedido LIKE ? 
-            order BY numero_pedido DESC LIMIT 1
+            ORDER BY numero_pedido DESC LIMIT 1
         `, [`PED-${year}${month}-%`]);
 
         let nextNumber = 1;

@@ -39,7 +39,7 @@ exports.getPayments = async (req, res) => {
     };
 
     // Si es usuario, solo mostrar sus pagos
-    if (req.user.rol === 'usuario') {
+    if (req.user.rol === 'usuarios') {
       filters.usuario_id = req.user.id;
     }
 
@@ -55,13 +55,13 @@ exports.getPayments = async (req, res) => {
 exports.getPaymentById = async (req, res) => {
   const { id } = req.params;
   try {
-    const payment = await Pago.findByPk(id);
+    const payment = await Pago.findById(id);
     if (!payment) {
       return res.status(404).json({ success: false, message: 'Pago no encontrado' });
     }
 
     // Verificar permisos: solo admins o el dueño del pago
-    if (req.user.rol === 'usuario' && payment.usuario_id !== req.user.id) {
+    if (req.user.rol === 'usuarios' && payment.usuario_id !== req.user.id) {
       return res.status(403).json({ success: false, message: 'No tienes permisos para ver este pago' });
     }
 
@@ -206,7 +206,7 @@ exports.updateClientPayment = async (req, res) => {
   const { pedido_id, concepto, monto, metodo_pago, estado, referencia_transferencia, banco_origen } = req.body;
 
   try {
-    const payment = await Pago.findByPk(id);
+    const payment = await Pago.findById(id);
     if (!payment) return res.status(404).json({ success: false, message: 'Pago no encontrado' });
     if (payment.usuario_id !== usuario_id) return res.status(403).json({ success: false, message: 'No tienes permisos para actualizar este pago' });
 
@@ -268,6 +268,14 @@ exports.createStripePayment = async (req, res) => {
 // Confirmar pago de Stripe
 exports.confirmStripePayment = async (req, res) => {
   const { payment_intent_id, client_email } = req.body;
+
+  // Validar que el usuario esté autenticado
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({
+      success: false,
+      message: 'Usuario no autenticado'
+    });
+  }
 
   try {
     const result = await paymentGatewayService.processPayment(
@@ -361,6 +369,14 @@ exports.createPayPalorder = async (req, res) => {
 // Capturar pago de PayPal
 exports.capturePayPalPayment = async (req, res) => {
   const { pedido_id, client_email } = req.body;
+
+  // Validar que el usuario esté autenticado
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({
+      success: false,
+      message: 'Usuario no autenticado'
+    });
+  }
 
   try {
     const result = await paymentGatewayService.processPayment(

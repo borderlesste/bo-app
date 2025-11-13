@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 
 const userService = {
   async getAllUsers() {
-    const [rows] = await db.execute('SELECT id, nombre, email, telefono, direccion, empresa, rfc, rol, estado, fecha_registro, updated_at FROM usuarios order BY fecha_registro DESC');
+    const [rows] = await db.execute('SELECT id, nombre, email, telefono, direccion, empresa, rfc, rol, estado, fecha_registro, updated_at FROM usuarios ORDER BY fecha_registro DESC');
     return rows;
   },
 

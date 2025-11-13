@@ -138,7 +138,7 @@ router.post('/database-info', async (req, res) => {
     const tableNames = tables.map(table => Object.values(table)[0]);
     
     // Listar todos los usuarios
-    const [users] = await pool.execute('SELECT id, nombre, email, rol, estado, created_at FROM usuarios order BY created_at DESC');
+    const [users] = await pool.execute('SELECT id, nombre, email, rol, estado, created_at FROM usuarios ORDER BY created_at DESC');
     
     // Contar registros en tablas principales
     const counts = {};
