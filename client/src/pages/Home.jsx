@@ -127,7 +127,7 @@ function Home() {
       {/* Hero Section - Using header.jpeg background */}
       <section className="relative text-white py-20 lg:py-32 overflow-hidden">
         {/* Background Image */}
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{backgroundImage: "url('https://borderlesstechno.com/header.jpg')"}}></div>
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{backgroundImage: "url('https://github.com/borderlesste/bo-app/blob/pro-git/client/src/assets/img/header.jpg')"}}></div>
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/90 via-slate-800/85 to-slate-700/80"></div>
         {/* Animated Background Elements */}
